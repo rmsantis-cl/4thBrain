@@ -1,0 +1,10 @@
+{
+  "enabledMcpjsonServers": [
+    "smart-connections"
+  ],
+  "permissions": {
+    "allow": [
+      "mcp__smart-connections__lookup"
+    ]
+  }
+}
