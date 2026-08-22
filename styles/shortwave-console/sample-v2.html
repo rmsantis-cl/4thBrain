@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shortwave Console — Style Sample v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* --- palette --- */
+    --gunmetal-900: #14181a;
+    --gunmetal-800: #1d2326;
+    --gunmetal-700: #2a3236;
+    --aluminum-500: #6b7478;
+    --aluminum-300: #a7afb2;
+    --ink-100: #e8e4d8;
+    --crt-green: #35ffb0;
+    --crt-green-dim: #1c8f66;
+    --amber: #ffb020;
+    --alert-red: #ff4d3d;
+    --alert-red-dim: #7a251d;
+    --cyan-vivid: #29e0ff;
+
+    /* --- type --- */
+    --font-display: 'Oswald', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --scale-h1: 2.6rem;
+    --scale-h2: 1.5rem;
+    --scale-h3: 1.05rem;
+    --scale-body: 1rem;
+    --scale-label: 0.72rem;
+
+    /* --- spacing / shape --- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 40px;
+    --radius-panel: 6px;
+    --radius-control: 4px;
+    --radius-btn: 10px;
+    --bezel: 3px solid var(--gunmetal-700);
+
+    /* --- motion --- */
+    --dur-fast: 120ms;
+    --dur-med: 240ms;
+    --dur-slow: 2400ms;
+    --ease-snap: cubic-bezier(.2,.8,.3,1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--gunmetal-900);
+    background-image:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 4px);
+    font-family: var(--font-mono);
+    color: var(--ink-100);
+    padding: var(--space-5) var(--space-3);
+  }
+
+  .console {
+    max-width: 760px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, var(--gunmetal-800), var(--gunmetal-900));
+    border: var(--bezel);
+    border-radius: var(--radius-panel);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.6);
+    padding: var(--space-4);
+  }
+
+  /* top bar */
+  .console-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--gunmetal-700);
+  }
+  .console-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-size: var(--scale-h3);
+    text-transform: uppercase;
+    color: var(--aluminum-300);
+  }
+  .led-row { display: flex; gap: var(--space-3); align-items: center; }
+  .led { display: flex; align-items: center; gap: var(--space-1); font-size: var(--scale-label); letter-spacing: 0.06em; color: var(--aluminum-500); text-transform: uppercase; }
+  .led-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--aluminum-500); }
+  .led-dot.on { background: var(--crt-green); box-shadow: 0 0 6px 2px var(--crt-green); animation: blink 1.8s ease-in-out infinite; }
+  .led-dot.warn { background: var(--amber); box-shadow: 0 0 6px 2px var(--amber); }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* headings / type scale demo */
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: var(--scale-h1); text-transform: uppercase; letter-spacing: 0.02em; margin: 0 0 var(--space-2); color: var(--ink-100); }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: var(--scale-h2); text-transform: uppercase; letter-spacing: 0.04em; color: var(--aluminum-300); margin: var(--space-4) 0 var(--space-2); }
+  p { font-size: var(--scale-body); line-height: 1.6; color: var(--aluminum-300); margin: 0 0 var(--space-3); }
+  .label { font-family: var(--font-display); font-size: var(--scale-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--aluminum-500); }
+
+  /* CRT transcript screen */
+  .crt-screen {
+    position: relative;
+    background: #05130d;
+    border: var(--bezel);
+    border-radius: var(--radius-control);
+    padding: var(--space-3);
+    height: 240px;
+    overflow-y: auto;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.8), inset 0 0 60px rgba(53,255,176,0.05);
+  }
+  .crt-screen::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0.15) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+  }
+  .crt-line { color: var(--crt-green); font-size: 0.92rem; line-height: 1.7; text-shadow: 0 0 4px var(--crt-green-dim); white-space: pre-wrap; }
+  .crt-line.system { color: var(--amber); text-shadow: 0 0 4px var(--amber); }
+  .crt-line .ts { color: var(--crt-green-dim); }
+
+  /* input strip */
+  .input-strip { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+  .input-strip input {
+    flex: 1;
+    background: var(--gunmetal-700);
+    border: 1px solid var(--gunmetal-700);
+    border-bottom: 2px solid var(--crt-green-dim);
+    border-radius: var(--radius-control);
+    color: var(--crt-green);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: var(--space-2) var(--space-3);
+    outline: none;
+  }
+  .input-strip input:focus { border-bottom-color: var(--crt-green); }
+  .input-strip input::placeholder { color: var(--aluminum-500); }
+
+  /* controls row — unified button language:
+     every button is the same glass chip (size, radius, blur, border weight),
+     differing only by accent hue. all get a breathing glow + a hover sweep. */
+  .controls-row { display: flex; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; }
+
+  .btn {
+    position: relative;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 65%, transparent);
+    color: color-mix(in srgb, var(--accent) 88%, white 12%);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+    animation: breathe var(--dur-slow) ease-in-out infinite;
+    transition: transform var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap);
+  }
+  .btn::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(115deg, transparent, color-mix(in srgb, var(--accent) 55%, white 20%), transparent);
+    transform: skewX(-20deg);
+    opacity: 0;
+    transition: opacity var(--dur-fast) ease;
+  }
+  .btn:hover::before { opacity: 0.7; animation: sweep 0.9s ease forwards; }
+  .btn:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--accent) 32%, transparent); box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .btn:active { transform: translateY(0px) scale(0.97); }
+
+  @keyframes sweep {
+    from { left: -60%; }
+    to { left: 130%; }
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+    50% { box-shadow: 0 0 16px 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+  }
+
+  .btn-transmit { --accent: var(--alert-red); }
+  .btn-standby  { --accent: var(--cyan-vivid); }
+  .btn-reset    { --accent: var(--amber); }
+  .btn-disabled {
+    --accent: var(--aluminum-500);
+    opacity: 0.45;
+    cursor: not-allowed;
+    animation: none;
+  }
+  .btn-disabled:hover { transform: none; box-shadow: none; background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  .btn-disabled:hover::before { opacity: 0; animation: none; }
+
+  /* nameplate card */
+  .nameplate {
+    margin-top: var(--space-4);
+    border: var(--bezel);
+    border-radius: var(--radius-control);
+    padding: var(--space-3) var(--space-4);
+    background: var(--gunmetal-800);
+    position: relative;
+  }
+  .nameplate::before, .nameplate::after {
+    content: "";
+    position: absolute; top: 8px; width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--aluminum-300), var(--aluminum-500));
+  }
+  .nameplate::before { left: 8px; }
+  .nameplate::after { right: 8px; }
+  .nameplate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); margin-top: var(--space-2); }
+  .nameplate-grid div span { display: block; }
+
+  /* palette swatches */
+  .swatches { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
+  .swatch { width: 84px; }
+  .swatch-color { height: 48px; border-radius: var(--radius-control); border: 1px solid rgba(255,255,255,0.08); }
+  .swatch .label { display: block; margin-top: var(--space-1); }
+</style>
+</head>
+<body>
+  <div class="console">
+    <div class="console-topbar">
+      <div class="console-title">Channel 7 — AI Uplink</div>
+      <div class="led-row">
+        <div class="led"><span class="led-dot on"></span>On Air</div>
+        <div class="led"><span class="led-dot warn"></span>Standby</div>
+        <div class="led"><span class="led-dot"></span>Fault</div>
+      </div>
+    </div>
+
+    <h1>Shortwave Console</h1>
+    <p>v2: all four controls now share one glass-chip button language — same shape, same radius, same blur and breathing glow — differing only by accent hue. Hover for a light sweep across the glass.</p>
+
+    <h2>Transcript</h2>
+    <div class="crt-screen" id="crt">
+      <div class="crt-line system">&gt;&gt; SESSION START — LINK ESTABLISHED</div>
+      <div class="crt-line"><span class="ts">[00:00:01]</span> OPERATOR: what's the weather doing out there</div>
+      <div class="crt-line"><span class="ts">[00:00:03]</span> UPLINK: clear skies, wind out of the northwest at 12 knots</div>
+    </div>
+
+    <div class="input-strip">
+      <input id="msg" type="text" placeholder="Type your transmission..." />
+    </div>
+
+    <div class="controls-row">
+      <button class="btn btn-transmit" id="submit">Transmit</button>
+      <button class="btn btn-standby">Standby</button>
+      <button class="btn btn-reset" id="reset">Reset Session</button>
+      <button class="btn btn-disabled" disabled>Record — Offline</button>
+    </div>
+
+    <div class="nameplate">
+      <div class="label">Session Nameplate</div>
+      <div class="nameplate-grid">
+        <div><span class="label">Frequency</span><span>7.230 MHz</span></div>
+        <div><span class="label">Session ID</span><span>UPLINK-0417</span></div>
+        <div><span class="label">Uptime</span><span>00:04:12</span></div>
+        <div><span class="label">Signal</span><span>Strong / Clear</span></div>
+      </div>
+    </div>
+
+    <h2>Palette</h2>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-color" style="background:var(--gunmetal-900)"></div><span class="label">Gunmetal 900</span></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--gunmetal-700)"></div><span class="label">Gunmetal 700</span></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--aluminum-300)"></div><span class="label">Aluminum 300</span></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--crt-green)"></div><span class="label">CRT Green</span></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--amber)"></div><span class="label">Amber (button accent)</span></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--alert-red)"></div><span class="label">Alert Red (button accent)</span></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--cyan-vivid)"></div><span class="label">Cyan Vivid (button accent)</span></div>
+    </div>
+  </div>
+
+<script>
+  const crt = document.getElementById('crt');
+  const input = document.getElementById('msg');
+  const time = () => new Date().toISOString().substr(11,8);
+
+  function addLine(text, who) {
+    const line = document.createElement('div');
+    line.className = 'crt-line';
+    line.innerHTML = `<span class="ts">[${time()}]</span> ${who}: ${text}`;
+    crt.appendChild(line);
+    crt.scrollTop = crt.scrollHeight;
+  }
+
+  document.getElementById('submit').addEventListener('click', () => {
+    if (!input.value.trim()) return;
+    addLine(input.value.trim(), 'OPERATOR');
+    input.value = '';
+    setTimeout(() => addLine('(sample) transmission received', 'UPLINK'), 400);
+  });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    crt.innerHTML = '<div class="crt-line system">&gt;&gt; SESSION RESET — LINK RE-ESTABLISHED</div>';
+  });
+
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('submit').click(); });
+</script>
+</body>
+</html>
