@@ -2,122 +2,62 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
-
 ## Project Overview
 
-**brain4th** is a Claude Code automation framework for a personal Obsidian vault at `C:\Users\rsant\desar\Local Vault\Local Vault`. It provides `b4-*` skills to automate research, note-taking, tagging, and quality review.
+**4thBrain** (a.k.a. the Personal Knowledge & Executive Assistant System) is currently in the design/requirements phase — the repository holds no application code yet. It contains the Claude Code automation framework used to *drive* the design process (skills, rules) plus the requirements/design artifacts those skills produce and consume.
 
-## Vault Architecture & Conventions
+The target system being designed: a privacy-first, locally hosted "second brain" that captures unstructured ideas, voice-to-text transcripts, links, documents, and email/calendar feeds; sanitizes, classifies, and indexes everything overnight via a local LLM into a human-readable Obsidian-compatible Markdown vault plus a local RAG vector database; and proactively surfaces relevant notes, daily briefings, and prioritized email summaries — with all inference running locally (Ollama/WSL2) and zero cloud API cost or outbound calls.
 
-**Vault location:** `C:\Users\rsant\desar\Local Vault\Local Vault`
+## Repository Structure
 
-**Note organization:** Nested topic hierarchy: `<Topic>/<Subtopic>/<Specific note>`. Examples:
-- `AI/Claude` — Claude-specific notes
-- `AI/Claude/Skills/<skill-name>` — documentation for a specific skill
-- `Writing/AI/Signs of AI Writing.md` — research sourcing the `write-properly` rule
+- **`documets/design/`** — baseline specs: `SYSTEM-REQUIREMENTS-SPECIFICATION.md` (FR1–FR9, NFR1–NFR12), `Project 4thBrain.md` (Epics EP1–EP11 and Stories), `Gantt Chart.md` (story schedule/dependencies), `ADRS.md` (ADR1–ADR13).
+- **`documets/PLAN.md`** — master plan: lifecycle phase status, EP1–EP11 summary, open scope-lock items.
+- **`vault/`, `local-llm/`, `ui/`, `ingestor-classification/`, `batch/`** — the five functional modules, each with its own `CLAUDE.md` (purpose/scope/dependencies) and `backlog.md` (story status). See the Module Map below. Full story text stays canonical in `documets/design/Project 4thBrain.md`; the per-module files are thin views onto it.
+- **`documets/Interviews/`** — phase interview transcripts capturing requirements discovery.
+- **`documets/method/`** — the process framework itself: `BOOT.md` (file-header/versioning protocol), `MD-MEMORY-INSTRUCTIONS.md` (`/MEMORY.md` maintenance rules), `Software Documentation Summary and Framework.md` (the document-type taxonomy and phase-by-phase software lifecycle this project follows — Requirement Collection → Formalization → Scope Lock → Epics → Stories/Dev/Release → Post-Release Gap Analysis → Buy-off → Maintenance), `Driving Dictation Prompt and Guidelines.md` (source for the `dictation` skill).
+- **`.claude/skills/`** — `b4-research` (cited web research into the Obsidian vault), `dictation` (hands-free dictation interaction protocol), `install-smart-connection`, `roast`, `surprise-me`.
+- **`.claude/rules/`** — `boot.md`, `md-memory.md`, `scrapper.md`, `shell.md`, `write-properly.md`.
+- **`.backup/v2/`** — prior repository contents (an earlier, code-oriented iteration of this project: `Generated/`, `styles/`, prior `CLAUDE.md`/`README.md`/`TODO.md`/`HANDOUT.md`, batch-queue plans, `.mcp.json`) preserved during a cleanup; not part of the active tree.
 
-**External content storage:** Retrieved web pages and reference logs live under `External/Web/`:
-- `External/Web/<host>/` — HTML/images from a domain (e.g., `External/Web/example.com/`)
-- `External/Web/References/references.md` — log of every URL fetched or referenced
+## Document Framework Conventions
 
-## Skills
+Per `documets/method/Software Documentation Summary and Framework.md`, project artifacts follow a fixed taxonomy and coding scheme — use these codes/prefixes when creating or referencing requirements docs:
 
-### Shipped
+- **FRn** — Functional Requirements (Code, Name, Abstract, Description, Priority [MVP/Good-to-Have/Desired], Acceptance Criteria)
+- **NFRn** — Non-Functional Requirements (runtime/environment constraints)
+- **ADRn** — Architectural Decisions (Description, Why, Date Created, Date Cancelled)
+- **EPn** — Epics (group FRs/NFRs, inherit their acceptance criteria)
+- **Story n** — Stories under an Epic (Abstract, Description, Acceptance Criteria, Status)
+- **Bug n / Issue n** — Testing & bug tracking
 
-| Skill | Purpose | Trigger |
-|---|---|---|
-| `b4-research` | Research a topic, write a cited (APA 7) note to the vault | User asks to research, "look into X", or add a sourced note |
-| `install-smart-connection` | Install/verify Smart Connections MCP | If MCP lookup tools are unavailable |
+Any file carrying a YAML file header (`---`-delimited block at the top with `name`/`description` required fields) is governed by `.claude/rules/boot.md`: files marked `read-only: true` must never be modified/deleted; new files without a header get one inserted; updates bump `metadata.version` and the `date` field.
 
-### Planned (see TODO.md)
+## Current Baseline (as of 2026-08-24)
 
-- `b4-tags` — add/remove tags from notes
-- `b4-review` — review/correct notes' citations, attribution, and tags
-- `b4-ai-score` — heuristic 0–100 confidence scorer using vault's own AI-writing-tells research
-- Batch-queue skill set — enqueue research tasks, manage queue state, run non-LLM jobs in WSL, route LLM jobs through Claude Batch
+Eleven epics (EP1–EP7 baseline, EP8–EP11 added via gap analysis), all stories currently `To Do`:
 
-## MCP Servers
+- **EP7** (System Infrastructure & Host Runtime) is the foundation — WSL2 + Ollama + MCP server setup — and gates nearly everything else.
+- **EP1** (Ingestion & Sanitization) depends on EP7.
+- **EP2** (Tagging/Classification) and **EP3** (Vector Indexing/MCP) depend on EP1.
+- **EP4** (Overnight Batch Processing) depends on EP1 + EP2.
+- **EP5** (Daily Briefing) depends on EP2 + EP4.
+- **EP6** (Web UI — ingestion form, search, dashboard) depends on EP1, EP3, EP4.
+- **EP8** (QA/Testing & Bug Tracking), **EP9** (Security & Access Control), **EP10** (Vault Backup & Recovery), **EP11** (Release Management) — cross-cutting additions; EP9 and EP10 reference proposed NFR13/NFR14, pending a Phase 3 scope-lock pass.
 
-Two MCPs are required. Both are configured at project scope in `.mcp.json` (empty by default; register these via `claude mcp add`).
+See `documets/design/Gantt Chart.md` for exact story-level day scheduling and dependency types (Depends on / Must be worked with), and `documets/PLAN.md` for overall phase status.
 
-### Smart Connections
+## Module Map
 
-Enables semantic vault lookup for duplicate-detection in `b4-research`.
+| Module | Owns | Depends on |
+| --- | --- | --- |
+| `vault/` | EP3 (vector indexing/MCP), EP10 (backup/recovery) | `local-llm/` |
+| `local-llm/` | EP7 (WSL2/Ollama/MCP host), EP11 (release mgmt) | none — foundation |
+| `ui/` | EP6 (web ingestion/search/dashboard), EP9 (auth) | `ingestor-classification/`, `vault/`, `batch/`, `local-llm/` |
+| `ingestor-classification/` | EP1 (ingestion/sanitization), EP2 (tagging) | `local-llm/`, `vault/` |
+| `batch/` | EP4 (overnight processing), EP5 (daily briefing), EP8 (QA/testing — cross-cutting) | `ingestor-classification/`, `local-llm/`, `vault/` |
 
-**Install:**
-```powershell
-claude mcp add smart-connections -e OBSIDIAN_VAULT="C:\Users\rsant\desar\Local Vault\Local Vault" -- npx -y @yejianye/smart-connections-mcp
-```
+## Working in This Repository
 
-**Prerequisite:** The vault must have the Obsidian Smart Connections plugin installed and the vault indexed (run in Obsidian's Smart Connections plugin first).
-
-**Status:** See TODO.md — vault index is currently empty (`mcp__smart-connections__lookup` returns "Smart sources data not found").
-
-### Firecrawl
-
-Web scraping for `b4-research` and other skills. Stores retrieved content per `scrapper.md`.
-
-**Install:**
-```powershell
-claude mcp add firecrawl -s local -e FIRECRAWL_API_KEY=<your-key> -- npx -y firecrawl-mcp
-```
-
-Get a key at [firecrawl.dev](https://firecrawl.dev).
-
-## Project Rules (`.claude/rules/`)
-
-- **`shell.md`** — PowerShell only; no Bash or cmd.exe syntax or commands.
-- **`scrapper.md`** — use Firecrawl (not `WebFetch`) to retrieve pages; store under `External/Web/<host>/` and log URLs in `External/Web/References/references.md`.
-- **`write-properly.md`** — avoid AI-writing tells in generated text. **Scoped to `Generated/` directory only** (enforced via `Generated/CLAUDE.md`). Applies to any note written by `b4-research` or other skills that output to `Generated/`.
-
-## Task Tracking
-
-Two parallel systems kept in sync manually:
-
-- **Session `TaskList`** (`TaskCreate`/`TaskUpdate`/`TaskList` tools) — in-memory, survives only within a session.
-- **`TODO.md`** — persistent file at project root, mirrors the session list. Treat this as source of truth across sessions.
-
-Update `TODO.md` directly as work progresses, or ask Claude to sync it when closing a session.
-
-## How Skills Work: b4-research Example
-
-1. Take the user's research topic
-2. Search vault for related notes using Smart Connections (checks for duplicates)
-3. Surface any matches; suggest a save location following the vault hierarchy
-4. Research on the web using Firecrawl (per `scrapper.md`)
-5. Draft a Markdown note with APA 7 citations (in-text `(Author, Year)` + numbered footnotes + References section)
-6. Before writing, confirm or override the save location
-7. If a file exists at that location, ask: append, merge, or save as new note with numeric suffix
-8. Write to vault; report the final path, write mode, and summary
-
-See `.claude/skills/b4-research/SKILL.md` for the full flow.
-
-## Creating New Skills
-
-Skills live in `.claude/skills/<skill-name>/SKILL.md`. Each skill:
-
-1. Starts with YAML frontmatter (name, description, when to trigger)
-2. Documents the full workflow step-by-step
-3. References relevant vault paths, MCP tools, and rules
-4. Specifies any MCP dependencies
-
-Example: `.claude/skills/b4-research/SKILL.md`
-
-When building a new `b4-*` skill:
-- Follow the same vault hierarchy and APA 7 citation style as `b4-research`
-- Use Firecrawl for web content (per `scrapper.md`)
-- Apply `write-properly` rules to generated text
-- Use Smart Connections for vault lookups (when index is working)
-- Check for existing notes before writing; never silently overwrite
-- Document the skill in `SKILL.md` including all steps and MCP dependencies
-
-## Project Status & Open Issues
-
-See `HANDOUT.md` for a full status summary.
-
-**Open issues:**
-1. Smart Connections vault index is empty — blocks `b4-research` duplicate detection and any future skill using vault lookup
-2. Firecrawl MCP tool exposure was flaky in prior sessions — verify if `scrapper.md` usage falls back to `WebFetch`
-
-See `TODO.md` for the persistent task list.
+- No build/lint/test commands exist yet — there is no application code to run.
+- When advancing the project from design to implementation, follow the phase sequence defined in `documets/method/Software Documentation Summary and Framework.md` rather than jumping straight to code.
+- Use the `dictation` skill's persona/interview/pause protocol when the user is dictating requirements or specs hands-free.
