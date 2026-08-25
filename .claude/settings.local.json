@@ -1,10 +1,13 @@
 {
-  "enabledMcpjsonServers": [
-    "smart-connections"
-  ],
   "permissions": {
     "allow": [
-      "mcp__smart-connections__lookup"
+      "mcp__smart-connections__lookup",
+      "Bash(git mv *)",
+      "Bash(mv vault/params.json params.json)",
+      "Bash(VAULT=\"/c/Users/rsant/desar/Local Vault/Local Vault\"; ls -la \"$VAULT\" 2>&1 | head -30; echo \"---smart-env---\"; ls -la \"$VAULT/.smart-env\" 2>&1 | head -50; echo \"---obsidian---\"; ls -la \"$VAULT/.obsidian\" 2>&1 | head -50)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "smart-connections"
+  ]
 }

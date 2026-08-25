@@ -1,9 +1,9 @@
 ---
 name: INDEX
 description: none
-date: 2026-08-24
+date: 2026-08-25
 metadata:
-  version: 1.6
+  version: 1.13
   created-by: Claude Code
 ---
 
@@ -17,7 +17,7 @@ History cells are a list of `[date] comment` entries, most recent last.
 | --- | --- |
 | `CLAUDE.md` | [2026-08-24] Created via /init from documets/design and documets/Interviews<br>[2026-08-24] Updated — added module directories to Repository Structure, EP8–EP11 to baseline, and Module Map table |
 | `documets/design/SYSTEM-REQUIREMENTS-SPECIFICATION.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
-| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis |
+| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats |
 | `documets/design/Gantt Chart.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-1.1-INTERVIEW.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-4.1-TRANSCRIPT.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
@@ -30,7 +30,8 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `.claude/skills/dictation/SKILL.md` | [2026-08-24] Created from documets/method dictation guidelines |
 | `documets/PLAN.md` | [2026-08-24] Created — Phase 4 status, EP1–EP11 summary, open scope-lock items |
 | `vault/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP3, EP10) |
-| `vault/backlog.md` | [2026-08-24] Created — story backlog for vault module |
+| `vault/backlog.md` | [2026-08-24] Created — story backlog for vault module<br>[2026-08-25] Added Spike 3.2 row (Done) |
+| `vault/check_smart_connections_status.py` | [2026-08-25] Created — Spike 3.2 deliverable: reports Smart Connections indexed/pending/excluded totals and per-note status from smart_sources.ajson<br>[2026-08-25] Rewritten to match native Smart Environment panel terminology (current/missing/skipped/unexpected) with skip-reason detection and Sources+Blocks totals; verified numbers match the panel exactly |
 | `local-llm/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP7, EP11) |
 | `local-llm/backlog.md` | [2026-08-24] Created — story backlog for local-llm module |
 | `ui/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP6, EP9) |
@@ -39,5 +40,16 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `ingestor-classification/backlog.md` | [2026-08-24] Created — story backlog for ingestor-classification module |
 | `batch/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP4, EP5, EP8) |
 | `batch/backlog.md` | [2026-08-24] Created — story backlog for batch module |
-| `documets/design/ADRS.md` | [2026-08-24] Created — ADR1–ADR12 backfilled from NFR baseline, ADR13 logged for module-split decision |
+| `documets/design/ADRS.md` | [2026-08-24] Created — ADR1–ADR12 backfilled from NFR baseline, ADR13 logged for module-split decision<br>[2026-08-25] Added ADR14 — ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw)<br>[2026-08-25] Added ADR15 — topic/subtopic-driven vault path resolution and sibling attachment directories |
 | `MEMORY.md` | [2026-08-24] Created — seeded from current project state per md-memory.md |
+| `params.json` | [2026-08-25] Created at vault/params.json — vault_dir and Smart Connections params<br>[2026-08-25] Moved to project root |
+| `vault/Instructions.md` | [2026-08-25] Created — Smart Connections install/config guide<br>[2026-08-25] Updated — params.json path reference |
+| `vault/validate_smart_connections.py` | [2026-08-25] Created — install validation script |
+| `vault/Obsidian-refs/Obsidian-MCP-Capabilities-Summary.md` | [2026-08-25] Created — summary of Obsidian REST API/MCP and Smart Connections capabilities, framed for EP3/EP10 |
+| `documets/INGESTION-FLOW.md` | [2026-08-25] Created — ingestion/classification flow narrative referencing img/ingestion-flow.png and img/classification-flow.png |
+| `documets/img/ingestion-flow.mmd`, `documets/img/ingestion-flow.png` | [2026-08-25] Created — Mermaid source and rendered PNG for the ingestion flow diagram |
+| `documets/img/classification-flow.mmd`, `documets/img/classification-flow.png` | [2026-08-25] Created — Mermaid source and rendered PNG for the classification flow diagram |
+| `documets/story/story-1.1.md` | [2026-08-25] Created — abstract, observations, ADR14 reference, TODO placeholder |
+| `documets/story/story-1.2.md` | [2026-08-25] Created — abstract, observations, ADR14 reference, TODO placeholder |
+| `documets/story/story-2.1.md` | [2026-08-25] Created — abstract, observations, ADR15 reference, TODO placeholder |
+| `documets/story/spike-3.2.md` | [2026-08-25] Created — abstract, investigation findings, deliverable, TODO follow-ups<br>[2026-08-25] Updated with native Smart Environment panel findings and revised current/missing/skipped/unexpected terminology |

@@ -102,6 +102,22 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-24
 **Date Cancelled:** —
 
+## ADR14: Ingestion directory layout ($RAW_DIR staging vs. $VAULT_DIR/incoming and /raw)
+
+**Description:** Inbound files land in `$RAW_DIR` (outside the vault). Text/MD/HTML — already indexable — are copied directly to `$VAULT_DIR/incoming`. URLs are moved to `$RAW_DIR/clipping` for extraction. Other binary formats are transcoded into MD/text; the transcoded output is written to `$VAULT_DIR/incoming` and the original binary is archived to `$VAULT_DIR/raw`, with the transcoded file referencing that archived location.
+**Why:** Binary files can't be indexed until transcoded, so they must not enter the vault (which drives Smart Connections indexing, per ADR3) before conversion completes. Separating pre-vault staging (`$RAW_DIR`) from the indexable queue (`$VAULT_DIR/incoming`) and archived originals (`$VAULT_DIR/raw`) keeps the vault free of un-indexable content while preserving traceability back to source files. Source: FR1, FR2, Story 1.1, Story 1.2.
+**Date Created:** 2026-08-25
+**Date Cancelled:** —
+
+## ADR15: Topic/subtopic-driven vault path with sibling attachment directories
+
+**Description:** During classification, the local LLM infers a topic/subtopic in addition to tags — this topic/subtopic pair, not the tags, determines the target vault subfolder a note is filed into. If a note references images, documents, or other files, those referenced files are placed in a sibling directory next to the note (not inline in `VAULT_DIR/incoming` or mixed into the note's own path), so a note and its attachments travel together.
+**Why:** Tags describe *what a note is about* for search/retrieval, but filing needs a single deterministic path — topic/subtopic gives a stable, hierarchical basis for that, decoupled from the (multi-valued, LLM-assisted) tag set. Keeping attachments in a sibling directory avoids collisions between unrelated notes' attachments and keeps a note's referenced files discoverable and easy to move/archive together with it. Source: FR3, Story 2.1.
+**Date Created:** 2026-08-25
+**Date Cancelled:** —
+
 ## Changelog
 
 - 2026-08-24: Created. Backfilled ADR1–ADR12 from the existing NFR baseline; logged ADR13 for this session's module-split decision.
+- 2026-08-25: Logged ADR14 for the ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw), dictated by the user for Story 1.1/1.2.
+- 2026-08-25: Logged ADR15 for topic/subtopic-driven vault path resolution and sibling attachment directories, dictated by the user for Story 2.1.

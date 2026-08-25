@@ -1,0 +1,7 @@
+{
+  "vault_dir": "C:\\Users\\rsant\\desar\\Local Vault\\Local Vault",
+  "smart_env_dir": ".smart-env",
+  "mcp_server_name": "smart-connections",
+  "mcp_package": "@yejianye/smart-connections-mcp",
+  "obsidian_vault_env_var": "OBSIDIAN_VAULT"
+}

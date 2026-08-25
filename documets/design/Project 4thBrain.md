@@ -17,8 +17,9 @@
 ### **Story 1.1: Direct Structured Vault Ingestion**
 
 > * **Abstract:** Ingest structured Markdown directly into designated Obsidian vault subfolders.  
-> * **Description:** Build local pipeline handlers to accept pre-formatted Markdown files or key-value content and write them directly to target subfolders without altering existing frontmatter or structure.  
+> * **Description:** Build local pipeline handlers that watch `$RAW_DIR` (outside the vault) for incoming files. Text, Markdown, and HTML files are already indexable, so they are copied directly to `$VAULT_DIR/incoming` without transformation, preserving existing frontmatter and structure. See ADR14 for the full directory layout.  
 > * **Acceptance Criteria:**  
+  * Text, Markdown, and HTML files placed in `$RAW_DIR` are copied to `$VAULT_DIR/incoming` without modification.  
   * Ingested files maintain original frontmatter schema and metadata.  
   * Target subfolder path resolution writes files directly to designated locations without file corruption.  
 > * **Dependencies:** depends on Story 7.1, depends on Story 7.2  
@@ -26,11 +27,14 @@
 
 ### **Story 1.2: Unstructured Text Parsing & Sanitization**
 
-> * **Abstract:** Clean and normalize unstructured raw text payloads.  
-> * **Description:** Implement an input parser that strips unsafe scripts, HTML bloat, and invalid formatting from web clips or freeform text submissions prior to vault insertion.  
+> * **Abstract:** Clean, transcode, and normalize unstructured or binary raw payloads.  
+> * **Description:** Implement handlers for content that can't be indexed as-is. URLs placed in `$RAW_DIR` are moved to `$RAW_DIR/clipping` for extraction. Binary formats (PDF, images, Word docs, etc.) are transcoded into clean MD/text; the transcoded output is written to `$VAULT_DIR/incoming`, and the original binary is archived to `$VAULT_DIR/raw` with the processed file carrying a reference back to its raw original's location. See ADR14 for the full directory layout.  
 > * **Acceptance Criteria:**  
   * Input containing raw HTML, web clips, or special characters is sanitized to clean plain text/Markdown.  
   * Core semantic text content remains fully intact post-sanitization.  
+  * URLs submitted for ingestion are relocated to `$RAW_DIR/clipping` prior to extraction.  
+  * Binary files are not written into the vault until transcoded; transcoded output lands in `$VAULT_DIR/incoming` and the original is archived to `$VAULT_DIR/raw`.  
+  * Each transcoded file in `$VAULT_DIR/incoming` references the archived location of its original raw file.  
 > * **Dependencies:** must be worked with Story 1.1  
 > * **Status:** To Do
 
@@ -41,11 +45,13 @@
 
 ### **Story 2.1: Local LLM Metadata & Tag Inference**
 
-> * **Abstract:** Infer tags and YAML metadata using local LLM inference.  
-> * **Description:** Connect the Node.js processing pipeline to the local Ollama instance to analyze raw note content and generate appropriate tags and YAML header fields based on vault taxonomy.  
+> * **Abstract:** Infer tags, metadata, and topic/subtopic placement using local LLM inference.  
+> * **Description:** Connect the Node.js processing pipeline to the local Ollama instance to analyze raw note content and generate appropriate tags and YAML header fields based on vault taxonomy. In addition to tags, the LLM infers a topic/subtopic for the note; this topic/subtopic (not the tags) determines the target vault subfolder the note is filed into. If the note references images, documents, or other files, those referenced files are placed in a sibling attachment directory next to the note. See ADR15.  
 > * **Acceptance Criteria:**  
   * Generated notes contain syntactically valid YAML frontmatter blocks.  
   * Applied tags strictly align with configured vault taxonomy rules.  
+  * Note is filed into the vault subfolder determined by its inferred topic/subtopic.  
+  * Files referenced by the note (images, documents, other attachments) are placed in a sibling directory next to the note, not left in `$VAULT_DIR/incoming`.  
 > * **Dependencies:** depends on Story 1.1, depends on Story 7.1  
 > * **Status:** To Do
 
@@ -63,6 +69,25 @@
   * Embeddings are stored locally in .smart-env without relying on cloud vector stores.  
 > * **Dependencies:** depends on Story 1.1, depends on Story 7.2  
 > * **Status:** To Do
+
+### **Spike 3.2: Smart Connections Indexing Status Retrieval**
+
+> * **Abstract:** Investigate how to determine Smart Connections indexing status (totals, failures, per-note lookup) from `$VAULT_DIR/.smart-env` or `$VAULT_DIR/.obsidian`.  
+> * **Description:** Timeboxed research spike to find a reliable source for: (1) totals of indexed/pending/failed notes, (2) a list of failed notes with causes, (3) a way to check a single note's status by path. Findings recorded in `documets/story/spike-3.2.md`.  
+> * **Findings:**  
+  * The data lives in `$VAULT_DIR/.smart-env`, not `.obsidian` — `.obsidian` only holds Obsidian app/plugin settings, no indexing state.  
+  * Smart Connections ships its own in-app diagnostics: a **Smart Environment** health panel (Obsidian command palette → search "Smart Environment") shows live totals — Indexed items, Eligible, Current embeddings, Needs embedding, and a per-collection breakdown (Smart Sources, Smart Blocks) of Total / Eligible / Current / Missing / Skipped / Unexpected — plus a "Skipped items" diagnostic listing each skipped item's path and a human-readable reason (e.g. "Below minimum size"). This is the authoritative live source; per user direction, **Skipped counts as failed to index** for this project's reporting.  
+  * `smart_sources/smart_sources.ajson` holds one entry per note, keyed `smart_sources:<vault-relative path>`, and each source's `blocks_data` holds one entry per block. Status per item is inferred by comparing stored size against `smart_env.json`'s `min_chars` threshold (separate values for sources and blocks) and its `file_exclusions`/`folder_exclusions` patterns — the same comparison the in-app panel performs live, since no reason string is persisted anywhere: **current** (embedded and eligible), **missing** (eligible, not yet embedded — "pending"), **skipped** (ineligible under current policy — "failed", with a derivable reason), **unexpected** (a vector exists for an item no longer eligible, e.g. content shrank after being embedded).  
+  * The `.ajson` files are not plain JSON — each is a sequence of `"key": {...},` fragments (an append-only log), not one JSON document; they must be parsed line-by-line.  
+  * Block-level coverage is much lower than source-level in this vault: 720 of 1,045 blocks are skipped (mostly sub-200-character blocks), vs. only 1 of 31 sources — worth knowing before relying on block-level (as opposed to whole-note) semantic search.  
+  * The registered `smart-connections` MCP server (see `vault/Instructions.md`) was not connected during this spike, so whether it exposes this same diagnostic as a callable tool (vs. only the in-app panel) is still unverified — open follow-up.  
+> * **Deliverable:** `vault/check_smart_connections_status.py` — reads `params.json` and `smart_env.json`, parses `smart_sources.ajson`, and reports (a) Sources and Blocks totals by status (current/missing/skipped/unexpected) with a summary run, including skipped/unexpected items and their reasons, and (b) a single note's status + reason via `python vault/check_smart_connections_status.py "<vault-relative path>"`. Verified against the live vault and cross-checked against the in-app Smart Environment panel — numbers match exactly: 31/30/0/1/0 sources (total/current/missing/skipped/unexpected), 1045/325/0/720/0 blocks, and identical skip-reason text.  
+> * **Acceptance Criteria:**  
+  * Script reports total current (indexed) / missing (pending) / skipped (failed) / unexpected counts against the real vault, for both Sources and Blocks — done, matches the native panel exactly.  
+  * Script reports a list of skipped/unexpected notes with causes — done, reason text matches the native panel's diagnostic modal.  
+  * Given a vault-relative note path, the script reports current / missing / skipped / unexpected / not-found, with a reason where applicable — done.  
+> * **Dependencies:** depends on Story 3.1  
+> * **Status:** Done. Open follow-up: confirm the exact Smart Environment command-palette entry name for documentation, and whether Story 3.1 needs to handle "unexpected" (orphaned) embeddings separately.
 
 ## **EP4: Overnight Batch Processing Engine**
 
