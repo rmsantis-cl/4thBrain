@@ -29,6 +29,7 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `.claude/rules/file-indexing.md` | [2026-08-24] Split out of former boot.md |
 | `.claude/skills/dictation/SKILL.md` | [2026-08-24] Created from documets/method dictation guidelines |
 | `documets/PLAN.md` | [2026-08-24] Created — Phase 4 status, EP1–EP11 summary, open scope-lock items |
+| `documets/BACKLOG-TRACKER.md` | [2026-08-26] Created — comprehensive view of all 23 stories with status (READY/WIP/COMPLETED), dependencies, acceptance criteria, and working-notes links |
 | `vault/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP3, EP10) |
 | `vault/backlog.md` | [2026-08-24] Created — story backlog for vault module<br>[2026-08-25] Added Spike 3.2 row (Done) |
 | `vault/check_smart_connections_status.py` | [2026-08-25] Created — Spike 3.2 deliverable: reports Smart Connections indexed/pending/excluded totals and per-note status from smart_sources.ajson<br>[2026-08-25] Rewritten to match native Smart Environment panel terminology (current/missing/skipped/unexpected) with skip-reason detection and Sources+Blocks totals; verified numbers match the panel exactly |
