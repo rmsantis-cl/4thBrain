@@ -4,7 +4,9 @@
       "mcp__smart-connections__lookup",
       "Bash(git mv *)",
       "Bash(mv vault/params.json params.json)",
-      "Bash(VAULT=\"/c/Users/rsant/desar/Local Vault/Local Vault\"; ls -la \"$VAULT\" 2>&1 | head -30; echo \"---smart-env---\"; ls -la \"$VAULT/.smart-env\" 2>&1 | head -50; echo \"---obsidian---\"; ls -la \"$VAULT/.obsidian\" 2>&1 | head -50)"
+      "Bash(VAULT=\"/c/Users/rsant/desar/Local Vault/Local Vault\"; ls -la \"$VAULT\" 2>&1 | head -30; echo \"---smart-env---\"; ls -la \"$VAULT/.smart-env\" 2>&1 | head -50; echo \"---obsidian---\"; ls -la \"$VAULT/.obsidian\" 2>&1 | head -50)",
+      "PowerShell(npx --yes @mermaid-js/mermaid-cli -i \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\documets\\\\design\\\\classes.mmd\" -o \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\documets\\\\design\\\\classes.png\" -b white 2>&1)",
+      "Bash(git add *)"
     ]
   },
   "enabledMcpjsonServers": [

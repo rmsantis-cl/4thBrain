@@ -1,0 +1,36 @@
+classDiagram
+    class Document {
+        +UUID UUID
+        +String name
+        +URI location
+        +StatusID status
+        +Timestamp created
+        +Timestamp updated
+        +ClassificationID classification
+    }
+
+    class Status {
+        +Integer ID
+        +String name
+        +String description
+    }
+
+    class Classification {
+        +UUID ID
+        +String name
+        +UUID parent
+    }
+
+    class Job {
+        +UUID ID
+        +String job_type
+        +Timestamp start_date
+        +Timestamp end_date
+        +String status
+        +UUID parent_job_ID
+    }
+
+    Document --> Status : status
+    Document --> Classification : classification
+    Classification --> Classification : parent
+    Job --> Job : parent_job_ID

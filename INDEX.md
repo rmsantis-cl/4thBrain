@@ -3,7 +3,7 @@ name: INDEX
 description: none
 date: 2026-08-25
 metadata:
-  version: 1.13
+  version: 1.15
   created-by: Claude Code
 ---
 
@@ -44,6 +44,8 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `MEMORY.md` | [2026-08-24] Created — seeded from current project state per md-memory.md |
 | `params.json` | [2026-08-25] Created at vault/params.json — vault_dir and Smart Connections params<br>[2026-08-25] Moved to project root |
 | `vault/Instructions.md` | [2026-08-25] Created — Smart Connections install/config guide<br>[2026-08-25] Updated — params.json path reference |
+| `documets/design/classes.md` | [2026-08-25] Created — Document/Status/Classification/Job class definitions transcribed from user-supplied Class_Definitions_Specification.rtf |
+| `documets/design/classes.mmd` | [2026-08-25] Created — Mermaid class diagram for Document/Status/Classification/Job |
 | `vault/validate_smart_connections.py` | [2026-08-25] Created — install validation script |
 | `vault/Obsidian-refs/Obsidian-MCP-Capabilities-Summary.md` | [2026-08-25] Created — summary of Obsidian REST API/MCP and Smart Connections capabilities, framed for EP3/EP10 |
 | `documets/INGESTION-FLOW.md` | [2026-08-25] Created — ingestion/classification flow narrative referencing img/ingestion-flow.png and img/classification-flow.png |
