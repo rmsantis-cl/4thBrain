@@ -292,6 +292,235 @@ const CSS = `
   }
   .placeholder-panel .icon { font-size: 32px; margin-bottom: 12px; }
 
+  /* ---------- Admin panel ---------- */
+  .admin-layout {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+  }
+
+  .admin-sidebar {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .admin-sidebar h2 {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+
+  .admin-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-menu-item {
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: all 0.15s ease;
+  }
+
+  .admin-menu-item:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+
+  .admin-menu-item.active {
+    background: var(--accent);
+    color: #191817;
+    border-color: var(--accent);
+  }
+
+  .admin-menu-item .mock-badge {
+    font-size: 10px;
+    margin-left: 4px;
+    opacity: 0.6;
+  }
+
+  .admin-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .admin-section {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    overflow-y: auto;
+  }
+
+  .admin-section.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .table-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-controls label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .table-controls select {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .table-controls select:hover {
+    background: var(--surface-hover);
+  }
+
+  .table-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .table-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: 6px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+  }
+
+  .table-wrapper {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+
+  #admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  #admin-table thead {
+    background: var(--surface-hover);
+    position: sticky;
+    top: 0;
+  }
+
+  #admin-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  #admin-table th:hover {
+    background: var(--border);
+  }
+
+  #admin-table tbody tr:hover {
+    background: var(--border);
+  }
+
+  #admin-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .table-pagination button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .table-pagination input {
+    width: 50px;
+    padding: 4px 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 12px;
+  }
+
+  .mock-stats {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .mock-stats .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mock-stats .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .mock-stats .stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
   /* ---------- Mobile ---------- */
   @media (max-width: 760px) {
     .mobile-topbar { display: flex; }

@@ -181,6 +181,114 @@ const CLIENT_JS = `
         llamaInput.focus();
       });
   });
+
+  // ---- Admin panel ----
+  var adminMenuItems = document.querySelectorAll('.admin-menu-item');
+  var adminSections = document.querySelectorAll('.admin-section');
+  var tableSelect = document.getElementById('table-select');
+  var tableContainer = document.querySelector('.table-container');
+
+  adminMenuItems.forEach(function (item) {
+    item.addEventListener('click', function () {
+      var target = item.getAttribute('data-admin-section');
+      adminMenuItems.forEach(function (m) { m.classList.remove('active'); });
+      adminSections.forEach(function (s) { s.classList.remove('active'); });
+      item.classList.add('active');
+      document.querySelector('[data-section="' + target + '"]').classList.add('active');
+    });
+  });
+
+  // Load tables on page load
+  function loadTables() {
+    fetch('/admin/db/api/tables')
+      .then(function (res) { return res.json(); })
+      .then(function (tables) {
+        tableSelect.innerHTML = '<option value="">— Select a table —</option>';
+        tables.forEach(function (t) {
+          var opt = document.createElement('option');
+          opt.value = t.name;
+          opt.textContent = t.name + ' (' + t.count + ' rows)';
+          tableSelect.appendChild(opt);
+        });
+      })
+      .catch(function (err) { console.error('Failed to load tables:', err); });
+  }
+
+  tableSelect.addEventListener('change', function () {
+    if (!tableSelect.value) {
+      tableContainer.style.display = 'none';
+      return;
+    }
+    loadTableRows(tableSelect.value, 1);
+  });
+
+  function loadTableRows(tableName, page) {
+    var params = new URLSearchParams({ page: page, pageSize: 25 });
+    fetch('/admin/db/api/table/' + tableName + '/rows?' + params)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        renderTable(tableName, data);
+        tableContainer.style.display = 'flex';
+      })
+      .catch(function (err) { console.error('Failed to load rows:', err); });
+  }
+
+  function renderTable(tableName, data) {
+    fetch('/admin/db/api/table/' + tableName + '/schema')
+      .then(function (res) { return res.json(); })
+      .then(function (schema) {
+        var thead = document.getElementById('admin-table-head');
+        var tbody = document.getElementById('admin-table-body');
+
+        thead.innerHTML = '';
+        schema.forEach(function (col) {
+          var th = document.createElement('th');
+          th.textContent = col.name;
+          thead.appendChild(th);
+        });
+
+        tbody.innerHTML = '';
+        data.rows.forEach(function (row) {
+          var tr = document.createElement('tr');
+          schema.forEach(function (col) {
+            var td = document.createElement('td');
+            var val = row[col.name];
+            td.textContent = val === null ? '(null)' : String(val);
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+
+        var pagination = document.getElementById('table-pagination');
+        pagination.innerHTML = '';
+        if (data.pages > 1) {
+          var prevBtn = document.createElement('button');
+          prevBtn.className = 'btn secondary';
+          prevBtn.textContent = '← Prev';
+          prevBtn.disabled = data.page === 1;
+          prevBtn.addEventListener('click', function () {
+            if (data.page > 1) loadTableRows(tableName, data.page - 1);
+          });
+          pagination.appendChild(prevBtn);
+
+          var pageInfo = document.createElement('span');
+          pageInfo.textContent = 'Page ' + data.page + ' of ' + data.pages;
+          pagination.appendChild(pageInfo);
+
+          var nextBtn = document.createElement('button');
+          nextBtn.className = 'btn secondary';
+          nextBtn.textContent = 'Next →';
+          nextBtn.disabled = data.page === data.pages;
+          nextBtn.addEventListener('click', function () {
+            if (data.page < data.pages) loadTableRows(tableName, data.page + 1);
+          });
+          pagination.appendChild(nextBtn);
+        }
+      });
+  }
+
+  // Load tables on init
+  loadTables();
 })();
 `;
 

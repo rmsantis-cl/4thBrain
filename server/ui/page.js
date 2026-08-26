@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { id: "ingest-status", icon: "▤", label: "Ingest status" },
   { id: "chat-llama", icon: "◎", label: "Chat with Llama" },
   { id: "chat-claude", icon: "✳", label: "Chat with Claude" },
+  { id: "admin", icon: "⚙", label: "Admin" },
 ];
 
 function renderNav() {
@@ -104,6 +105,94 @@ function renderClaudePanel() {
     </section>`;
 }
 
+function renderAdminPanel() {
+  return `
+    <section class="panel" id="panel-admin">
+      <div class="admin-layout">
+        <div class="admin-sidebar">
+          <h2>Admin Tools</h2>
+          <div class="admin-menu">
+            <button class="admin-menu-item active" data-admin-section="tables">
+              📊 Tables
+            </button>
+            <button class="admin-menu-item" data-admin-section="jobs">
+              ⏳ Jobs <span class="mock-badge">mock</span>
+            </button>
+            <button class="admin-menu-item" data-admin-section="indexing">
+              🔍 Indexing <span class="mock-badge">mock</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-content">
+          <!-- Tables Section -->
+          <div class="admin-section active" data-section="tables">
+            <h1>Database Tables</h1>
+            <p class="subtitle">Browse and edit database records.</p>
+
+            <div class="table-controls">
+              <label for="table-select">Table:</label>
+              <select id="table-select">
+                <option value="">— Select a table —</option>
+              </select>
+            </div>
+
+            <div class="table-container" style="display: none;">
+              <div class="table-toolbar">
+                <div class="filter-group">
+                  <select id="filter-col" style="display: none;">
+                    <option value="">Filter by...</option>
+                  </select>
+                  <input type="text" id="filter-val" placeholder="filter value" style="display: none;">
+                  <button class="btn secondary" id="filter-btn" style="display: none;">Apply</button>
+                </div>
+              </div>
+
+              <div class="table-wrapper">
+                <table id="admin-table">
+                  <thead id="admin-table-head"></thead>
+                  <tbody id="admin-table-body"></tbody>
+                </table>
+              </div>
+
+              <div class="table-pagination" id="table-pagination"></div>
+            </div>
+          </div>
+
+          <!-- Jobs Section (Mock) -->
+          <div class="admin-section" data-section="jobs">
+            <h1>Processing Jobs</h1>
+            <p class="subtitle">View active, pending, and failed jobs (mock data).</p>
+            <div class="card placeholder-panel">
+              <div class="icon">⏳</div>
+              <p>Job queue browser coming soon (Story 13.2)</p>
+              <div class="mock-stats" style="margin-top: 16px;">
+                <div class="stat"><span class="stat-label">Active</span> <span class="stat-value">3</span></div>
+                <div class="stat"><span class="stat-label">Pending</span> <span class="stat-value">12</span></div>
+                <div class="stat"><span class="stat-label">Failed</span> <span class="stat-value">1</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Indexing Section (Mock) -->
+          <div class="admin-section" data-section="indexing">
+            <h1>Vector Indexing Status</h1>
+            <p class="subtitle">Smart Connections embedding statistics (mock data).</p>
+            <div class="card placeholder-panel">
+              <div class="icon">🔍</div>
+              <p>Indexing status browser coming soon (Story 13.3)</p>
+              <div class="mock-stats" style="margin-top: 16px;">
+                <div class="stat"><span class="stat-label">Indexed</span> <span class="stat-value">247</span></div>
+                <div class="stat"><span class="stat-label">Pending</span> <span class="stat-value">8</span></div>
+                <div class="stat"><span class="stat-label">Skipped</span> <span class="stat-value">45</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>`;
+}
+
 function renderChatPage() {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -147,6 +236,7 @@ function renderChatPage() {
     ${renderStatusPanel()}
     ${renderLlamaPanel()}
     ${renderClaudePanel()}
+    ${renderAdminPanel()}
   </main>
 
 <script>${CLIENT_JS}</script>
