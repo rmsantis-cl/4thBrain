@@ -81,3 +81,4 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `ingestor-classification/db/init.js` | [2026-08-26] Created — database initialization module (mirrors server/db/init.js), targets ingestor-classification/b4hdb.sqlit3 |
 | `ingestor-classification/.gitignore` | [2026-08-26] Created — excludes b4hdb.sqlit3 from version control |
 | `ingestor-classification/b4hdb.sqlit3` | [2026-08-26] Created — SQLite database with all 7 tables from schema.sql and seeded status enum |
+| `server/routes/admin-db.js` | [2026-08-26] Created — Story 13.1 implementation: Database Inspector route with full CRUD UI, 700+ lines inlined HTML/CSS/JS, 7 API endpoints, table browser with pagination/filtering/sorting |

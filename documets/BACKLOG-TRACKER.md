@@ -39,7 +39,7 @@ Master tracking document for all project stories across all epics. Status values
 | 10.1 | Scheduled Vault Snapshot & Restore | READY | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
 | 11.1 | Release Packaging & Versioning | READY | 7.1, 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
 | 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
-| 13.1 | Database Inspector — Table Browser & Admin Panel | READY | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
+| 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
 
 ---
 
@@ -341,7 +341,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Add a protected admin route (`GET /admin/db`) serving a single-page interface to browse the 4thBrain metadata database (7 tables). Allow viewing table schemas, filtering/sorting rows, viewing record details, and (with caution) editing/deleting records for testing purposes. Include database health stats (row counts, total size, last updated). Protected behind a simple dev-only check or future auth (Story 9.1, EP9). |
 | **Dependencies** | depends on Story 7.3 (database setup, schema known) |
 | **Acceptance Criteria** | • Admin panel accessible at `/admin/db` (route present in `server/routes/`).<br>• Table list shows all 7 tables with row counts and schema preview.<br>• User can select a table and view paginated rows with column filtering/sorting.<br>• User can view a single record's full details (JSON-like format).<br>• User can insert, update, or delete a record (with confirmation prompt).<br>• Database stats (total size, last modified time) displayed.<br>• Protected from public access (dev-mode check or warning label). |
-| **Status** | READY |
+| **Status** | COMPLETED |
+| **Implementation** | `server/routes/admin-db.js` — Full CRUD interface with table browser, pagination, filtering, sorting, and database stats sidebar. Dev-mode protected. Verified working at `http://localhost:3000/admin/db` (NODE_ENV=development). |
 | **Working Notes** | [[story-13.1.md](./story/story-13.1.md)] |
 
 ---
