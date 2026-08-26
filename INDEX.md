@@ -77,3 +77,6 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `server/routes/ingest.js`, `server/routes/status.js`, `server/routes/chat-llama.js` | [2026-08-25] Created — mocked POST stub endpoints (add file/text/url, ingest status, Llama chat), canned responses, no real I/O or Ollama calls |
 | `server/index.js` | [2026-08-25] Created — wires config + routes, binds to 127.0.0.1, non-fatal Ollama reachability check on boot |
 | `server/.gitignore` | [2026-08-25] Created — excludes node_modules |
+| `ingestor-classification/db/init.js` | [2026-08-26] Created — database initialization module (mirrors server/db/init.js), targets ingestor-classification/b4hdb.sqlit3 |
+| `ingestor-classification/.gitignore` | [2026-08-26] Created — excludes b4hdb.sqlit3 from version control |
+| `ingestor-classification/b4hdb.sqlit3` | [2026-08-26] Created — SQLite database with all 7 tables from schema.sql and seeded status enum |
