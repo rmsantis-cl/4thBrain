@@ -22,11 +22,13 @@ Build the shared navigation shell and visual design system that Stories 6.1–6.
 - The model-selector slot in Claude's input bar has no equivalent here (4thBrain has no user-facing model choice — inference is always local per ADR2/ADR12), so it's repurposed as a local-runtime status pill ("Ollama · llama3.2") instead.
 - The floating "quick-capture" bar on the home view is a lightweight, site-wide entry point (text/link/file icon buttons) — it is not a replacement for Story 6.1's fuller multi-field ingestion form, which still owns the dedicated submission flow.
 - Stories 6.1, 6.2, and 6.3 were updated to add "depends on Story 6.4" so they build on this shell rather than each inventing their own chrome.
+- A first pass at implementing the actual `server/` code tried to deliver real cross-module integration (file writes into `$RAW_DIR`, real Smart Connections status, real Ollama chat) in the same step as the UI shell — corrected by the user: don't deliver the whole working application in one step, it won't work well. Scope narrowed to Story 6.4 only, with every cross-module interaction mocked; see `ui/plan.md` for the resulting plan and what's mocked vs. real.
 
 ## Deliverable
 
 - `ui/design/STYLE-GUIDE.md` — color tokens, typography, spacing/shape rules, layout pattern, and an explicit "what not to copy literally" section.
 - `ui/design/common-shell-mockup.html` — static, dependency-free HTML/CSS mockup of the shell (sidebar nav, recent-activity list, account row, greeting, capture bar). Rendered to `ui/design/common-shell-mockup-preview.png` for a quick look without opening a browser.
+- `ui/plan.md` — scoped implementation plan for the actual `server/` build: Story 6.4 only, all 6 panels present, every interaction with another module mocked (canned responses, no real file I/O or Ollama calls) until that module's own story is built.
 
 ## ADRs Created
 

@@ -3,7 +3,7 @@ name: INDEX
 description: none
 date: 2026-08-25
 metadata:
-  version: 1.16
+  version: 1.21
   created-by: Claude Code
 ---
 
@@ -42,9 +42,10 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `ingestor-classification/backlog.md` | [2026-08-24] Created — story backlog for ingestor-classification module |
 | `batch/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP4, EP5, EP8) |
 | `batch/backlog.md` | [2026-08-24] Created — story backlog for batch module |
-| `documets/design/ADRS.md` | [2026-08-24] Created — ADR1–ADR12 backfilled from NFR baseline, ADR13 logged for module-split decision<br>[2026-08-25] Added ADR14 — ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw)<br>[2026-08-25] Added ADR15 — topic/subtopic-driven vault path resolution and sibling attachment directories |
-| `MEMORY.md` | [2026-08-24] Created — seeded from current project state per md-memory.md |
-| `params.json` | [2026-08-25] Created at vault/params.json — vault_dir and Smart Connections params<br>[2026-08-25] Moved to project root |
+| `documets/design/ADRS.md` | [2026-08-24] Created — ADR1–ADR12 backfilled from NFR baseline, ADR13 logged for module-split decision<br>[2026-08-25] Added ADR14 — ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw)<br>[2026-08-25] Added ADR15 — topic/subtopic-driven vault path resolution and sibling attachment directories<br>[2026-08-25] Added ADR16 (open) — WSL2 vs. any-environment component placement, open question on running Obsidian in WSL2 for future Docker packaging<br>[2026-08-25] Split ADR16 full record out to `adr16-component-placement.md`; this file now holds only its abstract and a reference |
+| `documets/design/adr16-component-placement.md` | [2026-08-25] Created — full ADR16 record split out of ADRS.md, with research confirming Obsidian can run natively in WSL2 via WSLg<br>[2026-08-25] Added TODO section — install Obsidian in WSL, use git/Claude Code in WSL, use Zed to open the WSL project |
+| `MEMORY.md` | [2026-08-24] Created — seeded from current project state per md-memory.md<br>[2026-08-25] Updated — Story 6.4 in progress, ADR14/15, Spike 3.2, incremental-delivery decision |
+| `params.json` | [2026-08-25] Created at vault/params.json — vault_dir and Smart Connections params<br>[2026-08-25] Moved to project root<br>[2026-08-25] Added raw_dir, server_port, server_bind_host, ollama_base_url, ollama_chat_model |
 | `vault/Instructions.md` | [2026-08-25] Created — Smart Connections install/config guide<br>[2026-08-25] Updated — params.json path reference |
 | `documets/design/classes.md` | [2026-08-25] Created — Document/Status/Classification/Job class definitions transcribed from user-supplied Class_Definitions_Specification.rtf |
 | `documets/design/classes.mmd` | [2026-08-25] Created — Mermaid class diagram for Document/Status/Classification/Job |
@@ -57,4 +58,12 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/story/story-1.2.md` | [2026-08-25] Created — abstract, observations, ADR14 reference, TODO placeholder |
 | `documets/story/story-2.1.md` | [2026-08-25] Created — abstract, observations, ADR15 reference, TODO placeholder |
 | `documets/story/spike-3.2.md` | [2026-08-25] Created — abstract, investigation findings, deliverable, TODO follow-ups<br>[2026-08-25] Updated with native Smart Environment panel findings and revised current/missing/skipped/unexpected terminology |
-| `documets/story/story-6.4.md` | [2026-08-25] Created — abstract, observations, deliverable (style guide + mockup), TODO follow-ups |
+| `documets/story/story-6.4.md` | [2026-08-25] Created — abstract, observations, deliverable (style guide + mockup), TODO follow-ups<br>[2026-08-25] Updated — logged incremental-delivery correction, added ui/plan.md to Deliverable |
+| `ui/plan.md` | [2026-08-25] Created — scoped Story 6.4 implementation plan, real-vs-mocked breakdown per panel |
+| `server/package.json`, `server/config.js` | [2026-08-25] Created — server scaffold (express/multer/openai deps), params.json-backed config with $RAW_DIR setup and non-fatal Ollama reachability check |
+| `server/lib/smart-connections-status.js` | [2026-08-25] Created — JS port of vault/check_smart_connections_status.py, not yet wired into a route (reserved for Story 6.3) |
+| `server/ui/styles.js`, `server/ui/client.js`, `server/ui/page.js` | [2026-08-25] Created — 6-panel UI shell: CSS ported from common-shell-mockup.html, client-side panel switching/mobile toggle/mocked fetch calls, single inlined HTML page assembly |
+| `server/routes/chat-page.js` | [2026-08-25] Created — GET /chat, the only GET route in the app |
+| `server/routes/ingest.js`, `server/routes/status.js`, `server/routes/chat-llama.js` | [2026-08-25] Created — mocked POST stub endpoints (add file/text/url, ingest status, Llama chat), canned responses, no real I/O or Ollama calls |
+| `server/index.js` | [2026-08-25] Created — wires config + routes, binds to 127.0.0.1, non-fatal Ollama reachability check on boot |
+| `server/.gitignore` | [2026-08-25] Created — excludes node_modules |

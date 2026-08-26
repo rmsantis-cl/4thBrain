@@ -3,5 +3,10 @@
   "smart_env_dir": ".smart-env",
   "mcp_server_name": "smart-connections",
   "mcp_package": "@yejianye/smart-connections-mcp",
-  "obsidian_vault_env_var": "OBSIDIAN_VAULT"
+  "obsidian_vault_env_var": "OBSIDIAN_VAULT",
+  "raw_dir": "C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR",
+  "server_port": 3000,
+  "server_bind_host": "0.0.0.0",
+  "ollama_base_url": "http://localhost:11434/v1",
+  "ollama_chat_model": "llama3.2:3b"
 }

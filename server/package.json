@@ -1,0 +1,15 @@
+{
+  "name": "4thbrain-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "4thBrain single-page web UI + ingestion/chat API (EP6)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^2.0.0",
+    "openai": "^4.55.0"
+  }
+}

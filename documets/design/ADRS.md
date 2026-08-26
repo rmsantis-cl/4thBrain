@@ -1,9 +1,9 @@
 ---
 name: ADRS
 description: Architectural Decision Records for 4thBrain
-date: 2026-08-24
+date: 2026-08-25
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Code
 ---
 
@@ -116,8 +116,18 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-25
 **Date Cancelled:** —
 
+## ADR16: Where does each component run — WSL2 vs. any environment? (OPEN — not yet decided)
+
+**Status:** Open — no decision made yet.
+**Abstract:** Ollama must run in WSL2 (fixed, per ADR2); the ingestion/search app can run anywhere. Whether Obsidian should also run in WSL2 is open — colocating everything in one OS could simplify a future single-container Docker image (EP11).
+**Full record, constraints, and Obsidian-in-WSL2 research:** see `documets/design/adr16-component-placement.md`.
+**Date Created:** 2026-08-25
+**Date Cancelled:** —
+
 ## Changelog
 
 - 2026-08-24: Created. Backfilled ADR1–ADR12 from the existing NFR baseline; logged ADR13 for this session's module-split decision.
 - 2026-08-25: Logged ADR14 for the ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw), dictated by the user for Story 1.1/1.2.
 - 2026-08-25: Logged ADR15 for topic/subtopic-driven vault path resolution and sibling attachment directories, dictated by the user for Story 2.1.
+- 2026-08-25: Logged ADR16 (open) for component-to-environment placement — WSL2 vs. any environment — with the open question of whether Obsidian itself can run in WSL2, raised by the user re: future Docker packaging.
+- 2026-08-25: Split ADR16's full record into `adr16-component-placement.md`; this file now holds only the abstract and a reference. Added research confirming Obsidian can run natively in WSL2 via WSLg.
