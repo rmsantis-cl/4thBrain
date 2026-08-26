@@ -3,7 +3,7 @@ name: INDEX
 description: none
 date: 2026-08-25
 metadata:
-  version: 1.15
+  version: 1.16
   created-by: Claude Code
 ---
 
@@ -17,7 +17,7 @@ History cells are a list of `[date] comment` entries, most recent last.
 | --- | --- |
 | `CLAUDE.md` | [2026-08-24] Created via /init from documets/design and documets/Interviews<br>[2026-08-24] Updated — added module directories to Repository Structure, EP8–EP11 to baseline, and Module Map table |
 | `documets/design/SYSTEM-REQUIREMENTS-SPECIFICATION.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
-| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats |
+| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats<br>[2026-08-25] Added Story 6.4 (Common UI Shell & Design System) under EP6; added it as a dependency of Story 6.1/6.2/6.3 |
 | `documets/design/Gantt Chart.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-1.1-INTERVIEW.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-4.1-TRANSCRIPT.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
@@ -35,7 +35,9 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `local-llm/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP7, EP11) |
 | `local-llm/backlog.md` | [2026-08-24] Created — story backlog for local-llm module |
 | `ui/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP6, EP9) |
-| `ui/backlog.md` | [2026-08-24] Created — story backlog for ui module |
+| `ui/backlog.md` | [2026-08-24] Created — story backlog for ui module<br>[2026-08-25] Added Story 6.4 row; added Story 6.4 as a dependency of 6.1/6.2/6.3 |
+| `ui/design/STYLE-GUIDE.md` | [2026-08-25] Created — Claude-style design system for Story 6.4 (color tokens, typography, layout pattern) |
+| `ui/design/common-shell-mockup.html`, `ui/design/common-shell-mockup-preview.png` | [2026-08-25] Created — static HTML/CSS mockup of the common UI shell and its rendered preview |
 | `ingestor-classification/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP1, EP2) |
 | `ingestor-classification/backlog.md` | [2026-08-24] Created — story backlog for ingestor-classification module |
 | `batch/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP4, EP5, EP8) |
@@ -55,3 +57,4 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/story/story-1.2.md` | [2026-08-25] Created — abstract, observations, ADR14 reference, TODO placeholder |
 | `documets/story/story-2.1.md` | [2026-08-25] Created — abstract, observations, ADR15 reference, TODO placeholder |
 | `documets/story/spike-3.2.md` | [2026-08-25] Created — abstract, investigation findings, deliverable, TODO follow-ups<br>[2026-08-25] Updated with native Smart Environment panel findings and revised current/missing/skipped/unexpected terminology |
+| `documets/story/story-6.4.md` | [2026-08-25] Created — abstract, observations, deliverable (style guide + mockup), TODO follow-ups |

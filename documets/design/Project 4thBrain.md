@@ -124,13 +124,24 @@
 **Associated Requirements:** FR7 (Ingestion UI), FR8 (Search UI), FR9 (Ingestion Status UI)  
 **Inherited Acceptance Criteria:** User submits text or files via UI form and receives immediate queue confirmation and job submission ID; search query returns ranked note snippets with direct local note links within sub-second latency; dashboard renders active, pending, and failed job counts with options to retry failed items.
 
+### **Story 6.4: Common UI Shell & Design System**
+
+> * **Abstract:** Build the shared navigation shell and visual design system that Stories 6.1–6.3 render inside of.  
+> * **Description:** Establish a persistent app shell (left sidebar nav, top status/settings area, main content slot) and a reusable design-system spec (color palette, typography, spacing, component patterns — dark theme, sidebar navigation, floating quick-capture bar) modeled on the Claude.ai desktop app's visual language. Sidebar nav items map to 4thBrain's own surfaces (Ingest, Search, Dashboard) rather than Claude's. The home view includes a personalized greeting and a floating quick-capture input (text/URL/file) as the site-wide entry point; the fuller multi-field ingestion form remains Story 6.1's concern. Design-system spec and static mockup live under `ui/design/`.  
+> * **Acceptance Criteria:**  
+  * Written style guide documents color palette, typography, spacing scale, and component patterns, reusable across Stories 6.1–6.3.  
+  * Static HTML/CSS mockup demonstrates the shell (sidebar nav, greeting, quick-capture bar) rendered in a browser.  
+  * Sidebar nav items and quick-capture bar are labeled for 4thBrain's actual surfaces, not copied verbatim from Claude.ai.  
+> * **Dependencies:** none  
+> * **Status:** To Do
+
 ### **Story 6.1: Web Ingestion Form & Submission Handler**
 
 > * **Abstract:** Build web-based entry form for submitting links, files, and text.  
 > * **Description:** Construct frontend form components allowing raw text input, file uploads, and web URL submissions directly to the Node.js ingestion endpoint.  
 > * **Acceptance Criteria:**  
 > * Submitting form content creates a valid pipeline job and returns a unique Job ID immediately.  
-> * **Dependencies:** depends on Story 1.1, must be worked with Story 6.3  
+> * **Dependencies:** depends on Story 1.1, depends on Story 6.4, must be worked with Story 6.3  
 > * **Status:** To Do
 
 ### **Story 6.2: Hybrid Keyword & Semantic Search Interface**
@@ -139,7 +150,7 @@
 > * **Description:** Build a search component that queries local files and vector embeddings via MCP/Node endpoints, displaying ranked results with direct file links.  
 > * **Acceptance Criteria:**  
 > * Search queries display ranked result cards containing snippets and file paths with sub-second response times.  
-> * **Dependencies:** depends on Story 3.1  
+> * **Dependencies:** depends on Story 3.1, depends on Story 6.4  
 > * **Status:** To Do
 
 ### **Story 6.3: Pipeline Monitoring & Dashboard UI**
@@ -149,7 +160,7 @@
 > * **Acceptance Criteria:**  
   * Displays accurate counts for active, pending, and failed processing jobs.  
   * Provides functional "Retry" action button for failed jobs.  
-> * **Dependencies:** depends on Story 4.1, must be worked with Story 6.1  
+> * **Dependencies:** depends on Story 4.1, depends on Story 6.4, must be worked with Story 6.1  
 > * **Status:** To Do
 
 ## **EP7: System Infrastructure & Host Runtime**
