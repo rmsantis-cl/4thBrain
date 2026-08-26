@@ -15,31 +15,31 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Summary Table
 
-| ID | Story | Status | [[Detail](#story-details)] |
-|---|---|---|---|
-| 1.1 | Direct Structured Vault Ingestion | READY | [[1.1](#story-11-direct-structured-vault-ingestion)] |
-| 1.2 | Unstructured Text Parsing & Sanitization | READY | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
-| 2.1 | Local LLM Metadata & Tag Inference | READY | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
-| 3.1 | Smart Connections Vector Indexing Pipeline | READY | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
-| 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
-| 4.1 | Background Sweep & Queue Execution Script | READY | [[4.1](#story-41-background-sweep--queue-execution-script)] |
-| 5.1 | Multi-Source Briefing Synthesis Engine | READY | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
-| 6.1 | Web Ingestion Form & Submission Handler | READY | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
-| 6.2 | Hybrid Keyword & Semantic Search Interface | READY | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
-| 6.3 | Pipeline Monitoring & Dashboard UI | READY | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
-| 6.4 | Common UI Shell & Design System | WIP | [[6.4](#story-64-common-ui-shell--design-system)] |
-| 7.1 | WSL2 Runtime & Resource Bound Configuration | READY | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
-| 7.2 | Process Lifecycle & MCP Server Setup | READY | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
-| 7.3 | SQLite Database Setup for Processing-State Persistence | WIP | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
-| 7.4 | Create Database Schema from DDL | WIP | [[7.4](#story-74-create-database-schema-from-ddl)] |
-| 7.5 | Seed Constants & Enumerations | WIP | [[7.5](#story-75-seed-constants--enumerations)] |
-| 8.1 | Automated Test Harness & Regression Suite | READY | [[8.1](#story-81-automated-test-harness--regression-suite)] |
-| 8.2 | Bug & Issue Tracking Workflow | READY | [[8.2](#story-82-bug--issue-tracking-workflow)] |
-| 9.1 | Local-Only Access Enforcement & Auth Guard | READY | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
-| 10.1 | Scheduled Vault Snapshot & Restore | READY | [[101](#story-101-scheduled-vault-snapshot--restore)] |
-| 11.1 | Release Packaging & Versioning | READY | [[11.1](#story-111-release-packaging--versioning)] |
-| 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
-| 13.1 | Database Inspector — Table Browser & Admin Panel | READY | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
+| ID | Story | Status | Dependencies | Area | [[Detail](#story-details)] |
+|---|---|---|---|---|---|
+| 1.1 | Direct Structured Vault Ingestion | READY | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
+| 1.2 | Unstructured Text Parsing & Sanitization | READY | 1.1 | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
+| 2.1 | Local LLM Metadata & Tag Inference | READY | 1.1, 7.1 | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
+| 3.1 | Smart Connections Vector Indexing Pipeline | READY | 1.1, 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
+| 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
+| 4.1 | Background Sweep & Queue Execution Script | READY | 1.1, 2.1 | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
+| 5.1 | Multi-Source Briefing Synthesis Engine | READY | 2.1, 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
+| 6.1 | Web Ingestion Form & Submission Handler | READY | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
+| 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1, 6.4 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
+| 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1, 6.4 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
+| 6.4 | Common UI Shell & Design System | WIP | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
+| 7.1 | WSL2 Runtime & Resource Bound Configuration | READY | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
+| 7.2 | Process Lifecycle & MCP Server Setup | READY | 7.1 | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
+| 7.3 | SQLite Database Setup for Processing-State Persistence | WIP | 7.1, 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
+| 7.4 | Create Database Schema from DDL | WIP | 7.3 | Infrastructure | [[7.4](#story-74-create-database-schema-from-ddl)] |
+| 7.5 | Seed Constants & Enumerations | WIP | 7.4 | Infrastructure | [[7.5](#story-75-seed-constants--enumerations)] |
+| 8.1 | Automated Test Harness & Regression Suite | READY | 7.1, 7.2 | QA | [[8.1](#story-81-automated-test-harness--regression-suite)] |
+| 8.2 | Bug & Issue Tracking Workflow | READY | 8.1 | QA | [[8.2](#story-82-bug--issue-tracking-workflow)] |
+| 9.1 | Local-Only Access Enforcement & Auth Guard | READY | 7.2, 6.1 | Security | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
+| 10.1 | Scheduled Vault Snapshot & Restore | READY | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
+| 11.1 | Release Packaging & Versioning | READY | 7.1, 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
+| 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
+| 13.1 | Database Inspector — Table Browser & Admin Panel | READY | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
 
 ---
 
