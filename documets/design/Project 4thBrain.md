@@ -286,3 +286,23 @@
   * Storage location and access pattern (SQLite file location, Node.js driver) documented.  
 > * **Dependencies:** none  
 > * **Status:** Done
+
+## **EP13: Admin & Monitoring Tools**
+
+**Associated Requirements:** Cross-cutting — development and operational observability tools; no direct user-facing FR/NFR.  
+**Inherited Acceptance Criteria:** Developers and QA can inspect system state (database tables, process health, logs) for debugging and testing without modifying core application behavior.
+
+### **Story 13.1: Database Inspector — Table Browser & Admin Panel**
+
+> * **Abstract:** Web UI for developers and QA to inspect and edit SQLite database tables for debugging and testing.  
+> * **Description:** Add a protected admin route (`GET /admin/db`) serving a single-page interface to browse the 4thBrain metadata database (7 tables: status, job_type, process, classification, document, job, job_document). Allow viewing table schemas, filtering/sorting rows, viewing record details, and (with caution) editing/deleting records for testing purposes. Include database health stats (row counts, total size, last updated). Protected behind a simple dev-only check or future auth (Story 9.1, EP9).  
+> * **Acceptance Criteria:**  
+  * Admin panel accessible at `/admin/db` (route present in `server/routes/`).  
+  * Table list shows all 7 tables with row counts and schema preview.  
+  * User can select a table and view paginated rows with column filtering/sorting.  
+  * User can view a single record's full details (JSON-like format).  
+  * User can insert, update, or delete a record (with confirmation prompt).  
+  * Database stats (total size, last modified time) displayed.  
+  * Protected from public access (dev-mode check or warning label).  
+> * **Dependencies:** depends on Story 7.3 (database setup, schema known)  
+> * **Status:** To Do

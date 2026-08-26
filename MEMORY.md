@@ -43,6 +43,8 @@ metadata:
 - Real dev/test loop for `server/` is running on native Windows (Node v22, Ollama both native), not inside WSL2 as ADR1 describes â€” flagged as a dev-environment fact, not a redesign; revisit if/when actually deploying inside WSL2.
 
 ## Changelog
+- 2026-08-26: Story 7.3 split into 7.3/7.4/7.5: (7.3) driver install + file creation, (7.4) schema DDL execution, (7.5) seed constants tables (status/job_type/process enums). Each story now atomic, verifiable independently.
+- 2026-08-26: EP13 (Admin & Monitoring Tools) created with Story 13.1 (Database Inspector - table browser/admin panel for QA/dev debugging). Status: To Do.
 - 2026-08-26: Story 7.3 initiated: SQLite database setup. Database file created at server/4thbrain-metadata.db, schema initialized from documets/design/schema.sql. Using Node.js built-in node:sqlite module. Database attached to Express app.locals.db. Acceptance criteria: drivers, schema, file init, enum seed, cross-lang smoke test. Status: In Progress.
 - 2026-08-26: Story 7.3 added (EP7) — SQLite Database Setup for Processing-State Persistence. Acceptance criteria: SQLite drivers installed, schema created, database file initialized, status enum seeded, cross-language smoke test. Status: To Do.
 - 2026-08-26: ADR17 closed â€” SQLite chosen for simplicity and sequential processing. Critical implementation constraint: keep transactions brief; if long concurrent transactions needed during dev, decision must be revisited (migrate to PostgreSQL).

@@ -13,22 +13,20 @@ Canonical story text lives in `documets/design/Project 4thBrain.md` (EP7). This 
 
 ## Abstract
 
-Set up SQLite database for Document/Status/Classification/Job metadata storage.
+Install SQLite drivers and create the metadata database file.
 
 ## Observations
 
-- Part of EP7 (System Infrastructure & Host Runtime) — foundation work that unblocks EP1 (ingestion), EP2 (classification), and EP4 (batch processing), all of which generate processing state (jobs, document status, classification metadata).
-- Database schema already designed in Story 12.1 (7 tables: status, job_type, process, classification, document, job, job_document) — see `documets/design/schema.sql`.
-- SQLite chosen per ADR17 (closed 2026-08-26) for simplicity and zero-ops overhead. Critical constraint: **keep transactions brief** — long-running transactions holding database-level locks will serialize concurrent access. If implementation reveals need for long concurrent transactions, ADR17 must be revisited and migrated to PostgreSQL.
-- Cross-language access requirement (Node.js + Python) — both have excellent SQLite libraries (`better-sqlite3`, `sqlite3` stdlib).
+- Part of EP7 (System Infrastructure & Host Runtime) — foundation work that unblocks EP1 (ingestion), EP2 (classification), and EP4 (batch processing).
+- SQLite chosen per ADR17 for simplicity and zero-ops overhead. Critical constraint: **keep transactions brief** — long-running transactions holding database-level locks will serialize concurrent access.
+- Cross-language access requirement (Node.js + Python) — both have excellent SQLite libraries (`better-sqlite3` for npm, `sqlite3` stdlib for Python).
+- This story is *just* driver install + file creation. Schema creation (Story 7.4) and constants seeding (Story 7.5) are separate, allowing QA to verify each step independently.
 
 ## Deliverable
 
 - SQLite drivers installed (better-sqlite3 for npm, sqlite3 for Python)
-- Database schema created from `documets/design/schema.sql`
-- Database file initialized at `params.json` → `metadata_db_path`
-- Status enumeration seeded (New, Processing, Indexed, Failed, Archived)
-- Cross-language smoke test: Node.js writes + Python reads
+- Database file created at configured path (server/4thbrain-metadata.db)
+- Cross-language smoke test: Node.js connects and queries, Python connects and queries
 
 ## Implementation Notes
 

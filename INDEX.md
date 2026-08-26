@@ -3,7 +3,7 @@ name: INDEX
 description: none
 date: 2026-08-26
 metadata:
-  version: 1.25
+  version: 1.27
   created-by: Claude Code
 ---
 
@@ -17,7 +17,7 @@ History cells are a list of `[date] comment` entries, most recent last.
 | --- | --- |
 | `CLAUDE.md` | [2026-08-24] Created via /init from documets/design and documets/Interviews<br>[2026-08-24] Updated — added module directories to Repository Structure, EP8–EP11 to baseline, and Module Map table |
 | `documets/design/SYSTEM-REQUIREMENTS-SPECIFICATION.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-26] Added NFR15 — Structured Metadata & Job Queue Storage |
-| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats<br>[2026-08-25] Added Story 6.4 (Common UI Shell & Design System) under EP6; added it as a dependency of Story 6.1/6.2/6.3<br>[2026-08-26] Added EP12/Story 12.1 — Document/Status/Classification/Job database schema design, Status: Done<br>[2026-08-26] Added Story 7.3 (EP7) — SQLite Database Setup for Processing-State Persistence, Status: To Do |
+| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats<br>[2026-08-25] Added Story 6.4 (Common UI Shell & Design System) under EP6; added it as a dependency of Story 6.1/6.2/6.3<br>[2026-08-26] Added EP12/Story 12.1 — Document/Status/Classification/Job database schema design, Status: Done<br>[2026-08-26] Added Story 7.3 (EP7) — SQLite Database Setup for Processing-State Persistence, Status: To Do<br>[2026-08-26] Added EP13 (Admin & Monitoring Tools) and Story 13.1 — Database Inspector, Status: To Do<br>[2026-08-26] Split Story 7.3 into three focused stories: 7.3 (driver install + file create), 7.4 (schema DDL), 7.5 (enum seeding) |
 | `documets/design/Gantt Chart.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-1.1-INTERVIEW.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-4.1-TRANSCRIPT.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
@@ -54,7 +54,10 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/design/classes.mmd` | [2026-08-26] Created — Mermaid class diagram for 4-entity model<br>[2026-08-26] Updated for 7-class schema with new relationships<br>[2026-08-26] Reformatted field notation (bold name: type, explicit FK references, not null markers) |
 | `documets/design/classes.png` | [2026-08-26] Created — rendered class diagram (4-entity)<br>[2026-08-26] Updated — re-rendered from updated classes.mmd (7-class)<br>[2026-08-26] Re-rendered with improved field format |
 | `documets/img/database-schema.mmd`, `documets/img/database-schema.png` | [2026-08-26] Created — Mermaid ERD source and rendered PNG for the 4-entity database schema (superseded) |
-| `documets/story/story-7.3.md` | [2026-08-26] Created — abstract, observations, deliverable (SQLite setup), ADR17 reference, implementation notes, TODO follow-ups |
+| `documets/story/story-7.3.md` | [2026-08-26] Created — abstract, observations, deliverable (SQLite setup), ADR17 reference, implementation notes, TODO follow-ups<br>[2026-08-26] Revised — narrowed scope to driver installation + file creation only (schema and seeding split to 7.4/7.5) |
+| `documets/story/story-7.4.md` | [2026-08-26] Created — abstract, observations, deliverable (schema DDL creation), implementation notes, TODO follow-ups |
+| `documets/story/story-7.5.md` | [2026-08-26] Created — abstract, observations, deliverable (enum seeding), implementation notes, TODO follow-ups |
+| `documets/story/story-13.1.md` | [2026-08-26] Created — abstract, observations, deliverable (database inspector UI), implementation notes, TODO follow-ups |
 | `documets/story/story-12.1.md` | [2026-08-26] Created — abstract, observations, deliverable, ADR17 reference, TODO follow-ups<br>[2026-08-26] Updated — noted post-scope expansion to 7-class schema |
 | `vault/validate_smart_connections.py` | [2026-08-25] Created — install validation script |
 | `vault/Obsidian-refs/Obsidian-MCP-Capabilities-Summary.md` | [2026-08-25] Created — summary of Obsidian REST API/MCP and Smart Connections capabilities, framed for EP3/EP10 |
