@@ -11,8 +11,7 @@ This document presents the schedule and dependency tracking table for Project 4t
 | **Story 2.1** | Local LLM Metadata & Tag Inference | EP2 | 8 | 4 | 11 | Story 1.1, Story 7.1 | Depends on |
 | **Story 3.1** | Smart Connections Vector Indexing Pipeline | EP3 | 8 | 4 | 11 | Story 1.1, Story 7.2 | Depends on |
 | **Story 4.1** | Background Sweep & Queue Execution Script | EP4 | 12 | 4 | 15 | Story 1.1, Story 2.1 | Depends on |
-| **Story 5.1** | Multi-Source Briefing Synthesis Engine | EP5 | 16 | 5 | 20 | Story 2.1, Story 4.1 | Depends on |
+  | **Story 5.1** | Multi-Source Briefing Synthesis Engine | EP5 | 16 | 5 | 20 | Story 2.1, Story 4.1 | Depends on |
 | **Story 6.1** | Web Ingestion Form & Submission Handler | EP6 | 16 | 4 | 19 | Story 1.1, Story 6.3 | Depends on / Worked with |
 | **Story 6.2** | Hybrid Keyword & Semantic Search Interface | EP6 | 12 | 4 | 15 | Story 3.1 | Depends on |
 | **Story 6.3** | Pipeline Monitoring & Dashboard UI | EP6 | 16 | 4 | 19 | Story 4.1, Story 6.1 | Depends on / Worked with |
-

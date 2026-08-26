@@ -1,4 +1,4 @@
-# **Project 4thBrain \- Epics and Stories Breakdown**
+﻿# **Project 4thBrain \- Epics and Stories Breakdown**
 
 ## **Document Header**
 
@@ -75,17 +75,17 @@
 > * **Abstract:** Investigate how to determine Smart Connections indexing status (totals, failures, per-note lookup) from `$VAULT_DIR/.smart-env` or `$VAULT_DIR/.obsidian`.  
 > * **Description:** Timeboxed research spike to find a reliable source for: (1) totals of indexed/pending/failed notes, (2) a list of failed notes with causes, (3) a way to check a single note's status by path. Findings recorded in `documets/story/spike-3.2.md`.  
 > * **Findings:**  
-  * The data lives in `$VAULT_DIR/.smart-env`, not `.obsidian` — `.obsidian` only holds Obsidian app/plugin settings, no indexing state.  
-  * Smart Connections ships its own in-app diagnostics: a **Smart Environment** health panel (Obsidian command palette → search "Smart Environment") shows live totals — Indexed items, Eligible, Current embeddings, Needs embedding, and a per-collection breakdown (Smart Sources, Smart Blocks) of Total / Eligible / Current / Missing / Skipped / Unexpected — plus a "Skipped items" diagnostic listing each skipped item's path and a human-readable reason (e.g. "Below minimum size"). This is the authoritative live source; per user direction, **Skipped counts as failed to index** for this project's reporting.  
-  * `smart_sources/smart_sources.ajson` holds one entry per note, keyed `smart_sources:<vault-relative path>`, and each source's `blocks_data` holds one entry per block. Status per item is inferred by comparing stored size against `smart_env.json`'s `min_chars` threshold (separate values for sources and blocks) and its `file_exclusions`/`folder_exclusions` patterns — the same comparison the in-app panel performs live, since no reason string is persisted anywhere: **current** (embedded and eligible), **missing** (eligible, not yet embedded — "pending"), **skipped** (ineligible under current policy — "failed", with a derivable reason), **unexpected** (a vector exists for an item no longer eligible, e.g. content shrank after being embedded).  
-  * The `.ajson` files are not plain JSON — each is a sequence of `"key": {...},` fragments (an append-only log), not one JSON document; they must be parsed line-by-line.  
-  * Block-level coverage is much lower than source-level in this vault: 720 of 1,045 blocks are skipped (mostly sub-200-character blocks), vs. only 1 of 31 sources — worth knowing before relying on block-level (as opposed to whole-note) semantic search.  
-  * The registered `smart-connections` MCP server (see `vault/Instructions.md`) was not connected during this spike, so whether it exposes this same diagnostic as a callable tool (vs. only the in-app panel) is still unverified — open follow-up.  
-> * **Deliverable:** `vault/check_smart_connections_status.py` — reads `params.json` and `smart_env.json`, parses `smart_sources.ajson`, and reports (a) Sources and Blocks totals by status (current/missing/skipped/unexpected) with a summary run, including skipped/unexpected items and their reasons, and (b) a single note's status + reason via `python vault/check_smart_connections_status.py "<vault-relative path>"`. Verified against the live vault and cross-checked against the in-app Smart Environment panel — numbers match exactly: 31/30/0/1/0 sources (total/current/missing/skipped/unexpected), 1045/325/0/720/0 blocks, and identical skip-reason text.  
+  * The data lives in `$VAULT_DIR/.smart-env`, not `.obsidian` â€” `.obsidian` only holds Obsidian app/plugin settings, no indexing state.  
+  * Smart Connections ships its own in-app diagnostics: a **Smart Environment** health panel (Obsidian command palette â†’ search "Smart Environment") shows live totals â€” Indexed items, Eligible, Current embeddings, Needs embedding, and a per-collection breakdown (Smart Sources, Smart Blocks) of Total / Eligible / Current / Missing / Skipped / Unexpected â€” plus a "Skipped items" diagnostic listing each skipped item's path and a human-readable reason (e.g. "Below minimum size"). This is the authoritative live source; per user direction, **Skipped counts as failed to index** for this project's reporting.  
+  * `smart_sources/smart_sources.ajson` holds one entry per note, keyed `smart_sources:<vault-relative path>`, and each source's `blocks_data` holds one entry per block. Status per item is inferred by comparing stored size against `smart_env.json`'s `min_chars` threshold (separate values for sources and blocks) and its `file_exclusions`/`folder_exclusions` patterns â€” the same comparison the in-app panel performs live, since no reason string is persisted anywhere: **current** (embedded and eligible), **missing** (eligible, not yet embedded â€” "pending"), **skipped** (ineligible under current policy â€” "failed", with a derivable reason), **unexpected** (a vector exists for an item no longer eligible, e.g. content shrank after being embedded).  
+  * The `.ajson` files are not plain JSON â€” each is a sequence of `"key": {...},` fragments (an append-only log), not one JSON document; they must be parsed line-by-line.  
+  * Block-level coverage is much lower than source-level in this vault: 720 of 1,045 blocks are skipped (mostly sub-200-character blocks), vs. only 1 of 31 sources â€” worth knowing before relying on block-level (as opposed to whole-note) semantic search.  
+  * The registered `smart-connections` MCP server (see `vault/Instructions.md`) was not connected during this spike, so whether it exposes this same diagnostic as a callable tool (vs. only the in-app panel) is still unverified â€” open follow-up.  
+> * **Deliverable:** `vault/check_smart_connections_status.py` â€” reads `params.json` and `smart_env.json`, parses `smart_sources.ajson`, and reports (a) Sources and Blocks totals by status (current/missing/skipped/unexpected) with a summary run, including skipped/unexpected items and their reasons, and (b) a single note's status + reason via `python vault/check_smart_connections_status.py "<vault-relative path>"`. Verified against the live vault and cross-checked against the in-app Smart Environment panel â€” numbers match exactly: 31/30/0/1/0 sources (total/current/missing/skipped/unexpected), 1045/325/0/720/0 blocks, and identical skip-reason text.  
 > * **Acceptance Criteria:**  
-  * Script reports total current (indexed) / missing (pending) / skipped (failed) / unexpected counts against the real vault, for both Sources and Blocks — done, matches the native panel exactly.  
-  * Script reports a list of skipped/unexpected notes with causes — done, reason text matches the native panel's diagnostic modal.  
-  * Given a vault-relative note path, the script reports current / missing / skipped / unexpected / not-found, with a reason where applicable — done.  
+  * Script reports total current (indexed) / missing (pending) / skipped (failed) / unexpected counts against the real vault, for both Sources and Blocks â€” done, matches the native panel exactly.  
+  * Script reports a list of skipped/unexpected notes with causes â€” done, reason text matches the native panel's diagnostic modal.  
+  * Given a vault-relative note path, the script reports current / missing / skipped / unexpected / not-found, with a reason where applicable â€” done.  
 > * **Dependencies:** depends on Story 3.1  
 > * **Status:** Done. Open follow-up: confirm the exact Smart Environment command-palette entry name for documentation, and whether Story 3.1 needs to handle "unexpected" (orphaned) embeddings separately.
 
@@ -126,10 +126,10 @@
 
 ### **Story 6.4: Common UI Shell & Design System**
 
-> * **Abstract:** Build the shared navigation shell and visual design system that Stories 6.1–6.3 render inside of.  
-> * **Description:** Establish a persistent app shell (left sidebar nav, top status/settings area, main content slot) and a reusable design-system spec (color palette, typography, spacing, component patterns — dark theme, sidebar navigation, floating quick-capture bar) modeled on the Claude.ai desktop app's visual language. Sidebar nav items map to 4thBrain's own surfaces (Ingest, Search, Dashboard) rather than Claude's. The home view includes a personalized greeting and a floating quick-capture input (text/URL/file) as the site-wide entry point; the fuller multi-field ingestion form remains Story 6.1's concern. Design-system spec and static mockup live under `ui/design/`.  
+> * **Abstract:** Build the shared navigation shell and visual design system that Stories 6.1â€“6.3 render inside of.  
+> * **Description:** Establish a persistent app shell (left sidebar nav, top status/settings area, main content slot) and a reusable design-system spec (color palette, typography, spacing, component patterns â€” dark theme, sidebar navigation, floating quick-capture bar) modeled on the Claude.ai desktop app's visual language. Sidebar nav items map to 4thBrain's own surfaces (Ingest, Search, Dashboard) rather than Claude's. The home view includes a personalized greeting and a floating quick-capture input (text/URL/file) as the site-wide entry point; the fuller multi-field ingestion form remains Story 6.1's concern. Design-system spec and static mockup live under `ui/design/`.  
 > * **Acceptance Criteria:**  
-  * Written style guide documents color palette, typography, spacing scale, and component patterns, reusable across Stories 6.1–6.3.  
+  * Written style guide documents color palette, typography, spacing scale, and component patterns, reusable across Stories 6.1â€“6.3.  
   * Static HTML/CSS mockup demonstrates the shell (sidebar nav, greeting, quick-capture bar) rendered in a browser.  
   * Sidebar nav items and quick-capture bar are labeled for 4thBrain's actual surfaces, not copied verbatim from Claude.ai.  
 > * **Dependencies:** none  
@@ -188,9 +188,22 @@
 > * **Dependencies:** must be worked with Story 7.1  
 > * **Status:** To Do
 
+### **Story 7.3: SQLite Database Setup for Processing-State Persistence**
+
+> * **Abstract:** Set up SQLite database for Document/Status/Classification/Job metadata storage.  
+> * **Description:** Install SQLite drivers (better-sqlite3 for Node.js, sqlite3 for Python scripts), create the schema from documets/design/schema.sql, and initialize the database file at the configured metadata storage location. Verify cross-language access (Node.js and Python can read/write simultaneously without corruption). **Critical implementation note (ADR17):** keep all database transactions brief — long-running transactions holding locks will serialize concurrent access. If implementation reveals a need for long concurrent transactions, this decision must be revisited and migrated to PostgreSQL.  
+> * **Acceptance Criteria:**  
+  * SQLite driver installed and tested (better-sqlite3 via npm, sqlite3 available to Python).  
+  * Database schema created from documets/design/schema.sql (7 tables: status, job_type, process, classification, document, job, job_document).  
+  * Database file initialized at the configured path (params.json: metadata_db_path).  
+  * Status enumeration seeded (New, Processing, Indexed, Failed, Archived).  
+  * Cross-language smoke test: Node.js writes a Document record, Python reads it back without error.  
+> * **Dependencies:** depends on Story 7.1, depends on Story 7.2  
+> * **Status:** To Do
+
 ## **EP8: QA, Testing Harness & Bug/Issue Tracking**
 
-**Associated Requirements:** Cross-cutting — validates acceptance criteria across FR1–FR9, NFR1–NFR12  
+**Associated Requirements:** Cross-cutting â€” validates acceptance criteria across FR1â€“FR9, NFR1â€“NFR12  
 **Inherited Acceptance Criteria:** All Stories are verified against their acceptance criteria via automated/manual tests prior to closure; Bugs and Issues are logged, tracked to resolution, and linked back to originating Stories.
 
 ### **Story 8.1: Automated Test Harness & Regression Suite**
@@ -215,7 +228,7 @@
 
 ## **EP9: Security & Access Control**
 
-**Associated Requirements:** Gap — no existing NFR covers this; proposed NFR13 (Authentication & Local Access Control) pending Phase 3 scope lock  
+**Associated Requirements:** Gap â€” no existing NFR covers this; proposed NFR13 (Authentication & Local Access Control) pending Phase 3 scope lock  
 **Inherited Acceptance Criteria:** Web UI and API endpoints reject unauthenticated/unauthorized requests; sensitive vault content is not exposed beyond the local host boundary without explicit user action.
 
 ### **Story 9.1: Local-Only Access Enforcement & Auth Guard**
@@ -251,9 +264,25 @@
 ### **Story 11.1: Release Packaging & Versioning**
 
 > * **Abstract:** Define how completed Stories/fixes are grouped and versioned into a Release.  
-> * **Description:** Build the release definition/versioning process referenced in Phase 5 (Release Definition & Planning) — tagging, changelog, and rollout scripting distinct from initial dev-host setup.  
+> * **Description:** Build the release definition/versioning process referenced in Phase 5 (Release Definition & Planning) â€” tagging, changelog, and rollout scripting distinct from initial dev-host setup.  
 > * **Acceptance Criteria:**  
   * Each release has a version tag and changelog mapping to closed Stories/Bugs.  
   * A rollback path exists to the previous release version.  
 > * **Dependencies:** depends on Story 7.1, depends on Story 7.2, depends on Story 8.1  
 > * **Status:** To Do
+
+## **EP12: Structured Data & Job Queue Persistence**
+
+**Associated Requirements:** NFR15 (Structured Metadata & Job Queue Storage)  
+**Inherited Acceptance Criteria:** Document lifecycle status, hierarchical classification, and job queue/history are stored in a queryable local SQLite database, separate from the Markdown vault and the vector store.
+
+### **Story 12.1: Document/Status/Classification/Job Database Schema Design**
+
+> * **Abstract:** Design the SQLite schema for the Document/Status/Classification/Job data model.  
+> * **Description:** Translate the domain model in `documets/design/classes.md` into a physical SQLite schema â€” table definitions, primary/foreign keys, seed data for the fixed Status enumeration, and an ERD. Design only; no implementation or wiring into `server/` in this pass. Full schema: `documets/design/database-schema.md`. See ADR17.  
+> * **Acceptance Criteria:**  
+  * Schema covers exactly the four entities in `classes.md` (Document, Status, Classification, Job) with types/keys matching that spec.  
+  * ERD (`documets/design/database-schema.mmd`, rendered PNG) visualizes tables and relationships.  
+  * Storage location and access pattern (SQLite file location, Node.js driver) documented.  
+> * **Dependencies:** none  
+> * **Status:** Done

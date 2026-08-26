@@ -9,7 +9,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(mkdir -p \"styles/swiss-chat\")"
+      "Bash(mkdir -p \"styles/swiss-chat\")",
+      "Bash(wsl.exe --version)",
+      "Read(//proc/**)"
     ]
   },
   "enabledMcpjsonServers": [

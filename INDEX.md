@@ -1,9 +1,9 @@
 ---
 name: INDEX
 description: none
-date: 2026-08-25
+date: 2026-08-26
 metadata:
-  version: 1.21
+  version: 1.25
   created-by: Claude Code
 ---
 
@@ -16,8 +16,8 @@ History cells are a list of `[date] comment` entries, most recent last.
 | File Name | History |
 | --- | --- |
 | `CLAUDE.md` | [2026-08-24] Created via /init from documets/design and documets/Interviews<br>[2026-08-24] Updated — added module directories to Repository Structure, EP8–EP11 to baseline, and Module Map table |
-| `documets/design/SYSTEM-REQUIREMENTS-SPECIFICATION.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
-| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats<br>[2026-08-25] Added Story 6.4 (Common UI Shell & Design System) under EP6; added it as a dependency of Story 6.1/6.2/6.3 |
+| `documets/design/SYSTEM-REQUIREMENTS-SPECIFICATION.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-26] Added NFR15 — Structured Metadata & Job Queue Storage |
+| `documets/design/Project 4thBrain.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header)<br>[2026-08-24] Added EP8–EP11 (QA/Testing, Security, Backup/Recovery, Release Management) per Phase 4 gap analysis<br>[2026-08-25] Updated Story 1.1/1.2 with dictated ingestion directory layout ($RAW_DIR, $VAULT_DIR/incoming, $RAW_DIR/clipping, $VAULT_DIR/raw), cross-referencing new ADR14<br>[2026-08-25] Updated Story 2.1 with topic/subtopic-driven vault path and sibling attachment directory behavior, cross-referencing new ADR15<br>[2026-08-25] Added Spike 3.2 under EP3 — Smart Connections indexing status retrieval, Status: Done<br>[2026-08-25] Revised Spike 3.2 findings after user supplied the in-app "Smart Environment" panel screenshots — corrected terminology to current/missing/skipped/unexpected, added block-level stats<br>[2026-08-25] Added Story 6.4 (Common UI Shell & Design System) under EP6; added it as a dependency of Story 6.1/6.2/6.3<br>[2026-08-26] Added EP12/Story 12.1 — Document/Status/Classification/Job database schema design, Status: Done<br>[2026-08-26] Added Story 7.3 (EP7) — SQLite Database Setup for Processing-State Persistence, Status: To Do |
 | `documets/design/Gantt Chart.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-1.1-INTERVIEW.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
 | `documets/Interviews/PHASE-4.1-TRANSCRIPT.md` | [2026-08-24] Present at INDEX creation (pre-existing, no header) |
@@ -42,13 +42,20 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `ingestor-classification/backlog.md` | [2026-08-24] Created — story backlog for ingestor-classification module |
 | `batch/CLAUDE.md` | [2026-08-24] Created — module purpose/scope (EP4, EP5, EP8) |
 | `batch/backlog.md` | [2026-08-24] Created — story backlog for batch module |
-| `documets/design/ADRS.md` | [2026-08-24] Created — ADR1–ADR12 backfilled from NFR baseline, ADR13 logged for module-split decision<br>[2026-08-25] Added ADR14 — ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw)<br>[2026-08-25] Added ADR15 — topic/subtopic-driven vault path resolution and sibling attachment directories<br>[2026-08-25] Added ADR16 (open) — WSL2 vs. any-environment component placement, open question on running Obsidian in WSL2 for future Docker packaging<br>[2026-08-25] Split ADR16 full record out to `adr16-component-placement.md`; this file now holds only its abstract and a reference |
-| `documets/design/adr16-component-placement.md` | [2026-08-25] Created — full ADR16 record split out of ADRS.md, with research confirming Obsidian can run natively in WSL2 via WSLg<br>[2026-08-25] Added TODO section — install Obsidian in WSL, use git/Claude Code in WSL, use Zed to open the WSL project |
+| `documets/design/ADRS.md` | [2026-08-24] Created — ADR1–ADR12 backfilled from NFR baseline, ADR13 logged for module-split decision<br>[2026-08-25] Added ADR14 — ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw)<br>[2026-08-25] Added ADR15 — topic/subtopic-driven vault path resolution and sibling attachment directories<br>[2026-08-25] Added ADR16 (open) — WSL2 vs. any-environment component placement, open question on running Obsidian in WSL2 for future Docker packaging<br>[2026-08-25] Split ADR16 full record out to `adr16-component-placement.md`; this file now holds only its abstract and a reference<br>[2026-08-26] Closed ADR16 — tested Obsidian in WSL via flatpak; no benefit due to UI degradation; keep current setup (Windows Obsidian, WSL Ollama); re-evaluate at EP11<br>[2026-08-26] Added ADR17 — SQLite as the structured metadata/job-queue store<br>[2026-08-26] Closed ADR17 — SQLite chosen; critical constraint: keep transactions brief; if long concurrent txns needed during impl, must revisit (migrate to PostgreSQL) |
+| `documets/design/adr16-component-placement.md` | [2026-08-25] Created — full ADR16 record split out of ADRS.md, with research confirming Obsidian can run natively in WSL2 via WSLg<br>[2026-08-26] ADR closed: tested Obsidian/Zed in WSL via flatpak; no benefit due to UI degradation; keep current setup; re-evaluate at EP11 |
+| `documets/design/adr18-persistence-tech.md` | [2026-08-26] Created — full ADR18 record (open): relational database technology choice (SQLite vs. PostgreSQL) for processing-state persistence; analysis of separate vector database for pre-vault classification |
 | `MEMORY.md` | [2026-08-24] Created — seeded from current project state per md-memory.md<br>[2026-08-25] Updated — Story 6.4 in progress, ADR14/15, Spike 3.2, incremental-delivery decision |
 | `params.json` | [2026-08-25] Created at vault/params.json — vault_dir and Smart Connections params<br>[2026-08-25] Moved to project root<br>[2026-08-25] Added raw_dir, server_port, server_bind_host, ollama_base_url, ollama_chat_model |
 | `vault/Instructions.md` | [2026-08-25] Created — Smart Connections install/config guide<br>[2026-08-25] Updated — params.json path reference |
-| `documets/design/classes.md` | [2026-08-25] Created — Document/Status/Classification/Job class definitions transcribed from user-supplied Class_Definitions_Specification.rtf |
-| `documets/design/classes.mmd` | [2026-08-25] Created — Mermaid class diagram for Document/Status/Classification/Job |
+| `documets/design/classes.md` | [2026-08-25] Created — Document/Status/Classification/Job class definitions transcribed from user-supplied Class_Definitions_Specification.rtf<br>[2026-08-26] Added "Physical schema" section cross-referencing database-schema.md<br>[2026-08-26] Manually expanded to 7 classes (added JobType, JobDocument, Process; renamed topicId) |
+| `documets/design/schema.sql` | [2026-08-26] Created — standalone SQLite DDL for all 7 classes (status, job_type, process, classification, document, job, job_document) with FKs, indexes, and seed data |
+| `documets/design/database-schema.md` | [2026-08-26] Created — SQLite table definitions, DDL, seed data, storage location decision for Story 12.1<br>[2026-08-26] Marked superseded — full schema moved to schema.sql |
+| `documets/design/classes.mmd` | [2026-08-26] Created — Mermaid class diagram for 4-entity model<br>[2026-08-26] Updated for 7-class schema with new relationships<br>[2026-08-26] Reformatted field notation (bold name: type, explicit FK references, not null markers) |
+| `documets/design/classes.png` | [2026-08-26] Created — rendered class diagram (4-entity)<br>[2026-08-26] Updated — re-rendered from updated classes.mmd (7-class)<br>[2026-08-26] Re-rendered with improved field format |
+| `documets/img/database-schema.mmd`, `documets/img/database-schema.png` | [2026-08-26] Created — Mermaid ERD source and rendered PNG for the 4-entity database schema (superseded) |
+| `documets/story/story-7.3.md` | [2026-08-26] Created — abstract, observations, deliverable (SQLite setup), ADR17 reference, implementation notes, TODO follow-ups |
+| `documets/story/story-12.1.md` | [2026-08-26] Created — abstract, observations, deliverable, ADR17 reference, TODO follow-ups<br>[2026-08-26] Updated — noted post-scope expansion to 7-class schema |
 | `vault/validate_smart_connections.py` | [2026-08-25] Created — install validation script |
 | `vault/Obsidian-refs/Obsidian-MCP-Capabilities-Summary.md` | [2026-08-25] Created — summary of Obsidian REST API/MCP and Smart Connections capabilities, framed for EP3/EP10 |
 | `documets/INGESTION-FLOW.md` | [2026-08-25] Created — ingestion/classification flow narrative referencing img/ingestion-flow.png and img/classification-flow.png |

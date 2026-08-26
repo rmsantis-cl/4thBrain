@@ -116,18 +116,65 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-25
 **Date Cancelled:** —
 
-## ADR16: Where does each component run — WSL2 vs. any environment? (OPEN — not yet decided)
+## ADR16: Where does each component run — WSL2 vs. any environment?
 
-**Status:** Open — no decision made yet.
-**Abstract:** Ollama must run in WSL2 (fixed, per ADR2); the ingestion/search app can run anywhere. Whether Obsidian should also run in WSL2 is open — colocating everything in one OS could simplify a future single-container Docker image (EP11).
-**Full record, constraints, and Obsidian-in-WSL2 research:** see `documets/design/adr16-component-placement.md`.
+**Status:** Closed (2026-08-26) — tested and resolved.
+**Decision:** Keep all components (Ollama, ingestion/search app, Obsidian) running in their current native/Windows environments. Running Obsidian in WSL2 via flatpak is technically feasible but offers no practical benefit — UI quality is lower, and the vault/Smart Connections work equally well accessed from Windows. Re-evaluate this decision only when packaging for final delivery (EP11), after the development process is complete.
+**Abstract:** Ollama must run in WSL2 (fixed, per ADR2); the ingestion/search app can run anywhere. Testing confirmed Obsidian can run in WSL2 via WSLg/flatpak, but UI degradation and lack of benefit means keeping the current native-Windows setup is the right call for development.
+**Full record, testing results, and rationale:** see `documets/design/adr16-component-placement.md`.
 **Date Created:** 2026-08-25
+**Date Cancelled:** —
+
+## ADR17: SQLite as the local structured metadata / job-queue store
+
+**Status:** Closed (2026-08-26) — implementation decision made.
+
+**Description:** The `Document`/`Status`/`Classification`/`Job` data model (`documets/design/classes.md`) is persisted in a single-file SQLite database, separate from the Markdown vault (content) and `.smart-env` (vectors). Full schema: `documets/design/schema.sql`.
+
+**Decision:** Use SQLite for simplicity, minimal operations overhead, and low-volume sequential processing (ADR10, concurrency=1).
+
+**Why:** The vault stores note *content* and `.smart-env` stores *embeddings* — neither is a good fit for structured, queryable, relational metadata (document lifecycle status, hierarchical classification, job queue/history with parent-child jobs). SQLite is single-file, zero-config, requires no server process, and fits the same local-first/zero-cloud/single-host constraints as the rest of the stack (ADR1/ADR12) while giving real relational queries (join documents to their classification/status, walk job trees) that flat files and the vector store can't. It's also directly usable from the Node.js orchestration server (ADR5) via `better-sqlite3` or Node's built-in `node:sqlite`, with no new runtime dependency beyond Node itself. Source: NFR15, EP12/Story 12.1.
+
+**Critical Implementation Constraint:** SQLite uses database-level locking (not row/table-level). When a process writes, the entire database is locked for other processes. **Transactions must be kept brief** — avoid long-running transactions that hold locks across multiple operations. If implementation reveals a need for long concurrent transactions (e.g., parallel batch processing requiring simultaneous multi-row updates), **this decision must be revisited and migrated to PostgreSQL**.
+
+**Date Created:** 2026-08-26
+**Date Closed:** 2026-08-26
+**Date Cancelled:** —
+
+## ADR18: Local relational database technology for processing-state persistence (OPEN — technology choice TBD)
+
+**Status:** Open — evaluating SQLite vs. PostgreSQL.
+
+**Description:** The system maintains state during ingestion, classification, and batch processing: documents' lifecycle status, job queue history, classification assignments, and intermediate results. This state must be readable and writable by multiple concurrent processes/scripts (the Node.js orchestration server, Python batch jobs, CLI tools) without corruption. It must not bloat the Obsidian vault (which stays content-only). Two technology options are being evaluated: **SQLite** (single-file, zero-config, no server) vs. **PostgreSQL** (server-based, better concurrent-write handling). Additionally, **a separate vector database (independent of Obsidian's .smart-env) is under consideration** to facilitate initial document classification before vault filing — Smart Connections currently generates embeddings only after notes are in the vault, but having pre-vault embeddings could improve the LLM's classification accuracy.
+
+**Why this decision matters:**
+- The Document/Status/Classification/Job model (ADR17) needs persistent storage. ADR17 chose SQLite for simplicity, but the concurrent-access requirement (multiple scripts writing simultaneously) may exceed SQLite's write-locking capabilities on local filesystems (especially on Windows with its stricter file locking). PostgreSQL handles concurrent writes cleanly but adds operational complexity (requires a server process, network socket configuration, process supervision per ADR9).
+- A separate vector store (current .smart-env) could speed up classification — the LLM could generate embeddings and compare against existing vault vectors during ingestion, before the document is filed. This would be a classification hint mechanism (FR3 / ADR15), not a full RAG replacement.
+
+**Constraints:**
+- No cloud services — any database must be local (ADR1/ADR12).
+- Single-host, single-user system (no multi-tenant requirements).
+- Low volume of write operations (~dozens of jobs per overnight batch run, not thousands).
+- Cross-language access (Node.js, Python, potentially bash) required.
+
+**Open questions:**
+1. Is concurrent write access to the same tables a real bottleneck, or will serialized job processing (ADR10, concurrency=1 for Ollama) keep writes naturally sequential?
+2. If a separate vector database is needed, should it be SQLite (same as ADR17), a lightweight embedding store like Qdrant/Milvus, or embedded within the Node.js process (in-memory + disk cache)?
+3. What is the performance impact of pre-vault embeddings on classification accuracy vs. the complexity of maintaining two vector stores?
+
+**Full analysis:** see `documets/design/adr18-persistence-tech.md`.
+
+**Date Created:** 2026-08-26
 **Date Cancelled:** —
 
 ## Changelog
 
+- 2026-08-26: Closed ADR17 — SQLite chosen for simplicity and low-volume sequential processing. Critical constraint: keep transactions brief; if long concurrent transactions are needed during implementation, decision must be revisited (migrate to PostgreSQL).
+- 2026-08-26: Logged ADR18 (open) — relational database technology (SQLite vs. PostgreSQL) for processing-state persistence, plus consideration of a separate vector database for pre-vault classification.
+- 2026-08-26: Closed ADR16 — tested Obsidian in WSL via flatpak; no benefit due to UI degradation; keep current setup.
 - 2026-08-24: Created. Backfilled ADR1–ADR12 from the existing NFR baseline; logged ADR13 for this session's module-split decision.
 - 2026-08-25: Logged ADR14 for the ingestion directory layout ($RAW_DIR / $VAULT_DIR/incoming / $RAW_DIR/clipping / $VAULT_DIR/raw), dictated by the user for Story 1.1/1.2.
 - 2026-08-25: Logged ADR15 for topic/subtopic-driven vault path resolution and sibling attachment directories, dictated by the user for Story 2.1.
 - 2026-08-25: Logged ADR16 (open) for component-to-environment placement — WSL2 vs. any environment — with the open question of whether Obsidian itself can run in WSL2, raised by the user re: future Docker packaging.
 - 2026-08-25: Split ADR16's full record into `adr16-component-placement.md`; this file now holds only the abstract and a reference. Added research confirming Obsidian can run natively in WSL2 via WSLg.
+- 2026-08-26: Logged ADR17 — SQLite chosen as the structured metadata/job-queue store for the Document/Status/Classification/Job model, for the "database design" session.
