@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Code
   date: 2026-08-26
 ---
@@ -40,6 +40,7 @@ Master tracking document for all project stories across all epics. Status values
 | 11.1 | Release Packaging & Versioning | READY | 7.1, 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
 | 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
 | 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
+| 13.2 | Review Mobile UI | READY | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
 
 ---
 
@@ -344,6 +345,18 @@ Master tracking document for all project stories across all epics. Status values
 | **Status** | COMPLETED |
 | **Implementation** | `server/routes/admin-db.js` — Full CRUD interface with table browser, pagination, filtering, sorting, and database stats sidebar. Dev-mode protected. Verified working at `http://localhost:3000/admin/db` (NODE_ENV=development). |
 | **Working Notes** | [[story-13.1.md](./story/story-13.1.md)] |
+
+---
+
+### Story 13.2: Review Mobile UI
+
+| Field | Value |
+|---|---|
+| **Abstract** | Audit and fix the web UI's responsive/mobile behavior across all panels, including the Admin panel. |
+| **Description** | Review the Story 6.4 shell and the Story 13.1 Admin panel on narrow viewports (≤760px). Verify the sidebar nav, all "Add" forms, chat panels, and the Admin panel's Tables/Jobs/Indexing sub-menu remain usable — no overlapping elements, no unreachable controls, no horizontal overflow. Fix issues found. |
+| **Dependencies** | depends on Story 6.4 (UI shell) and Story 13.1 (Admin panel) |
+| **Acceptance Criteria** | • All panels render without overlap or overflow at common mobile widths (360px–760px).<br>• Admin panel's sidebar sub-menu is reachable and toggleable on mobile without obscuring the Tables/Jobs/Indexing content.<br>• Sidebar open/close (hamburger menu) and Admin panel close (back arrow) both function correctly on mobile.<br>• No regressions introduced on desktop layout. |
+| **Status** | READY |
 
 ---
 

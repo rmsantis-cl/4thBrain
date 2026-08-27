@@ -305,4 +305,16 @@
   * Database stats (total size, last modified time) displayed.  
   * Protected from public access (dev-mode check or warning label).  
 > * **Dependencies:** depends on Story 7.3 (database setup, schema known)  
+> * **Status:** Completed
+
+### **Story 13.2: Review Mobile UI**
+
+> * **Abstract:** Audit and fix the web UI's responsive/mobile behavior across all panels, including the Admin panel.  
+> * **Description:** Review the Story 6.4 shell and the Story 13.1 Admin panel on narrow viewports (≤760px). Verify the sidebar nav, all "Add" forms, chat panels, and the Admin panel's Tables/Jobs/Indexing sub-menu remain usable — no overlapping elements, no unreachable controls, no horizontal overflow. Fix issues found (e.g. the Admin panel needs to collapse its sub-menu behind a tap target on mobile rather than showing a cramped two-column layout).  
+> * **Acceptance Criteria:**  
+  * All panels (add-file, add-text, add-url, ingest-status, chat-llama, chat-claude, admin) render without overlap or overflow at common mobile widths (360px–760px).  
+  * Admin panel's sidebar sub-menu is reachable and toggleable on mobile without obscuring the Tables/Jobs/Indexing content.  
+  * Sidebar open/close (hamburger menu) and Admin panel close (back arrow) both function correctly on mobile.  
+  * No regressions introduced on desktop layout.  
+> * **Dependencies:** depends on Story 6.4 (UI shell) and Story 13.1 (Admin panel)  
 > * **Status:** To Do

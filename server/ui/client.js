@@ -183,6 +183,21 @@ const CLIENT_JS = `
   });
 
   // ---- Admin panel ----
+  var adminCloseBtn = document.getElementById('admin-close');
+  adminCloseBtn.addEventListener('click', function () {
+    var defaultNavItem = navItems[0];
+    navItems.forEach(function (n) { n.classList.remove('active'); });
+    panels.forEach(function (p) { p.classList.remove('active'); });
+    defaultNavItem.classList.add('active');
+    document.getElementById('panel-' + defaultNavItem.getAttribute('data-panel')).classList.add('active');
+  });
+
+  var adminTitleText = document.getElementById('admin-title-text');
+  var adminMenu = document.getElementById('admin-menu');
+  adminTitleText.addEventListener('click', function () {
+    adminMenu.classList.toggle('collapsed');
+  });
+
   var adminMenuItems = document.querySelectorAll('.admin-menu-item');
   var adminSections = document.querySelectorAll('.admin-section');
   var tableSelect = document.getElementById('table-select');

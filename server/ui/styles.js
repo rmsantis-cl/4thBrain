@@ -293,6 +293,35 @@ const CSS = `
   .placeholder-panel .icon { font-size: 32px; margin-bottom: 12px; }
 
   /* ---------- Admin panel ---------- */
+  /* Overlays the whole shell (including the sidebar) while open — max-width
+     from the base .panel rule is overridden so it can span the full width. */
+  #panel-admin.active {
+    position: fixed;
+    inset: 0;
+    max-width: none;
+    margin: 0;
+    background: var(--bg);
+    z-index: 40;
+    padding: 32px;
+    overflow-y: auto;
+  }
+
+  .admin-close {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-secondary);
+    border: none;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .admin-close:hover { background: var(--surface-hover); color: var(--text-primary); }
+
+  #admin-title-text { cursor: default; }
+
   .admin-layout {
     display: flex;
     gap: 20px;
@@ -307,6 +336,9 @@ const CSS = `
   }
 
   .admin-sidebar h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 14px;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -321,15 +353,18 @@ const CSS = `
   }
 
   .admin-menu-item {
-    padding: 12px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: none;
+    border: none;
     border-radius: 8px;
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 14px;
     text-align: left;
-    transition: all 0.15s ease;
+    font-family: inherit;
   }
 
   .admin-menu-item:hover {
@@ -338,9 +373,8 @@ const CSS = `
   }
 
   .admin-menu-item.active {
-    background: var(--accent);
-    color: #191817;
-    border-color: var(--accent);
+    background: var(--surface-hover);
+    color: var(--text-primary);
   }
 
   .admin-menu-item .mock-badge {
@@ -537,6 +571,16 @@ const CSS = `
     .sidebar.open ~ .backdrop, .backdrop.open { display: block; }
     main { padding: 20px; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .admin-layout { flex-direction: column; gap: 12px; }
+    .admin-sidebar { width: 100%; }
+    #admin-title-text { cursor: pointer; }
+    .admin-menu {
+      overflow: hidden;
+      max-height: 500px;
+      transition: max-height 0.2s ease;
+    }
+    .admin-menu.collapsed { max-height: 0; }
   }
 `;
 

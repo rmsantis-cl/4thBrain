@@ -110,8 +110,11 @@ function renderAdminPanel() {
     <section class="panel" id="panel-admin">
       <div class="admin-layout">
         <div class="admin-sidebar">
-          <h2>Admin Tools</h2>
-          <div class="admin-menu">
+          <h2>
+            <span id="admin-title-text">Admin Tools</span>
+            <button class="admin-close" id="admin-close" aria-label="Close admin panel">◀</button>
+          </h2>
+          <div class="admin-menu" id="admin-menu">
             <button class="admin-menu-item active" data-admin-section="tables">
               📊 Tables
             </button>
