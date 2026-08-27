@@ -32,10 +32,23 @@ CREATE TABLE document (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   uri_location TEXT NOT NULL,
+  mime_type TEXT,
+  charset TEXT,
   status_id INTEGER NOT NULL REFERENCES status(id),
   created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   topic_id TEXT REFERENCES classification(id)
+);
+
+CREATE TABLE tag (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE document_tag (
+  document_id TEXT NOT NULL REFERENCES document(id),
+  tag_id TEXT NOT NULL REFERENCES tag(id),
+  PRIMARY KEY (document_id, tag_id)
 );
 
 CREATE TABLE job (
@@ -65,6 +78,7 @@ CREATE INDEX idx_job_parent ON job(parent_job_id);
 CREATE INDEX idx_job_document_job ON job_document(job_id);
 CREATE INDEX idx_job_document_doc ON job_document(doc_id);
 CREATE INDEX idx_job_document_process ON job_document(process_id);
+CREATE INDEX idx_document_tag_tag ON document_tag(tag_id);
 
 -- Seed the fixed status enumeration
 INSERT INTO status (id, name, description) VALUES
@@ -83,3 +97,6 @@ insert into classification(id, name, parent_id)
 values
 (1, 'top', null),
 (2, 'AI', 1);
+insert into process(id, name, description, environment)
+values
+('1', 'ingest', 'stage submitted content into $RAW_DIR', 'node');

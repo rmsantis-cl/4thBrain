@@ -10,6 +10,7 @@ const adminDbRoute = require("./routes/admin-db");
 
 const config = buildConfig();
 const app = express();
+app.locals.config = config;
 
 // Middleware
 app.use(express.json());

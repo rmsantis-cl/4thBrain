@@ -133,7 +133,7 @@
   * Static HTML/CSS mockup demonstrates the shell (sidebar nav, greeting, quick-capture bar) rendered in a browser.  
   * Sidebar nav items and quick-capture bar are labeled for 4thBrain's actual surfaces, not copied verbatim from Claude.ai.  
 > * **Dependencies:** none  
-> * **Status:** To Do
+> * **Status:** Completed
 
 ### **Story 6.1: Web Ingestion Form & Submission Handler**
 
@@ -142,7 +142,7 @@
 > * **Acceptance Criteria:**  
 > * Submitting form content creates a valid pipeline job and returns a unique Job ID immediately.  
 > * **Dependencies:** depends on Story 1.1, depends on Story 6.4, must be worked with Story 6.3  
-> * **Status:** To Do
+> * **Status:** Completed
 
 ### **Story 6.2: Hybrid Keyword & Semantic Search Interface**
 
@@ -199,7 +199,7 @@
   * Status enumeration seeded (New, Processing, Indexed, Failed, Archived).  
   * Cross-language smoke test: Node.js writes a Document record, Python reads it back without error.  
 > * **Dependencies:** depends on Story 7.1, depends on Story 7.2  
-> * **Status:** To Do
+> * **Status:** Completed
 
 ## **EP8: QA, Testing Harness & Bug/Issue Tracking**
 

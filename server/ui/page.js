@@ -23,11 +23,12 @@ function renderNav() {
 function renderAddFilePanel() {
   return `
     <section class="panel active" id="panel-add-file">
-      <h1>Add file <span class="mock-badge">mocked — Story 6.1</span></h1>
-      <p class="subtitle">Drop a file or browse. Nothing is written to disk yet — Story 6.1 wires this up for real.</p>
+      <h1>Add file</h1>
+      <p class="subtitle">Drop a file or browse.</p>
       <div class="card">
         <div class="dropzone" id="dropzone">Drag a file here, or click to browse</div>
         <input type="file" id="file-input" style="display:none">
+        <input type="text" id="file-tags-input" class="tags-input" placeholder="Tags (comma-separated)">
         <div class="result-msg" id="file-result"></div>
       </div>
     </section>`;
@@ -36,11 +37,12 @@ function renderAddFilePanel() {
 function renderAddTextPanel() {
   return `
     <section class="panel" id="panel-add-text">
-      <h1>Add text <span class="mock-badge">mocked — Story 6.1</span></h1>
+      <h1>Add text</h1>
       <p class="subtitle">Paste or type freeform text.</p>
       <div class="card">
         <form id="text-form">
           <textarea id="text-input" placeholder="Paste or type a note…"></textarea>
+          <input type="text" id="text-tags-input" class="tags-input" placeholder="Tags (comma-separated)">
           <button type="submit" class="btn">Submit</button>
         </form>
         <div class="result-msg" id="text-result"></div>
@@ -51,11 +53,12 @@ function renderAddTextPanel() {
 function renderAddUrlPanel() {
   return `
     <section class="panel" id="panel-add-url">
-      <h1>Add url <span class="mock-badge">mocked — Story 6.1</span></h1>
+      <h1>Add url</h1>
       <p class="subtitle">Submit a link to be clipped.</p>
       <div class="card">
         <form id="url-form">
           <input type="url" id="url-input" placeholder="https://…">
+          <input type="text" id="url-tags-input" class="tags-input" placeholder="Tags (comma-separated)">
           <button type="submit" class="btn">Submit</button>
         </form>
         <div class="result-msg" id="url-result"></div>
@@ -149,6 +152,7 @@ function renderAdminPanel() {
                   <input type="text" id="filter-val" placeholder="filter value" style="display: none;">
                   <button class="btn secondary" id="filter-btn" style="display: none;">Apply</button>
                 </div>
+                <button class="btn" id="admin-insert-btn">+ Add row</button>
               </div>
 
               <div class="table-wrapper">
@@ -159,6 +163,30 @@ function renderAdminPanel() {
               </div>
 
               <div class="table-pagination" id="table-pagination"></div>
+            </div>
+          </div>
+
+          <!-- Add/Edit row modal -->
+          <div class="admin-modal" id="admin-row-modal">
+            <div class="admin-modal-content">
+              <h2 id="admin-row-modal-title">Add row</h2>
+              <form id="admin-row-form"></form>
+              <div class="admin-modal-actions">
+                <button type="button" class="btn secondary" id="admin-row-cancel">Cancel</button>
+                <button type="button" class="btn" id="admin-row-save">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Delete confirmation modal -->
+          <div class="admin-modal" id="admin-delete-modal">
+            <div class="admin-modal-content">
+              <h2>Delete record?</h2>
+              <p class="subtitle">This action cannot be undone.</p>
+              <div class="admin-modal-actions">
+                <button type="button" class="btn secondary" id="admin-delete-cancel">Cancel</button>
+                <button type="button" class="btn danger" id="admin-delete-confirm">Delete</button>
+              </div>
             </div>
           </div>
 

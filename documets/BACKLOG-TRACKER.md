@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.1
+  version: 1.2
   created-by: Claude Code
   date: 2026-08-26
 ---
@@ -24,15 +24,15 @@ Master tracking document for all project stories across all epics. Status values
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
 | 4.1 | Background Sweep & Queue Execution Script | READY | 1.1, 2.1 | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
 | 5.1 | Multi-Source Briefing Synthesis Engine | READY | 2.1, 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
-| 6.1 | Web Ingestion Form & Submission Handler | READY | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
+| 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1, 6.4 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
 | 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1, 6.4 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
-| 6.4 | Common UI Shell & Design System | WIP | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
+| 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
 | 7.1 | WSL2 Runtime & Resource Bound Configuration | READY | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
 | 7.2 | Process Lifecycle & MCP Server Setup | READY | 7.1 | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
-| 7.3 | SQLite Database Setup for Processing-State Persistence | WIP | 7.1, 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
-| 7.4 | Create Database Schema from DDL | WIP | 7.3 | Infrastructure | [[7.4](#story-74-create-database-schema-from-ddl)] |
-| 7.5 | Seed Constants & Enumerations | WIP | 7.4 | Infrastructure | [[7.5](#story-75-seed-constants--enumerations)] |
+| 7.3 | SQLite Database Setup for Processing-State Persistence | COMPLETED | 7.1, 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
+| 7.4 | Create Database Schema from DDL | COMPLETED | 7.3 | Infrastructure | [[7.4](#story-74-create-database-schema-from-ddl)] |
+| 7.5 | Seed Constants & Enumerations | COMPLETED | 7.4 | Infrastructure | [[7.5](#story-75-seed-constants--enumerations)] |
 | 8.1 | Automated Test Harness & Regression Suite | READY | 7.1, 7.2 | QA | [[8.1](#story-81-automated-test-harness--regression-suite)] |
 | 8.2 | Bug & Issue Tracking Workflow | READY | 8.1 | QA | [[8.2](#story-82-bug--issue-tracking-workflow)] |
 | 9.1 | Local-Only Access Enforcement & Auth Guard | READY | 7.2, 6.1 | Security | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
@@ -147,7 +147,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Construct frontend form components allowing raw text input, file uploads, and web URL submissions directly to the Node.js ingestion endpoint. |
 | **Dependencies** | depends on Story 1.1, depends on Story 6.4, must be worked with Story 6.3 |
 | **Acceptance Criteria** | • Submitting form content creates a valid pipeline job and returns a unique Job ID immediately. |
-| **Status** | READY |
+| **Status** | COMPLETED |
 | **Working Notes** | [[story-6.1.md](./story/story-6.1.md)] (not yet created) |
 
 ---
@@ -186,7 +186,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Establish a persistent app shell (left sidebar nav, top status/settings area, main content slot) and a reusable design-system spec (color palette, typography, spacing, component patterns – dark theme, sidebar navigation, floating quick-capture bar) modeled on the Claude.ai desktop app's visual language. Sidebar nav items map to 4thBrain's own surfaces (Ingest, Search, Dashboard) rather than Claude's. The home view includes a personalized greeting and a floating quick-capture input (text/URL/file) as the site-wide entry point; the fuller multi-field ingestion form remains Story 6.1's concern. Design-system spec and static mockup live under `ui/design/`. |
 | **Dependencies** | none |
 | **Acceptance Criteria** | • Written style guide documents color palette, typography, spacing scale, and component patterns, reusable across Stories 6.1–6.3.<br>• Static HTML/CSS mockup demonstrates the shell (sidebar nav, greeting, quick-capture bar) rendered in a browser.<br>• Sidebar nav items and quick-capture bar are labeled for 4thBrain's actual surfaces, not copied verbatim from Claude.ai. |
-| **Status** | WIP |
+| **Status** | COMPLETED |
 | **Working Notes** | [[story-6.4.md](./story/story-6.4.md)] |
 
 ---
@@ -225,7 +225,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Install SQLite drivers (node:sqlite for Node.js, sqlite3 stdlib for Python), create database file at configured path, and initialize with schema from documets/design/schema.sql. Verify cross-language access (Node.js and Python can read/write simultaneously). **Critical constraint (ADR17):** keep all transactions brief — long-running transactions will serialize concurrent access. |
 | **Dependencies** | depends on Story 7.1, depends on Story 7.2 |
 | **Acceptance Criteria** | • SQLite driver installed and tested (node:sqlite via Node, sqlite3 available to Python).<br>• Database file created at configured path (server/4thbrain-metadata.db and ingestor-classification/b4hdb.sqlit3).<br>• Cross-language smoke test: Node.js writes a Document record, Python reads it back without error. |
-| **Status** | WIP |
+| **Status** | COMPLETED |
 | **Working Notes** | [[story-7.3.md](./story/story-7.3.md)] |
 
 ---
@@ -238,7 +238,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Run documets/design/schema.sql to create all 7 tables (status, job_type, process, classification, document, job, job_document) with FK constraints and indexes. Verify via `pragma table_info()` on each table. |
 | **Dependencies** | depends on Story 7.3 |
 | **Acceptance Criteria** | • All 7 tables created in the database.<br>• All columns, types, and constraints match schema.sql spec.<br>• All indexes created (idx_document_status, idx_job_type, etc.).<br>• Schema verifiable via `pragma table_info()` on each table. |
-| **Status** | WIP |
+| **Status** | COMPLETED |
 | **Working Notes** | [[story-7.4.md](./story/story-7.4.md)] |
 
 ---
@@ -251,7 +251,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Seed status table (5 rows: New/Processing/Indexed/Failed/Archived), job_type table (ingest, transcode, classify, batch-run, index), and process table (windows, wsl, batch) with deterministic identifiers. Idempotent seeding via `INSERT OR IGNORE`. |
 | **Dependencies** | depends on Story 7.4 |
 | **Acceptance Criteria** | • Status table seeded with exactly 5 rows (New, Processing, Indexed, Failed, Archived).<br>• Job_type table seeded with exactly 5 rows (ingest, transcode, classify, batch-run, index).<br>• Process table seeded with exactly 3 rows (windows, wsl, batch).<br>• All values queryable and validated via smoke test. |
-| **Status** | WIP |
+| **Status** | COMPLETED |
 | **Working Notes** | [[story-7.5.md](./story/story-7.5.md)] |
 
 ---

@@ -244,6 +244,10 @@ const CSS = `
   }
   .btn:hover { background: var(--accent-hover); }
   .btn:disabled { background: var(--surface-hover); color: var(--text-muted); cursor: not-allowed; }
+  .btn.danger { background: var(--status-failed); color: #191817; }
+  .btn.danger:hover { background: #b3564d; }
+  .btn.secondary { background: var(--surface-hover); color: var(--text-primary); }
+  .btn.secondary:hover { background: var(--surface); }
 
   .result-msg {
     margin-top: 14px;
@@ -442,6 +446,8 @@ const CSS = `
   .table-toolbar {
     display: flex;
     gap: 10px;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 12px;
   }
 
@@ -502,6 +508,68 @@ const CSS = `
   #admin-table td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);
+  }
+
+  .admin-row-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .admin-row-actions .btn {
+    margin-top: 0;
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  /* ---------- Admin add/edit/delete modals ---------- */
+  .admin-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+  }
+  .admin-modal.active { display: flex; }
+
+  .admin-modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 440px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .admin-modal-content h2 { font-size: 16px; margin: 0 0 8px; font-weight: 600; }
+  .admin-modal-content .subtitle { margin-bottom: 16px; }
+
+  #admin-row-form label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 12px 0 4px;
+  }
+  #admin-row-form label:first-child { margin-top: 0; }
+  #admin-row-form input {
+    width: 100%;
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+  #admin-row-form input[readonly] { color: var(--text-muted); }
+
+  .admin-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 18px;
   }
 
   .table-pagination {

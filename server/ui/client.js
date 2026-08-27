@@ -1,6 +1,6 @@
-// Client-side JS for the Story 6.4 shell. Mocked: every fetch() here hits a stub
-// route that returns canned data (see server/routes/*.js) — no real ingestion,
-// status, or Ollama call happens yet. See ui/plan.md.
+// Client-side JS for the Story 6.4 shell. Ingestion (file/text/url) is wired
+// to real endpoints as of Story 6.1 — status and Ollama chat are still mocked.
+// See ui/plan.md.
 const CLIENT_JS = `
 (function () {
   var sidebar = document.querySelector('.sidebar');
@@ -35,6 +35,7 @@ const CLIENT_JS = `
   // ---- Add file ----
   var dropzone = document.getElementById('dropzone');
   var fileInput = document.getElementById('file-input');
+  var fileTagsInput = document.getElementById('file-tags-input');
   var fileResult = document.getElementById('file-result');
 
   dropzone.addEventListener('click', function () { fileInput.click(); });
@@ -52,17 +53,20 @@ const CLIENT_JS = `
   function uploadFile(file) {
     var formData = new FormData();
     formData.append('file', file);
+    formData.append('tags', fileTagsInput.value);
     showResult(fileResult, 'Uploading …');
     fetch('/api/ingest/file', { method: 'POST', body: formData })
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        showResult(fileResult, 'Mocked — ' + data.message + ' (jobId ' + data.jobId + ')');
+        showResult(fileResult, data.message + ' (jobId ' + data.jobId + ')');
+        fileTagsInput.value = '';
       })
       .catch(function () { showResult(fileResult, 'Upload failed.'); });
   }
 
   // ---- Add text ----
   var textForm = document.getElementById('text-form');
+  var textTagsInput = document.getElementById('text-tags-input');
   var textResult = document.getElementById('text-result');
   textForm.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -72,18 +76,20 @@ const CLIENT_JS = `
     fetch('/api/ingest/text', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text }),
+      body: JSON.stringify({ text: text, tags: textTagsInput.value }),
     })
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        showResult(textResult, 'Mocked — ' + data.message + ' (jobId ' + data.jobId + ')');
+        showResult(textResult, data.message + ' (jobId ' + data.jobId + ')');
         document.getElementById('text-input').value = '';
+        textTagsInput.value = '';
       })
       .catch(function () { showResult(textResult, 'Submit failed.'); });
   });
 
   // ---- Add url ----
   var urlForm = document.getElementById('url-form');
+  var urlTagsInput = document.getElementById('url-tags-input');
   var urlResult = document.getElementById('url-result');
   urlForm.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -93,12 +99,13 @@ const CLIENT_JS = `
     fetch('/api/ingest/url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: url }),
+      body: JSON.stringify({ url: url, tags: urlTagsInput.value }),
     })
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        showResult(urlResult, 'Mocked — ' + data.message + ' (jobId ' + data.jobId + ')');
+        showResult(urlResult, data.message + ' (jobId ' + data.jobId + ')');
         document.getElementById('url-input').value = '';
+        urlTagsInput.value = '';
       })
       .catch(function () { showResult(urlResult, 'Submit failed.'); });
   });
@@ -202,6 +209,7 @@ const CLIENT_JS = `
   var adminSections = document.querySelectorAll('.admin-section');
   var tableSelect = document.getElementById('table-select');
   var tableContainer = document.querySelector('.table-container');
+  var adminState = { currentTable: null, currentPage: 1, editingRecord: null, deleteId: null, deletePkCol: null };
 
   adminMenuItems.forEach(function (item) {
     item.addEventListener('click', function () {
@@ -238,6 +246,8 @@ const CLIENT_JS = `
   });
 
   function loadTableRows(tableName, page) {
+    adminState.currentTable = tableName;
+    adminState.currentPage = page;
     var params = new URLSearchParams({ page: page, pageSize: 25 });
     fetch('/admin/db/api/table/' + tableName + '/rows?' + params)
       .then(function (res) { return res.json(); })
@@ -254,6 +264,7 @@ const CLIENT_JS = `
       .then(function (schema) {
         var thead = document.getElementById('admin-table-head');
         var tbody = document.getElementById('admin-table-body');
+        var pkCol = schema.find(function (c) { return c.pk === 1; });
 
         thead.innerHTML = '';
         schema.forEach(function (col) {
@@ -261,6 +272,9 @@ const CLIENT_JS = `
           th.textContent = col.name;
           thead.appendChild(th);
         });
+        var actionsTh = document.createElement('th');
+        actionsTh.textContent = 'Actions';
+        thead.appendChild(actionsTh);
 
         tbody.innerHTML = '';
         data.rows.forEach(function (row) {
@@ -271,6 +285,29 @@ const CLIENT_JS = `
             td.textContent = val === null ? '(null)' : String(val);
             tr.appendChild(td);
           });
+
+          var actionsTd = document.createElement('td');
+          actionsTd.className = 'admin-row-actions';
+
+          var editBtn = document.createElement('button');
+          editBtn.className = 'btn secondary';
+          editBtn.type = 'button';
+          editBtn.textContent = 'Edit';
+          editBtn.addEventListener('click', function () { openRowModal(schema, row); });
+          actionsTd.appendChild(editBtn);
+
+          var delBtn = document.createElement('button');
+          delBtn.className = 'btn danger';
+          delBtn.type = 'button';
+          delBtn.textContent = 'Delete';
+          delBtn.addEventListener('click', function () {
+            adminState.deleteId = pkCol ? row[pkCol.name] : null;
+            adminState.deletePkCol = pkCol ? pkCol.name : null;
+            document.getElementById('admin-delete-modal').classList.add('active');
+          });
+          actionsTd.appendChild(delBtn);
+
+          tr.appendChild(actionsTd);
           tbody.appendChild(tr);
         });
 
@@ -301,6 +338,89 @@ const CLIENT_JS = `
         }
       });
   }
+
+  // ---- Admin panel: add/edit/delete row ----
+  var adminInsertBtn = document.getElementById('admin-insert-btn');
+  var adminRowModal = document.getElementById('admin-row-modal');
+  var adminRowForm = document.getElementById('admin-row-form');
+  var adminRowModalTitle = document.getElementById('admin-row-modal-title');
+  var adminDeleteModal = document.getElementById('admin-delete-modal');
+
+  adminInsertBtn.addEventListener('click', function () {
+    if (!adminState.currentTable) return;
+    fetch('/admin/db/api/table/' + adminState.currentTable + '/schema')
+      .then(function (res) { return res.json(); })
+      .then(function (schema) { openRowModal(schema, null); });
+  });
+
+  function openRowModal(schema, record) {
+    adminState.editingRecord = record;
+    var pkCol = schema.find(function (c) { return c.pk === 1; });
+    adminState.editingPk = pkCol ? pkCol.name : null;
+    adminRowModalTitle.textContent = record ? 'Edit row' : 'Add row';
+    adminRowForm.innerHTML = schema.map(function (col) {
+      var value = record ? record[col.name] : '';
+      var readonly = col.pk === 1 && record;
+      var displayValue = value === null || value === undefined ? '' : String(value);
+      return '<label>' + col.name + '</label>' +
+        '<input type="text" name="' + col.name + '" value="' + escapeAttr(displayValue) + '"' + (readonly ? ' readonly' : '') + '>';
+    }).join('');
+    adminRowModal.classList.add('active');
+  }
+
+  function escapeAttr(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML.replace(/"/g, '&quot;');
+  }
+
+  document.getElementById('admin-row-cancel').addEventListener('click', function () {
+    adminRowModal.classList.remove('active');
+  });
+
+  document.getElementById('admin-row-save').addEventListener('click', function () {
+    var formData = new FormData(adminRowForm);
+    var record = {};
+    formData.forEach(function (val, key) { record[key] = val === '' ? null : val; });
+
+    var editing = adminState.editingRecord;
+    var method = editing ? 'PATCH' : 'POST';
+    var url = editing
+      ? '/admin/db/api/table/' + adminState.currentTable + '/row/' + editing[adminState.editingPk]
+      : '/admin/db/api/table/' + adminState.currentTable + '/row';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (result) {
+        if (result.error) { alert('Error: ' + result.error); return; }
+        adminRowModal.classList.remove('active');
+        loadTableRows(adminState.currentTable, adminState.currentPage);
+      })
+      .catch(function (err) { alert('Error: ' + err.message); });
+  });
+
+  document.getElementById('admin-delete-cancel').addEventListener('click', function () {
+    adminDeleteModal.classList.remove('active');
+  });
+
+  document.getElementById('admin-delete-confirm').addEventListener('click', function () {
+    if (adminState.deleteId === null) { adminDeleteModal.classList.remove('active'); return; }
+    fetch('/admin/db/api/table/' + adminState.currentTable + '/row/' + adminState.deleteId, { method: 'DELETE' })
+      .then(function (res) { return res.json(); })
+      .then(function (result) {
+        adminDeleteModal.classList.remove('active');
+        if (result.error) { alert('Error: ' + result.error); return; }
+        loadTableRows(adminState.currentTable, adminState.currentPage);
+      })
+      .catch(function (err) {
+        adminDeleteModal.classList.remove('active');
+        alert('Error: ' + err.message);
+      });
+  });
 
   // Load tables on init
   loadTables();
