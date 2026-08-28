@@ -11,7 +11,21 @@
       "Bash(git push *)",
       "Bash(mkdir -p \"styles/swiss-chat\")",
       "Bash(wsl.exe --version)",
-      "Read(//proc/**)"
+      "Read(//proc/**)",
+      "Bash(ls -la ~/.claude.json 2>/dev/null; ls -la ~/.claude/ 2>/dev/null | head -30)",
+      "Bash(python3 -c ' *)",
+      "Bash(sqlite3 --version)",
+      "Bash(rm -f /tmp/schema-test.db)",
+      "Bash(sqlite3 /tmp/schema-test.db)",
+      "Bash(sqlite3 /tmp/schema-test.db \".tables\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"SELECT name, parent FROM classification ORDER BY name;\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"SELECT name, description FROM job_status;\")",
+      "Bash(sqlite3 /tmp/schema-test.db \".schema job_file\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"PRAGMA foreign_key_check;\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"INSERT INTO classification \\(name, parent\\) VALUES \\('VAULT_DIR', NULL\\);\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"PRAGMA foreign_keys = ON; INSERT INTO job \\(job_type, status\\) VALUES \\('ingest', 'Bogus'\\);\")",
+      "Bash(sqlite3 /tmp/schema-test.db 'PRAGMA foreign_keys = ON; *)",
+      "Bash(sqlite3 /tmp/schema-test.db \"UPDATE tag SET end_date = datetime\\('now'\\), active = 0 WHERE name = 'urgent'; SELECT name, end_date, active FROM tag;\")"
     ]
   },
   "enabledMcpjsonServers": [

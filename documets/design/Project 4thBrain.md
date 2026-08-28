@@ -287,6 +287,24 @@
 > * **Dependencies:** none  
 > * **Status:** Done
 
+### **Story 12.2: Schema Redesign**
+
+> * **Abstract:** Schema redesign — continuation of Story 12.1.  
+> * **Description:** Continuation of Story 12.1 (Document/Status/Classification/Job Database Schema Design). Corrects `documets/design/schema.sql` and re-baselines `documets/design/classes.md` against what the schema actually implements today — Document, Status, Classification, Job, JobType, JobStatus, JobFile, Tag (eight entities), dropping `Process`/`JobDocument` which were added to `classes.md` after Story 12.1 shipped without a Story or ADR behind them (see Bug 1). Fixes outstanding syntax defects (`INTEGERPRIMARY KEY`, `DEFAUL` typo), broken index references (`status_id`/`topic_id` columns that don't exist), FK type mismatches (`TEXT` referencing `INTEGER` primary keys); gives `tag` a real primary key (`name`) with a `document_tag` link table since tags must be end-dated rather than deleted; makes `classification` fully name-keyed (globally unique `name`, no surrogate id); constrains `job.status` via a new `job_status` lookup table; and adds `job_file` to track per-job file artifacts.  
+> * **Acceptance Criteria:**  
+  * `schema.sql` executes via `db.exec()` against a fresh database file with no errors.  
+  * Every index references a column that actually exists on its table.  
+  * Every FK column's declared type matches the type of the primary key it references.  
+  * `tag.name` is the primary key; `document_tag` links `document` and `tag`; deleting a tag sets `end_date` rather than removing the row.  
+  * `job.document_id` references the document a job is processing (replacing the removed `job_document` link table).  
+  * `job.status` references a new `job_status` lookup table (mirroring `status`), closing the previously-unconstrained free-text status field.  
+  * `classification` is name-keyed (`name TEXT PRIMARY KEY`, no surrogate id); names are globally unique across the whole tree; `document.topic` references `classification(name)`.  
+  * `job_file` tracks files associated with a job (name, path, mime_type, directory), FK'd to `job(id)`; its `status` column is intentionally unvalidated free text; `lock_by_PID` records the OS process ID holding the file locked, if any.  
+  * `classification` is seeded with system directory roles (`VAULT_DIR`, `VAULT_RAW`, `VAULT_INCOMMING`, `DOCUMENT_ROOT`, `TMP_DIR`), each resolvable to an actual filesystem path via a matching uppercase key in `params.json`.  
+  * `classes.md` lists exactly the entities present in `schema.sql`, with no reconciliation gaps noted.  
+> * **Dependencies:** none (continuation of Story 12.1)  
+> * **Status:** Approved for implementation planning
+
 ## **EP13: Admin & Monitoring Tools**
 
 **Associated Requirements:** Cross-cutting — development and operational observability tools; no direct user-facing FR/NFR.  

@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.2
+  version: 1.4
   created-by: Claude Code
-  date: 2026-08-26
+  date: 2026-08-28
 ---
 
 # BACKLOG TRACKER — 4thBrain Stories
@@ -39,6 +39,7 @@ Master tracking document for all project stories across all epics. Status values
 | 10.1 | Scheduled Vault Snapshot & Restore | READY | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
 | 11.1 | Release Packaging & Versioning | READY | 7.1, 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
 | 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
+| 12.2 | Schema Redesign | READY | none | Design | [[12.2](#story-122-schema-redesign)] |
 | 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
 | 13.2 | Review Mobile UI | READY | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
 
@@ -334,6 +335,19 @@ Master tracking document for all project stories across all epics. Status values
 
 ---
 
+### Story 12.2: Schema Redesign
+
+| Field | Value |
+|---|---|
+| **Abstract** | Schema redesign — continuation of Story 12.1. |
+| **Description** | Continuation of Story 12.1 (Document/Status/Classification/Job Database Schema Design). Corrects `documets/design/schema.sql` and re-baselines `documets/design/classes.md` against what the schema actually implements today — Document, Status, Classification, Job, JobType, Tag (six entities), dropping `Process`/`JobDocument` which were added to `classes.md` after Story 12.1 shipped without a Story or ADR behind them (see Bug 1). Fixes outstanding syntax defects (`INTEGERPRIMARY KEY`, `DEFAUL` typo), broken index references (`status_id`/`topic_id` columns that don't exist), FK type mismatches (`TEXT` referencing `INTEGER` primary keys), and gives `tag` a real primary key (`name`) with a `document_tag` link table, since tags must be end-dated rather than deleted. |
+| **Dependencies** | none (continuation of Story 12.1) |
+| **Acceptance Criteria** | • `schema.sql` executes via `db.exec()` against a fresh database file with no errors.<br>• Every index references a column that actually exists on its table.<br>• Every FK column's declared type matches the type of the primary key it references.<br>• `tag.name` is the primary key; `document_tag` links `document` and `tag`; deleting a tag sets `end_date` rather than removing the row.<br>• `job.document_id` references the document a job is processing (replacing the removed `job_document` link table).<br>• `job.status` references a new `job_status` lookup table (mirroring `status`), closing the previously-unconstrained free-text status field.<br>• `classification` is name-keyed (`name TEXT PRIMARY KEY`, no surrogate id); names are globally unique across the whole tree; `document.topic` references `classification(name)`.<br>• `job_file` tracks files associated with a job (name, path, mime_type, directory), FK'd to `job(id)`; its `status` column is intentionally unvalidated free text; `lock_by_PID` records the OS process ID holding the file locked, if any.<br>• `classification` is seeded with system directory roles (`VAULT_DIR`, `VAULT_RAW`, `VAULT_INCOMMING`, `DOCUMENT_ROOT`, `TMP_DIR`), each resolvable to an actual filesystem path via a matching uppercase key in `params.json`.<br>• `classes.md` lists exactly the entities present in `schema.sql`, with no reconciliation gaps noted. |
+| **Status** | READY |
+| **Working Notes** | [[documets/PLAN-28-08-2026.md](../PLAN-28-08-2026.md)], [[Bug 1](./bugs/Bug-1-Unauthorized-Schema-Table-Additions.md)] |
+
+---
+
 ### Story 13.1: Database Inspector — Table Browser & Admin Panel
 
 | Field | Value |
@@ -371,3 +385,19 @@ Master tracking document for all project stories across all epics. Status values
 ## Changelog
 
 - **2026-08-26** — Initial backlog tracker created with all 23 stories across 13 epics; current status snapshot
+- **2026-08-28** — Added Story 12.2 (Schema Redesign), READY, continuation of Story 12.1; closes Bug 1
+- **2026-08-28** — Appended "Follow-up Tasks" section: documentation backpropagation for the Story 12.2 schema redesign
+
+---
+
+## Follow-up Tasks (not yet formalized as Stories)
+
+- **Documentation backpropagation for Story 12.2 (Schema Redesign).** The 2026-08-28 schema redesign (natural keys on `status`/`job_type`/`tag`/`classification`, `classification` re-keyed to global name-based identity, new `job_status`/`job_file` tables, `document_tag` link table, `classification` doubling as a system-directory-role registry) has already been applied to `documets/design/schema.sql`, `documets/design/classes.md`, and root `CLAUDE.md`. It has **not** yet been propagated to:
+  - `documets/PROJECT-SUMMARY.md` — still describes the old "7 tables: status, job_type, process, classification, document, job, job_document" model.
+  - `documets/design/classes.mmd` (and the rendered `classes.png`) — still diagrams the old 7-class model with `Process`/`JobDocument` and `status_id`/`topic_id` naming.
+  - `documets/design/database-schema.md` — superseded doc; check its superseded-by note still points somewhere accurate.
+  - Any per-module `backlog.md` (e.g. `ui/backlog.md`) that references the old schema shape.
+  - `params.json` — the planned `VAULT_DIR`/`VAULT_RAW`/`VAULT_INCOMMING`/`DOCUMENT_ROOT`/`TMP_DIR` keys are still only documented in `documets/PLAN-28-08-2026.md`, not applied to the live file.
+  - `server/db/init.js` — needs `PRAGMA foreign_keys = ON` or every FK constraint in the new schema is silently unenforced at runtime (found during Story 12.2 testing, 2026-08-28).
+
+  **Why this is a separate tracked task instead of being fixed inline:** the schema redesign is still in motion — Story 13.3 (API layer) and Story 13.2 (admin UI restructuring) haven't been implemented yet and will likely touch the same surface area again. Chasing every doc on every incremental change is wasted motion; do one full backpropagation pass once the redesign settles instead.

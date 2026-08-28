@@ -43,6 +43,7 @@ metadata:
 - Real dev/test loop for `server/` is running on native Windows (Node v22, Ollama both native), not inside WSL2 as ADR1 describes â€” flagged as a dev-environment fact, not a redesign; revisit if/when actually deploying inside WSL2.
 
 ## Changelog
+- 2026-08-28: Ingestion State Diagram documentation: translated PlantUML to Mermaid stateDiagram-v2 for native Markdown rendering; preserved original UML source; fixed image reference to diagram/in%20gestion-process-flow.png. Committed and pushed to v03.
 - 2026-08-26: Story 7.3 split into 7.3/7.4/7.5: (7.3) driver install + file creation, (7.4) schema DDL execution, (7.5) seed constants tables (status/job_type/process enums). Each story now atomic, verifiable independently.
 - 2026-08-26: EP13 (Admin & Monitoring Tools) created with Story 13.1 (Database Inspector - table browser/admin panel for QA/dev debugging). Status: To Do.
 - 2026-08-26: Story 7.3 initiated: SQLite database setup. Database file created at server/4thbrain-metadata.db, schema initialized from documets/design/schema.sql. Using Node.js built-in node:sqlite module. Database attached to Express app.locals.db. Acceptance criteria: drivers, schema, file init, enum seed, cross-lang smoke test. Status: In Progress.
