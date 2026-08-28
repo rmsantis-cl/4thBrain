@@ -1,36 +1,11 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const devOnly = require("../middleware/dev-only");
 
 const router = express.Router();
 
-// Dev-mode protection
-router.use((req, res, next) => {
-  if (process.env.NODE_ENV !== "development") {
-    return res.status(403).type("html").send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Admin Access Denied</title>
-        <style>
-          body { font-family: system-ui; padding: 40px; text-align: center; background: #f5f5f5; }
-          .error { background: white; padding: 40px; border-radius: 8px; max-width: 400px; margin: 0 auto; }
-          h1 { color: #d32f2f; }
-          code { background: #eee; padding: 4px 8px; border-radius: 4px; }
-        </style>
-      </head>
-      <body>
-        <div class="error">
-          <h1>🔒 Access Denied</h1>
-          <p>Admin panel requires <code>NODE_ENV=development</code></p>
-          <p><small>Set NODE_ENV=development to enable this tool.</small></p>
-        </div>
-      </body>
-      </html>
-    `);
-  }
-  next();
-});
+router.use(devOnly);
 
 // Main admin panel route
 router.get("/", (req, res) => {

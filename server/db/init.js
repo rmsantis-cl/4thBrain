@@ -9,6 +9,7 @@ function initDatabase() {
   const schema = fs.readFileSync(schemaPath, "utf-8");
 
   const db = new sqlite.DatabaseSync(dbPath);
+  db.exec("PRAGMA foreign_keys = ON");
   db.exec(schema);
 
   console.log(`SQLite database initialized at: ${dbPath}`);
@@ -16,10 +17,19 @@ function initDatabase() {
 }
 
 function getDatabase() {
-  if (!fs.existsSync(dbPath)) {
-    return initDatabase();
+  const db = new sqlite.DatabaseSync(dbPath);
+  db.exec("PRAGMA foreign_keys = ON");
+
+  // Check if schema needs to be applied (bootstrap check for empty database)
+  const tableCount = db.prepare("SELECT COUNT(*) as count FROM sqlite_master WHERE type='table'").get().count;
+  if (tableCount === 0) {
+    const schemaPath = path.join(__dirname, "..", "..", "documets", "design", "schema.sql");
+    const schema = fs.readFileSync(schemaPath, "utf-8");
+    db.exec(schema);
+    console.log(`SQLite schema applied at: ${dbPath}`);
   }
-  return new sqlite.DatabaseSync(dbPath);
+
+  return db;
 }
 
 module.exports = { initDatabase, getDatabase, dbPath };
