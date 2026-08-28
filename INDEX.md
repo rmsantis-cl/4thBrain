@@ -3,7 +3,7 @@ name: INDEX
 description: none
 date: 2026-08-28
 metadata:
-  version: 1.32
+  version: 1.33
   created-by: Claude Code
 ---
 
@@ -88,4 +88,5 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `.claude/rules/design-before-implementation.md` | [2026-08-27] Created — no implementation without design + Epic/Story; gaps logged as Design Debt; code commits require explicit per-change user authorization, documentation doesn't |
 | `documets/DESIGN-DEBT.md` | [2026-08-27] Created, empty — companion log for the new design-before-implementation rule |
 | `documets/PLAN-28-08-2026.md` | [2026-08-28] Created — Schema Redesign (Story 12.2) → API Layer (Story 13.3) → Admin UI Restructuring (Story 13.2 extension) planning session output; tracks implementation status per step |
+| `documets/HANDOUT-28-08-2026.md` | [2026-08-28] Created — session handoff for continuing from a different machine: git state, chronological summary of Story 12.2 (implemented) and Story 13.3 (planned), next steps, working notes |
 | `documets/bugs/Bug-1-Unauthorized-Schema-Table-Additions.md` | [2026-08-28] Created, filed and closed — unauthorized process/job_document/document_tag tables and UUID keys added to schema.sql/classes.md without Story/design authorization; addressed by Story 12.2 |
