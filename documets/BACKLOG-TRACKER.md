@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.4
+  version: 1.5
   created-by: Claude Code
   date: 2026-08-28
 ---
@@ -42,6 +42,7 @@ Master tracking document for all project stories across all epics. Status values
 | 12.2 | Schema Redesign | READY | none | Design | [[12.2](#story-122-schema-redesign)] |
 | 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
 | 13.2 | Review Mobile UI | READY | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
+| 13.3 | Unified Data-Access API | READY | 12.2, 6.4, 13.1, 6.1 | UI | [[13.3](#story-133-unified-data-access-api)] |
 
 ---
 
@@ -374,6 +375,19 @@ Master tracking document for all project stories across all epics. Status values
 
 ---
 
+### Story 13.3: Unified Data-Access API
+
+| Field | Value |
+|---|---|
+| **Abstract** | Replace ad-hoc SQL with a validated repository layer and per-table REST API. |
+| **Description** | Continuation of Story 13.1 (Database Inspector — Table Browser & Admin Panel) and Story 6.1 (Web Ingestion Form & Submission Handler). Replaces `admin-db.js`'s generic, unvalidated PRAGMA-reflected CRUD engine and `ingest-service.js`'s raw `db.prepare()` calls with a shared repository layer (explicit per-table validation and business rules) and a thin REST API at `/api/tables/*`, documented via an OpenAPI spec and exposed through a Scalar interactive docs UI at `/api/docs`. |
+| **Dependencies** | depends on Story 12.2 (corrected schema), depends on Story 6.4, depends on Story 13.1, depends on Story 6.1 |
+| **Acceptance Criteria** | • `server/lib/repositories/` exposes validated `list/get/create/update/remove` per table; "removing" a tag sets `end_date` rather than deleting the row.<br>• `/api/tables/*` REST routes contain no SQL or validation logic — they only call the repository layer.<br>• `ingest-service.js` contains no direct `db.prepare()` calls; it calls the repository layer instead, and no longer self-generates surrogate keys (uses SQLite's `lastInsertRowid`).<br>• `/api/docs` serves an interactive Scalar UI listing every `/api/tables/*` endpoint.<br>• Both `/api/tables/*` and `/api/docs` stay behind the existing `NODE_ENV=development` gate (extracted into reusable `server/middleware/dev-only.js`).<br>• `tagRepository`, `statusRepository`, and `jobTypeRepository`'s `update()` reject changes to the `name` column (the primary key) — renaming means end-dating the old row and inserting a new one, not an in-place `UPDATE`. |
+| **Status** | READY |
+| **Working Notes** | [[story-13.3.md](./story/story-13.3.md)] |
+
+---
+
 ## Status Legend
 
 - **READY** — Story not yet started; all blockers (dependencies) satisfied or N/A
@@ -387,6 +401,7 @@ Master tracking document for all project stories across all epics. Status values
 - **2026-08-26** — Initial backlog tracker created with all 23 stories across 13 epics; current status snapshot
 - **2026-08-28** — Added Story 12.2 (Schema Redesign), READY, continuation of Story 12.1; closes Bug 1
 - **2026-08-28** — Appended "Follow-up Tasks" section: documentation backpropagation for the Story 12.2 schema redesign
+- **2026-08-28** — Added Story 13.3 (Unified Data-Access API), READY, continuation of Story 13.1/6.1; formally created from its draft in `documets/PLAN-28-08-2026.md`
 
 ---
 

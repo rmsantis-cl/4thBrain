@@ -336,3 +336,17 @@
   * No regressions introduced on desktop layout.  
 > * **Dependencies:** depends on Story 6.4 (UI shell) and Story 13.1 (Admin panel)  
 > * **Status:** To Do
+
+### **Story 13.3: Unified Data-Access API**
+
+> * **Abstract:** Replace ad-hoc SQL with a validated repository layer and per-table REST API.  
+> * **Description:** Continuation of Story 13.1 (Database Inspector — Table Browser & Admin Panel) and Story 6.1 (Web Ingestion Form & Submission Handler). Replaces `admin-db.js`'s generic, unvalidated PRAGMA-reflected CRUD engine and `ingest-service.js`'s raw `db.prepare()` calls with a shared repository layer (explicit per-table validation and business rules) and a thin REST API at `/api/tables/*`, documented via an OpenAPI spec and exposed through a Scalar interactive docs UI at `/api/docs`.  
+> * **Acceptance Criteria:**  
+  * `server/lib/repositories/` exposes validated `list/get/create/update/remove` per table; "removing" a tag sets `end_date` rather than deleting the row.  
+  * `/api/tables/*` REST routes contain no SQL or validation logic — they only call the repository layer.  
+  * `ingest-service.js` contains no direct `db.prepare()` calls; it calls the repository layer instead, and no longer self-generates surrogate keys (uses SQLite's `lastInsertRowid`).  
+  * `/api/docs` serves an interactive Scalar UI listing every `/api/tables/*` endpoint.  
+  * Both `/api/tables/*` and `/api/docs` stay behind the existing `NODE_ENV=development` gate (extracted into reusable `server/middleware/dev-only.js`).  
+  * `tagRepository`, `statusRepository`, and `jobTypeRepository`'s `update()` reject changes to the `name` column (the primary key) — renaming means end-dating the old row and inserting a new one, not an in-place `UPDATE`.  
+> * **Dependencies:** depends on Story 12.2 (corrected schema), depends on Story 6.4, depends on Story 13.1, depends on Story 6.1  
+> * **Status:** Approved for implementation planning

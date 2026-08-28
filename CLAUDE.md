@@ -20,7 +20,7 @@ The target system being designed: a privacy-first, locally hosted "second brain"
 - **`documets/PLAN-*.md`** (e.g. `PLAN-28-08-2026.md`) — dated planning-session outputs for specific multi-story efforts; each tracks its own implementation-status checklist.
 - **`documets/DESIGN-DEBT.md`** — gaps found mid-plan (missing Epic/Story or design decision), per `.claude/rules/design-before-implementation.md`.
 - **`documets/bugs/`** — one file per Bug (`Bug-N-<slug>.md`), per the `Bug n` document type below.
-- **`vault/`, `local-llm/`, `ui/`, `ingestor-classification/`, `batch/`** — the five functional modules, each with its own `CLAUDE.md` (purpose/scope/dependencies) and `backlog.md` (story status). See the Module Map below. Full story text stays canonical in `documets/design/Project 4thBrain.md`; the per-module files are thin views onto it. **EP12 (Structured Data & Job Queue Persistence) and EP13 (Admin & Monitoring Tools) are not yet assigned to a module** — open item.
+- **`vault/`, `local-llm/`, `ui/`, `ingestor-classification/`, `batch/`, `server/`** — the six functional modules, each with its own `CLAUDE.md` (purpose/scope/dependencies) and `backlog.md` (story status). See the Module Map below. Full story text stays canonical in `documets/design/Project 4thBrain.md`; the per-module files are thin views onto it. `server/` is the first module with real shipped code rather than design-only artifacts, and owns EP12 (Structured Data & Job Queue Persistence) and EP13 (Admin & Monitoring Tools), resolving what was previously an open "no module owner" item.
 - **`documets/Interviews/`** — phase interview transcripts capturing requirements discovery.
 - **`documets/method/`** — the process framework itself: `BOOT.md` (file-header/versioning protocol, now split into `.claude/rules/file-format.md`/`file-protection.md`/`file-versioning.md`/`file-indexing.md`), `MD-MEMORY-INSTRUCTIONS.md` (`/MEMORY.md` maintenance rules), `Software Documentation Summary and Framework.md` (the document-type taxonomy and phase-by-phase software lifecycle this project follows — Requirement Collection → Formalization → Scope Lock → Epics → Stories/Dev/Release → Post-Release Gap Analysis → Buy-off → Maintenance), `Driving Dictation Prompt and Guidelines.md` (source for the `dictation` skill).
 - **`scripts/`** — dev-environment helpers (`ui-server.ps1` start/stop/status for the `server/` app, `reset-dev-db.ps1` for the SQLite dev database).
@@ -68,8 +68,7 @@ See `documets/design/Gantt Chart.md` for exact story-level day scheduling and de
 | `ui/` | EP6 (web ingestion/search/dashboard), EP9 (auth) | `ingestor-classification/`, `vault/`, `batch/`, `local-llm/` |
 | `ingestor-classification/` | EP1 (ingestion/sanitization), EP2 (tagging) | `local-llm/`, `vault/` |
 | `batch/` | EP4 (overnight processing), EP5 (daily briefing), EP8 (QA/testing — cross-cutting) | `ingestor-classification/`, `local-llm/`, `vault/` |
-
-EP12/EP13 have no module owner yet — open item (see `documets/PROJECT-SUMMARY.md`).
+| `server/` | EP6 (Web UI/ingestion API), EP9 (auth), EP12 (SQLite metadata DB runtime), EP13 (admin tools/data-access API) | `local-llm/` (Ollama HTTP endpoint) |
 
 ## Working in This Repository
 
