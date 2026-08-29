@@ -3,8 +3,8 @@ name: INDEX
 description: none
 date: 2026-08-29
 metadata:
-  version: 1.35
-  created-by: Claude Code
+  version: 1.36
+  created-by: Claude Haiku 4.5
 ---
 
 # INDEX
@@ -91,3 +91,18 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/HANDOUT-28-08-2026.md` | [2026-08-28] Created — session handoff for continuing from a different machine: git state, chronological summary of Story 12.2 (implemented) and Story 13.3 (planned), next steps, working notes |
 | `documets/bugs/Bug-1-Unauthorized-Schema-Table-Additions.md` | [2026-08-28] Created, filed and closed — unauthorized process/job_document/document_tag tables and UUID keys added to schema.sql/classes.md without Story/design authorization; addressed by Story 12.2 |
 | `documets/PLAN-29-08-2026.md` | [2026-08-29] Created — ingestion pipeline implementation plan (Stories 1.1/1.2/2.1/3.1/4.1): job queue processor design, Clipper/Extractor/RAG Indexing/Classification actuators, `document.parent`/`author` schema addition, leveled (INFO/WARNING/ERROR) logging with centralized start/end audit trail, real ZIP/TAR/`.Z` archive extraction scoped for this pass; tracks its own implementation-status checklist<br>[2026-08-29] Corrected `created-by` metadata to Claude Sonnet 5 |
+| `server/lib/logger.js` | [2026-08-29] Created (Phase 1) — leveled structured JSON logger (INFO/WARNING/ERROR) with document/job id binding via forDocument() |
+| `server/lib/job-queue/poller.js` | [2026-08-29] Created (Phase 1) — in-process setInterval job queue processor: pulls New jobs from database at configurable interval, dispatches to handlers sequentially, emits standard start/end audit logs with document id/name/status |
+| `server/lib/job-queue/handlers.js` | [2026-08-29] Created (Phase 1) — exports handlers for all 4 job types (ingest/convert/index/classify) |
+| `server/lib/job-queue/handlers/ingest.js` | [2026-08-29] Created (Phase 2) — Ingest handler: mocks Clipper for URL-origin docs, routes text to index and binary to convert |
+| `server/lib/job-queue/handlers/convert.js` | [2026-08-29] Created (Phase 2) — Convert handler: real archive extraction (ZIP/TAR/.Z) plus mock extraction for PDF/image/DOCX; creates new documents per extracted file and re-enqueues as ingest |
+| `server/lib/job-queue/handlers/index.js` | [2026-08-29] Created (Phase 2) — Index handler: real RAG indexing via Smart Connections polling, non-blocking binary sniff check, routes too-short content to VAULT_NOTES or failures to VAULT_RAW |
+| `server/lib/job-queue/handlers/classify.js` | [2026-08-29] Created (Phase 3) — Classify handler: calls Ollama to classify (topic/subtopic/tags), creates frontmatter, files into vault tree with sibling attachment directories for child docs |
+| `server/lib/job-queue/fixtures.js` | [2026-08-29] Created (Phase 2) — mock constants for Clipper/Extractor mocks (MOCK_HTML_WITH_IMAGES, MOCK_MARKDOWN, MOCK_PDF_URL_TEXT, MOCK_*_EXTRACTED_TEXT, MOCK_GENERIC_TRANSCRIPTION_NOTE) |
+| `server/lib/job-queue/text-sniff.js` | [2026-08-29] Created (Phase 2) — looksBinary() sniff check: scans first 8KB for NUL bytes or >30% non-printable control bytes, returns isBinary flag + reason (non-blocking, WARNING only) |
+| `server/lib/job-queue/extractors/archive.js` | [2026-08-29] Created (Phase 2) — extractArchive() real implementation: ZIP (adm-zip + zip-slip validation), TAR (tar package), .Z (system uncompress binary if available); returns {relativePath, absolutePath, sizeBytes} list per extracted file |
+| `params.json` | [2026-08-29] Updated — added thread_count, job_poll_interval_ms, log_level, smart_connections_poll_interval_ms, smart_connections_poll_timeout_ms for Phase 1–2 configuration |
+| `server/package.json` | [2026-08-29] Updated — added `adm-zip` and `tar` dependencies for real archive extraction (Phase 2) |
+| `server/config.js` | [2026-08-29] Updated — extended buildConfig() to load and expose new Phase 1–2 parameters (threadCount, jobPollIntervalMs, logLevel, smartConnections timeouts); creates vaultIncomingDir/vaultRawDir/tmpDir |
+| `server/index.js` | [2026-08-29] Updated — initialize logger, start job queue poller with handlers after repositories setup; wires logger into app.locals for route handlers |
+| `documets/DESIGN-DEBT.md` | [2026-08-29] Updated — marked items 5 & 7 as Cleared (frontmatter schema and VAULT_NOTES implemented) |

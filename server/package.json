@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "@scalar/express-api-reference": "^0.10.17",
+    "adm-zip": "^0.5.14",
     "express": "^4.19.2",
     "mime-types": "^2.1.35",
     "multer": "^2.0.0",
-    "openai": "^4.55.0"
+    "openai": "^4.55.0",
+    "tar": "^6.2.1"
   }
 }

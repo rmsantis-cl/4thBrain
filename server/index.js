@@ -2,6 +2,9 @@ const express = require("express");
 const { buildConfig, checkOllamaReachable } = require("./config");
 const { getDatabase } = require("./db/init");
 const { createRepositories } = require("./lib/repositories");
+const { createLogger } = require("./lib/logger");
+const { startJobQueuePoller } = require("./lib/job-queue/poller");
+const handlers = require("./lib/job-queue/handlers");
 
 const chatPageRoute = require("./routes/chat-page");
 const ingestRoutes = require("./routes/ingest");
@@ -24,7 +27,15 @@ const db = getDatabase();
 app.locals.db = db;
 
 // Initialize repositories (Story 13.3)
-app.locals.repositories = createRepositories(db);
+const repos = createRepositories(db);
+app.locals.repositories = repos;
+
+// Initialize logger (Phase 1)
+const logger = createLogger(config.logLevel);
+app.locals.logger = logger;
+
+// Start job queue poller (Phase 1, Story 4.1)
+const poller = startJobQueuePoller({ db, repos, config, handlers, logger });
 
 app.get("/", (req, res) => res.redirect(302, "/chat"));
 
