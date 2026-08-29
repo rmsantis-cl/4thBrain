@@ -226,6 +226,22 @@
 > * **Dependencies:** must be worked with Story 8.1  
 > * **Status:** To Do
 
+### **Story 8.3: Manual Smoke Test — Browser Navigation & Screenshot Verification**
+
+> * **Abstract:** Launch the application server and verify all UI routes and pages render correctly via manual browser navigation.  
+> * **Description:** Start the Node.js server (`npm start` or `scripts/ui-server.ps1 start`), open a browser to `http://localhost:3000`, and navigate through all major UI routes (`/`, `/chat`, `/admin`, `/admin/db`, `/api/docs`). Verify each page loads without errors, sidebar navigation works, form submissions are functional, and all links are clickable. Capture screenshots of each major page state (landing, chat, ingestion forms, admin menu, tables browser, API docs) for documentation and regression verification.  
+> * **Acceptance Criteria:**  
+  * `GET /` redirects to `/chat` (verify in browser location bar).  
+  * `/chat` loads and displays all 6 sidebar panels (Add file, Add text, Add url, Ingest status, Chat with Llama, Chat with Claude) and the Admin link.  
+  * Clicking "Admin" in sidebar navigates to `/admin` and shows a menu with "Tables" and "API Docs" links (not an in-page panel toggle).  
+  * `/admin/db` loads the database table browser (existing functionality, unchanged).  
+  * `/api/docs` loads the Scalar interactive API documentation (Story 13.3).  
+  * Browser DevTools console shows no JavaScript errors on any page.  
+  * All form inputs are reachable and keyboard-navigable on mobile viewport (360px width).  
+  * Screenshots are saved to `documets/screenshots/` with consistent naming (e.g., `landing-redirect.png`, `chat-shell.png`, `admin-menu.png`, `admin-db-tables.png`, `api-docs.png`).  
+> * **Dependencies:** depends on Story 6.4 (UI shell), depends on Story 6.1 (ingestion), depends on Story 13.1 (admin table browser), depends on Story 13.3 (API docs)  
+> * **Status:** Ready
+
 ## **EP9: Security & Access Control**
 
 **Associated Requirements:** Gap â€” no existing NFR covers this; proposed NFR13 (Authentication & Local Access Control) pending Phase 3 scope lock  
@@ -325,17 +341,18 @@
 > * **Dependencies:** depends on Story 7.3 (database setup, schema known)  
 > * **Status:** Completed
 
-### **Story 13.2: Review Mobile UI**
+### **Story 13.2: Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu**
 
-> * **Abstract:** Audit and fix the web UI's responsive/mobile behavior across all panels, including the Admin panel.  
-> * **Description:** Review the Story 6.4 shell and the Story 13.1 Admin panel on narrow viewports (≤760px). Verify the sidebar nav, all "Add" forms, chat panels, and the Admin panel's Tables/Jobs/Indexing sub-menu remain usable — no overlapping elements, no unreachable controls, no horizontal overflow. Fix issues found (e.g. the Admin panel needs to collapse its sub-menu behind a tap target on mobile rather than showing a cramped two-column layout).  
+> * **Abstract:** Remove the Story 13.1 embedded "Admin Tools" panel from the `/chat` shell; add a `GET /` → `/chat` redirect; add a small standalone `/admin` menu page linking to the existing dev tools.  
+> * **Description:** Delete `renderAdminPanel()` from `server/ui/page.js`, its call site in `renderChatPage()`, and the matching "Admin panel" block in `server/ui/client.js` and `server/ui/styles.js` — the embedded table browser/Jobs/Indexing sub-menu is gone, not moved. Add `GET /` returning a 302 redirect to `/chat`. Add a new dev-gated `GET /admin` page (`server/routes/admin-page.js` + `renderAdminMenuPage()` in `server/ui/page.js`) that is just a menu with two links: "Tables" → `/admin/db` and "API Docs" → `/api/docs`. The sidebar's "Admin" nav item becomes a plain link to `/admin` instead of an in-page panel toggle. **`server/routes/admin-db.js` is explicitly out of scope for this story** — it is not touched, not rewired to any REST layer, and not deleted; it keeps its own internal SQL and keeps serving `/admin/db` exactly as before. This story supersedes the larger "Story 13.2 extended" draft in `documets/PLAN-28-08-2026.md` (which proposed rewiring `/admin` to Story 13.3's `/api/tables/*` and deleting `admin-db.js`) — that remains a future option, not part of this story. The mobile-responsiveness audit originally scoped to this story is also deferred, not covered here.  
 > * **Acceptance Criteria:**  
-  * All panels (add-file, add-text, add-url, ingest-status, chat-llama, chat-claude, admin) render without overlap or overflow at common mobile widths (360px–760px).  
-  * Admin panel's sidebar sub-menu is reachable and toggleable on mobile without obscuring the Tables/Jobs/Indexing content.  
-  * Sidebar open/close (hamburger menu) and Admin panel close (back arrow) both function correctly on mobile.  
-  * No regressions introduced on desktop layout.  
-> * **Dependencies:** depends on Story 6.4 (UI shell) and Story 13.1 (Admin panel)  
-> * **Status:** To Do
+  * `GET /` returns a 302 redirect to `/chat`.  
+  * `GET /admin` (dev-only, `NODE_ENV=development`) returns 200 with a page containing links to `/admin/db` and `/api/docs`, and a 403 otherwise (same gating as `/admin/db` and `/api/docs`).  
+  * `GET /admin/db` is unchanged — same 200 response, same internal implementation, not touched by this story.  
+  * `/chat` contains no embedded admin panel markup (`#panel-admin`, `.admin-*` table browser, modals) and no `fetch('/admin/db/api/...')` calls in its client JS.  
+  * The sidebar's "Admin" nav item is a link (`<a href="/admin">`), not a panel-toggle button; clicking it navigates to `/admin` and does not throw a JS console error.  
+> * **Dependencies:** depends on Story 6.4 (UI shell), depends on Story 13.1 (the panel being removed) — *(no dependency on Story 13.3; that pairing is deferred to a future story if the bigger draft is later approved)*  
+> * **Status:** Review
 
 ### **Story 13.3: Unified Data-Access API**
 

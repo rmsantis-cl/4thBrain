@@ -35,6 +35,7 @@ Master tracking document for all project stories across all epics. Status values
 | 7.5 | Seed Constants & Enumerations | COMPLETED | 7.4 | Infrastructure | [[7.5](#story-75-seed-constants--enumerations)] |
 | 8.1 | Automated Test Harness & Regression Suite | READY | 7.1, 7.2 | QA | [[8.1](#story-81-automated-test-harness--regression-suite)] |
 | 8.2 | Bug & Issue Tracking Workflow | READY | 8.1 | QA | [[8.2](#story-82-bug--issue-tracking-workflow)] |
+| 8.3 | Manual Smoke Test — Browser Navigation & Screenshot Verification | READY | 6.4, 6.1, 13.1, 13.3 | QA | [[8.3](#story-83-manual-smoke-test--browser-navigation--screenshot-verification)] |
 | 9.1 | Local-Only Access Enforcement & Auth Guard | READY | 7.2, 6.1 | Security | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
 | 10.1 | Scheduled Vault Snapshot & Restore | READY | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
 | 11.1 | Release Packaging & Versioning | READY | 7.1, 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
@@ -284,6 +285,18 @@ Master tracking document for all project stories across all epics. Status values
 
 ---
 
+### Story 8.3: Manual Smoke Test — Browser Navigation & Screenshot Verification
+
+| Field | Value |
+|---|---|
+| **Abstract** | Launch the application server and verify all UI routes and pages render correctly via manual browser navigation. |
+| **Description** | Start the Node.js server, open a browser to `http://localhost:3000`, and navigate through all major UI routes (`/`, `/chat`, `/admin`, `/admin/db`, `/api/docs`). Verify each page loads without errors, sidebar navigation works, form submissions are functional, and all links are clickable. Capture screenshots of each major page state for documentation and regression verification. |
+| **Dependencies** | depends on Story 6.4 (UI shell), depends on Story 6.1 (ingestion), depends on Story 13.1 (admin table browser), depends on Story 13.3 (API docs) |
+| **Acceptance Criteria** | • `GET /` redirects to `/chat`.<br>• `/chat` loads and displays all 6 sidebar panels and the Admin link; clicking Admin navigates to `/admin` (not an in-page toggle).<br>• `/admin/db` loads the database table browser (unchanged).<br>• `/api/docs` loads the Scalar interactive API documentation.<br>• Browser DevTools console shows no JavaScript errors on any page.<br>• All form inputs are reachable and keyboard-navigable on mobile viewport (360px width).<br>• Screenshots are saved to `documets/screenshots/` with consistent naming. |
+| **Status** | READY |
+
+---
+
 ### Story 9.1: Local-Only Access Enforcement & Auth Guard
 
 | Field | Value |
@@ -363,15 +376,15 @@ Master tracking document for all project stories across all epics. Status values
 
 ---
 
-### Story 13.2: Review Mobile UI
+### Story 13.2: Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu
 
 | Field | Value |
 |---|---|
-| **Abstract** | Audit and fix the web UI's responsive/mobile behavior across all panels, including the Admin panel. |
-| **Description** | Review the Story 6.4 shell and the Story 13.1 Admin panel on narrow viewports (≤760px). Verify the sidebar nav, all "Add" forms, chat panels, and the Admin panel's Tables/Jobs/Indexing sub-menu remain usable — no overlapping elements, no unreachable controls, no horizontal overflow. Fix issues found. |
-| **Dependencies** | depends on Story 6.4 (UI shell) and Story 13.1 (Admin panel) |
-| **Acceptance Criteria** | • All panels render without overlap or overflow at common mobile widths (360px–760px).<br>• Admin panel's sidebar sub-menu is reachable and toggleable on mobile without obscuring the Tables/Jobs/Indexing content.<br>• Sidebar open/close (hamburger menu) and Admin panel close (back arrow) both function correctly on mobile.<br>• No regressions introduced on desktop layout. |
-| **Status** | READY |
+| **Abstract** | Remove the Story 13.1 embedded "Admin Tools" panel from the `/chat` shell; add a `GET /` → `/chat` redirect; add a small standalone `/admin` menu page linking to the existing dev tools. |
+| **Description** | Delete `renderAdminPanel()` from `server/ui/page.js`, its call site in `renderChatPage()`, and the matching "Admin panel" block in `server/ui/client.js` and `server/ui/styles.js`. Add `GET /` returning a 302 redirect to `/chat`. Add a new dev-gated `GET /admin` page with a menu linking to `/admin/db` and `/api/docs`. The sidebar's "Admin" nav item becomes a plain link to `/admin` instead of an in-page panel toggle. `server/routes/admin-db.js` is unchanged. This story supersedes the larger draft in `documets/PLAN-28-08-2026.md` (which proposed rewiring `/admin` to `/api/tables/*` and deleting `admin-db.js`). The mobile-responsiveness audit originally scoped to this story is deferred. |
+| **Dependencies** | depends on Story 6.4 (UI shell), depends on Story 13.1 (the panel being removed) |
+| **Acceptance Criteria** | • `GET /` returns a 302 redirect to `/chat`.<br>• `GET /admin` (dev-only) returns 200 with links to `/admin/db` and `/api/docs`; 403 in non-dev mode.<br>• `GET /admin/db` is unchanged — no internal changes.<br>• `/chat` contains no embedded admin panel markup or `fetch('/admin/db/api/...')` calls.<br>• The sidebar's "Admin" nav item is a link (`<a href="/admin">`), not a panel toggle; clicking it navigates without JS errors. |
+| **Status** | REVIEW |
 
 ---
 

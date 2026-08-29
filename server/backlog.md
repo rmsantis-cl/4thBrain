@@ -18,6 +18,6 @@ Full text of each story lives in `documets/design/Project 4thBrain.md`. This is 
 | 12.1 | Document/Status/Classification/Job Database Schema Design | EP12 | Completed | none |
 | 12.2 | Schema Redesign | EP12 | Ready | continuation of Story 12.1 |
 | 13.1 | Database Inspector — Table Browser & Admin Panel | EP13 | Completed | Story 7.3 |
-| 13.2 | Review Mobile UI | EP13 | Ready | Story 6.4, Story 13.3 |
+| 13.2 | Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu | EP13 | Completed | Story 6.4, Story 13.1 |
 | 13.3 | Unified Data-Access API | EP13 | Proposed | Story 12.2, Story 6.4, Story 13.1, Story 6.1 |
 | 9.1 | Local-Only Access Enforcement & Auth Guard | EP9 | Ready | Story 7.2, Story 6.1 |

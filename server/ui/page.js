@@ -8,16 +8,22 @@ const NAV_ITEMS = [
   { id: "ingest-status", icon: "▤", label: "Ingest status" },
   { id: "chat-llama", icon: "◎", label: "Chat with Llama" },
   { id: "chat-claude", icon: "✳", label: "Chat with Claude" },
-  { id: "admin", icon: "⚙", label: "Admin" },
+  { id: "admin", icon: "⚙", label: "Admin", href: "/admin" },
 ];
 
 function renderNav() {
-  return NAV_ITEMS.map(
-    (item, i) => `
+  return NAV_ITEMS.map((item, i) => {
+    if (item.href) {
+      return `
+      <a class="nav-item" href="${item.href}">
+        <span class="icon">${item.icon}</span> ${item.label}
+      </a>`;
+    }
+    return `
       <button class="nav-item${i === 0 ? " active" : ""}" data-panel="${item.id}">
         <span class="icon">${item.icon}</span> ${item.label}
-      </button>`
-  ).join("");
+      </button>`;
+  }).join("");
 }
 
 function renderAddFilePanel() {
@@ -108,120 +114,27 @@ function renderClaudePanel() {
     </section>`;
 }
 
-function renderAdminPanel() {
-  return `
-    <section class="panel" id="panel-admin">
-      <div class="admin-layout">
-        <div class="admin-sidebar">
-          <h2>
-            <span id="admin-title-text">Admin Tools</span>
-            <button class="admin-close" id="admin-close" aria-label="Close admin panel">◀</button>
-          </h2>
-          <div class="admin-menu" id="admin-menu">
-            <button class="admin-menu-item active" data-admin-section="tables">
-              📊 Tables
-            </button>
-            <button class="admin-menu-item" data-admin-section="jobs">
-              ⏳ Jobs <span class="mock-badge">mock</span>
-            </button>
-            <button class="admin-menu-item" data-admin-section="indexing">
-              🔍 Indexing <span class="mock-badge">mock</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="admin-content">
-          <!-- Tables Section -->
-          <div class="admin-section active" data-section="tables">
-            <h1>Database Tables</h1>
-            <p class="subtitle">Browse and edit database records.</p>
-
-            <div class="table-controls">
-              <label for="table-select">Table:</label>
-              <select id="table-select">
-                <option value="">— Select a table —</option>
-              </select>
-            </div>
-
-            <div class="table-container" style="display: none;">
-              <div class="table-toolbar">
-                <div class="filter-group">
-                  <select id="filter-col" style="display: none;">
-                    <option value="">Filter by...</option>
-                  </select>
-                  <input type="text" id="filter-val" placeholder="filter value" style="display: none;">
-                  <button class="btn secondary" id="filter-btn" style="display: none;">Apply</button>
-                </div>
-                <button class="btn" id="admin-insert-btn">+ Add row</button>
-              </div>
-
-              <div class="table-wrapper">
-                <table id="admin-table">
-                  <thead id="admin-table-head"></thead>
-                  <tbody id="admin-table-body"></tbody>
-                </table>
-              </div>
-
-              <div class="table-pagination" id="table-pagination"></div>
-            </div>
-          </div>
-
-          <!-- Add/Edit row modal -->
-          <div class="admin-modal" id="admin-row-modal">
-            <div class="admin-modal-content">
-              <h2 id="admin-row-modal-title">Add row</h2>
-              <form id="admin-row-form"></form>
-              <div class="admin-modal-actions">
-                <button type="button" class="btn secondary" id="admin-row-cancel">Cancel</button>
-                <button type="button" class="btn" id="admin-row-save">Save</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Delete confirmation modal -->
-          <div class="admin-modal" id="admin-delete-modal">
-            <div class="admin-modal-content">
-              <h2>Delete record?</h2>
-              <p class="subtitle">This action cannot be undone.</p>
-              <div class="admin-modal-actions">
-                <button type="button" class="btn secondary" id="admin-delete-cancel">Cancel</button>
-                <button type="button" class="btn danger" id="admin-delete-confirm">Delete</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Jobs Section (Mock) -->
-          <div class="admin-section" data-section="jobs">
-            <h1>Processing Jobs</h1>
-            <p class="subtitle">View active, pending, and failed jobs (mock data).</p>
-            <div class="card placeholder-panel">
-              <div class="icon">⏳</div>
-              <p>Job queue browser coming soon (Story 13.2)</p>
-              <div class="mock-stats" style="margin-top: 16px;">
-                <div class="stat"><span class="stat-label">Active</span> <span class="stat-value">3</span></div>
-                <div class="stat"><span class="stat-label">Pending</span> <span class="stat-value">12</span></div>
-                <div class="stat"><span class="stat-label">Failed</span> <span class="stat-value">1</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Indexing Section (Mock) -->
-          <div class="admin-section" data-section="indexing">
-            <h1>Vector Indexing Status</h1>
-            <p class="subtitle">Smart Connections embedding statistics (mock data).</p>
-            <div class="card placeholder-panel">
-              <div class="icon">🔍</div>
-              <p>Indexing status browser coming soon (Story 13.3)</p>
-              <div class="mock-stats" style="margin-top: 16px;">
-                <div class="stat"><span class="stat-label">Indexed</span> <span class="stat-value">247</span></div>
-                <div class="stat"><span class="stat-label">Pending</span> <span class="stat-value">8</span></div>
-                <div class="stat"><span class="stat-label">Skipped</span> <span class="stat-value">45</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>`;
+function renderAdminMenuPage() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4thBrain — Admin</title>
+<style>${CSS}</style>
+</head>
+<body style="display:block; overflow:auto; height:auto; min-height:100vh; padding:40px;">
+  <div class="card" style="max-width:420px; margin:60px auto;">
+    <h1 style="margin-top:0;">Admin</h1>
+    <p class="subtitle">Dev-only tools.</p>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
+      <a class="btn" style="display:inline-block; text-align:center; text-decoration:none;" href="/admin/db">Tables</a>
+      <a class="btn secondary" style="display:inline-block; text-align:center; text-decoration:none;" href="/api/docs">API Docs</a>
+    </div>
+    <p class="subtitle" style="margin-top:24px;"><a href="/chat" style="color:var(--accent);">← Back to chat</a></p>
+  </div>
+</body>
+</html>`;
 }
 
 function renderChatPage() {
@@ -267,7 +180,6 @@ function renderChatPage() {
     ${renderStatusPanel()}
     ${renderLlamaPanel()}
     ${renderClaudePanel()}
-    ${renderAdminPanel()}
   </main>
 
 <script>${CLIENT_JS}</script>
@@ -275,4 +187,4 @@ function renderChatPage() {
 </html>`;
 }
 
-module.exports = { renderChatPage };
+module.exports = { renderChatPage, renderAdminMenuPage };
