@@ -142,7 +142,7 @@
 > * **Acceptance Criteria:**  
 > * Submitting form content creates a valid pipeline job and returns a unique Job ID immediately.  
 > * **Dependencies:** depends on Story 1.1, depends on Story 6.4, must be worked with Story 6.3  
-> * **Status:** Completed
+> * **Status:** Working
 
 ### **Story 6.2: Hybrid Keyword & Semantic Search Interface**
 

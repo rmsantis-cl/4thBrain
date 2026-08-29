@@ -150,8 +150,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Construct frontend form components allowing raw text input, file uploads, and web URL submissions directly to the Node.js ingestion endpoint. |
 | **Dependencies** | depends on Story 1.1, depends on Story 6.4, must be worked with Story 6.3 |
 | **Acceptance Criteria** | • Submitting form content creates a valid pipeline job and returns a unique Job ID immediately. |
-| **Status** | COMPLETED |
-| **Working Notes** | [[story-6.1.md](./story/story-6.1.md)] (not yet created) |
+| **Status** | WORKING |
+| **Working Notes** | [[story-6.1.md](./story/story-6.1.md)] (not yet created); AC is technically met (forms work, jobs created, IDs returned) but jobs are not consumed by any batch processor — depends on Story 4.1 (Overnight Batch Processing) to be meaningful. See [[6.1-pipeline-gap.md](./6.1-pipeline-gap.md)]. |
 
 ---
 
