@@ -1,9 +1,9 @@
 ---
 name: INDEX
 description: none
-date: 2026-08-28
+date: 2026-08-29
 metadata:
-  version: 1.33
+  version: 1.34
   created-by: Claude Code
 ---
 
@@ -90,3 +90,4 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/PLAN-28-08-2026.md` | [2026-08-28] Created — Schema Redesign (Story 12.2) → API Layer (Story 13.3) → Admin UI Restructuring (Story 13.2 extension) planning session output; tracks implementation status per step |
 | `documets/HANDOUT-28-08-2026.md` | [2026-08-28] Created — session handoff for continuing from a different machine: git state, chronological summary of Story 12.2 (implemented) and Story 13.3 (planned), next steps, working notes |
 | `documets/bugs/Bug-1-Unauthorized-Schema-Table-Additions.md` | [2026-08-28] Created, filed and closed — unauthorized process/job_document/document_tag tables and UUID keys added to schema.sql/classes.md without Story/design authorization; addressed by Story 12.2 |
+| `documets/PLAN-29-08-2026.md` | [2026-08-29] Created — ingestion pipeline implementation plan (Stories 1.1/1.2/2.1/3.1/4.1): job queue processor design, Clipper/Extractor/RAG Indexing/Classification actuators, `document.parent`/`author` schema addition, leveled (INFO/WARNING/ERROR) logging with centralized start/end audit trail, real ZIP/TAR/`.Z` archive extraction scoped for this pass; tracks its own implementation-status checklist |
