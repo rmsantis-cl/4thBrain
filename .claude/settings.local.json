@@ -1,4 +1,5 @@
 {
+	"showThinkingSummaries": false,
   "permissions": {
     "allow": [
       "mcp__smart-connections__lookup",
@@ -25,7 +26,12 @@
       "Bash(sqlite3 /tmp/schema-test.db \"INSERT INTO classification \\(name, parent\\) VALUES \\('VAULT_DIR', NULL\\);\")",
       "Bash(sqlite3 /tmp/schema-test.db \"PRAGMA foreign_keys = ON; INSERT INTO job \\(job_type, status\\) VALUES \\('ingest', 'Bogus'\\);\")",
       "Bash(sqlite3 /tmp/schema-test.db 'PRAGMA foreign_keys = ON; *)",
-      "Bash(sqlite3 /tmp/schema-test.db \"UPDATE tag SET end_date = datetime\\('now'\\), active = 0 WHERE name = 'urgent'; SELECT name, end_date, active FROM tag;\")"
+      "Bash(sqlite3 /tmp/schema-test.db \"UPDATE tag SET end_date = datetime\\('now'\\), active = 0 WHERE name = 'urgent'; SELECT name, end_date, active FROM tag;\")",
+      "PowerShell(cd \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\server\"; npm install 2>&1 | Out-Null; if \\($?\\) { \"✓ npm install succeeded\" } else { \"✗ npm install failed \\(exit code $LASTEXITCODE\\)\" })",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" restart)",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" stop)",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" start)",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" status)"
     ]
   },
   "enabledMcpjsonServers": [

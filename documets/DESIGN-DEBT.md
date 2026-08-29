@@ -13,8 +13,9 @@ Per `.claude/rules/design-before-implementation.md`: no implementation without a
 
 | ID | Description | Raised During | Status | Resolution |
 |---|---|---|---|---|
-| _(none yet)_ | | | | |
+| 2 | `GET /` returns "Cannot GET /" — no route redirects the root path to `/chat`. EP6 covers the `/chat` UI shell but no Story specifies root-path behavior. | User hit `http://localhost:3000/` directly after starting the server, 2026-08-28 | Open | |
 
 ## Changelog
 
 - 2026-08-27: Created, empty — companion log for the new design-before-implementation rule.
+- 2026-08-28: Added item 2 (root path redirect to /chat).
