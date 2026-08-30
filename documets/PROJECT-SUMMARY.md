@@ -3,7 +3,7 @@ name: PROJECT-SUMMARY
 description: Single-page current-state summary of 4thBrain — read this first instead of rescanning the repo
 date: 2026-08-30
 metadata:
-  version: 1.2
+  version: 1.3
   created-by: Claude Code
 ---
 
@@ -28,12 +28,15 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 - 7.3, 7.4, 7.5 — SQLite setup, schema DDL, seed data
 - 12.1 — DB schema design (`documets/design/schema.sql`, `classes.md`)
 - 13.1 — Database Inspector / Admin panel (`server/routes/admin-db.js`, `/admin/db`, dev-mode protected)
+- 13.3 — Unified Data-Access API (`server/lib/repositories/`, `/api/tables`, `/api/docs`)
 
 **WIP**
 - 1.1 — Direct Structured Vault Ingestion (`server/lib/ingestion/`, 32 tests; not run against the real WSL2/Windows target)
 - 4.1 — Background Sweep & Queue Execution Script (`batch/`, 18 tests; one-sweep-per-invocation, scheduling not exercised)
 
 **READY (not started)** — 1.2, 2.1, 3.1, 5.1, 6.2, 6.3, 7.1, 7.2, 8.1, 8.2, 9.1, 10.1, 11.1, 13.2 (mobile UI review)
+
+*13.3 was code-complete since commit `67e7d64` but untracked here until 2026-08-30, when two bugs found in a fresh audit (`document_tag` leaking into the generic `/api/tables/:table` dispatcher; an unbound query parameter in `documentTag.js`) were fixed and it was formally closed out.*
 
 ## Epics (EP1–EP13, see `documets/design/Project 4thBrain.md`)
 

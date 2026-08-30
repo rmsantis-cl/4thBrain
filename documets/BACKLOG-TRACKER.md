@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.6
+  version: 1.7
   created-by: Claude Code
   date: 2026-08-30
 ---
@@ -43,7 +43,7 @@ Master tracking document for all project stories across all epics. Status values
 | 12.2 | Schema Redesign | READY | none | Design | [[12.2](#story-122-schema-redesign)] |
 | 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
 | 13.2 | Review Mobile UI | READY | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
-| 13.3 | Unified Data-Access API | READY | 12.2, 6.4, 13.1, 6.1 | UI | [[13.3](#story-133-unified-data-access-api)] |
+| 13.3 | Unified Data-Access API | COMPLETED | 12.2, 6.4, 13.1, 6.1 | UI | [[13.3](#story-133-unified-data-access-api)] |
 
 ---
 
@@ -398,7 +398,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Continuation of Story 13.1 (Database Inspector — Table Browser & Admin Panel) and Story 6.1 (Web Ingestion Form & Submission Handler). Replaces `admin-db.js`'s generic, unvalidated PRAGMA-reflected CRUD engine and `ingest-service.js`'s raw `db.prepare()` calls with a shared repository layer (explicit per-table validation and business rules) and a thin REST API at `/api/tables/*`, documented via an OpenAPI spec and exposed through a Scalar interactive docs UI at `/api/docs`. |
 | **Dependencies** | depends on Story 12.2 (corrected schema), depends on Story 6.4, depends on Story 13.1, depends on Story 6.1 |
 | **Acceptance Criteria** | • `server/lib/repositories/` exposes validated `list/get/create/update/remove` per table; "removing" a tag sets `end_date` rather than deleting the row.<br>• `/api/tables/*` REST routes contain no SQL or validation logic — they only call the repository layer.<br>• `ingest-service.js` contains no direct `db.prepare()` calls; it calls the repository layer instead, and no longer self-generates surrogate keys (uses SQLite's `lastInsertRowid`).<br>• `/api/docs` serves an interactive Scalar UI listing every `/api/tables/*` endpoint.<br>• Both `/api/tables/*` and `/api/docs` stay behind the existing `NODE_ENV=development` gate (extracted into reusable `server/middleware/dev-only.js`).<br>• `tagRepository`, `statusRepository`, and `jobTypeRepository`'s `update()` reject changes to the `name` column (the primary key) — renaming means end-dating the old row and inserting a new one, not an in-place `UPDATE`. |
-| **Status** | READY |
+| **Status** | COMPLETED |
 | **Working Notes** | [[story-13.3.md](./story/story-13.3.md)] |
 
 ---
@@ -418,6 +418,7 @@ Master tracking document for all project stories across all epics. Status values
 - **2026-08-28** — Appended "Follow-up Tasks" section: documentation backpropagation for the Story 12.2 schema redesign
 - **2026-08-28** — Added Story 13.3 (Unified Data-Access API), READY, continuation of Story 13.1/6.1; formally created from its draft in `documets/PLAN-28-08-2026.md`
 - **2026-08-30** — Stories 1.1 and 4.1 moved READY → WIP: implemented and tested (32 + 18 passing tests respectively), not yet run against the real WSL2/Windows target environment. Fixed Bug 2 (repository layer out of sync with the Story 12.2 schema redesign) as a prerequisite — see `documets/bugs/Bug-2-Repository-Layer-Schema-Mismatch.md`.
+- **2026-08-30** — Story 13.3 moved READY → COMPLETED: the code was already fully implemented (commit `67e7d64`) but the tracker was never updated. Closed out by fixing two bugs found in a fresh audit against the story spec — `documentTag.js`'s `listForDocument()` never bound its query parameter, and `repositories/index.js`'s registry let `document_tag` leak into the generic `/api/tables/:table` dispatcher (which the story explicitly excludes it from), causing a 500 instead of a clean 404. Added regression coverage in `server/test/repositories.documentTag.test.js`. Also fixed unrelated leftover git conflict markers in 12 `server/test/*.js` files from the `v03-eth` merge that had silently broken `npm test` (syntax errors), and ran `npm install` to pick up the `chokidar` dependency the merge had added to `package.json` but never installed.
 
 ---
 
@@ -432,3 +433,5 @@ Master tracking document for all project stories across all epics. Status values
   - `server/db/init.js` — needs `PRAGMA foreign_keys = ON` or every FK constraint in the new schema is silently unenforced at runtime (found during Story 12.2 testing, 2026-08-28).
 
   **Why this is a separate tracked task instead of being fixed inline:** the schema redesign is still in motion — Story 13.3 (API layer) and Story 13.2 (admin UI restructuring) haven't been implemented yet and will likely touch the same surface area again. Chasing every doc on every incremental change is wasted motion; do one full backpropagation pass once the redesign settles instead.
+
+- **OpenAPI schema fidelity (Story 13.3).** `server/openapi/spec.js` documents `/api/tables/*` structurally (all paths, dev-gating, error responses) but uses generic `{type: "object"}` / `{type: "array"}` placeholders for every request/response body instead of full per-field schemas for each of the 9 tables. Functional, not blocking — deferred as a documentation-quality follow-up rather than built as part of closing out Story 13.3 (2026-08-30).
