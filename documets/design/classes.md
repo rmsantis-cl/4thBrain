@@ -24,6 +24,8 @@ Originally transcribed from `Class_Definitions_Specification.rtf` (user-supplied
 | created | Timestamp | Timestamp when the document was created. |
 | updated | Timestamp | Timestamp when the document was last updated. |
 | topic | String, FK Classification(name) | Reference to Classification name. |
+| parent | INTEGER, nullable, FK Document(id) | Reference to the parent document if this document is derived from another (e.g., extracted from an archive, clipped from a URL). Root documents (direct ingestion) have `parent = NULL`. |
+| author | String, nullable | The actuator/service that created this document as a derived output. Examples: `'Clipper'`, `'Extractor'`. Root documents have `author = NULL`. |
 
 ## Status Class
 

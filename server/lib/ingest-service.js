@@ -23,7 +23,14 @@ function createIngestJob(db, { name, uriLocation, mimeType, charset, tags }) {
     });
 
     // Create document
-    const document = repos.document.create("new", null, name);
+    const document = repos.document.create({
+      name,
+      uriLocation,
+      mimeType,
+      charset,
+      status: "New",
+      topic: null
+    });
 
     // Link tags to document
     tagNames.forEach((tagName) => {
@@ -31,7 +38,7 @@ function createIngestJob(db, { name, uriLocation, mimeType, charset, tags }) {
     });
 
     // Create job
-    const job = repos.job.create("ingest", "New", document.id);
+    const job = repos.job.create("ingest", document.id);
 
     return job.id;
   });

@@ -1,0 +1,21 @@
+Original processor 
+
+ 1. Ingestion & Initial Routing
+   An incoming document arrives at the Ingestor. The ingestor evaluates the document type and routes payload components to three destination paths simultaneously:
+   * Text payload \rightarrow Sent directly to Indexer.
+   * Binary files \rightarrow Sent to TextExtractor.
+   * URLs \rightarrow Sent to WebClipper.
+ 2. URL Processing (WebClipper Branch)
+   The WebClipper fetches external content over the network and returns the retrieved document back to the Ingestor to rejoin the pipeline processing flow.
+ 3. Extraction (TextExtractor Branch)
+   The TextExtractor processes binary content:
+   * Success Path: Extracted plain text is sent back to the Ingestor.
+   * Failure Path (Extraction Fails): Raw unextracted binary file is dumped into the Raw Repo.
+ 4. Indexing & Embedding
+   The Indexer generates vector embeddings for incoming text streams:
+   * Success Path (Indexed): Document metadata and embeddings pass to the Classifier.
+   * Failure Path (Not Indexed): Document drops out of classification and routes to the Notes Repo.
+ 5. Classification & Final Storage
+   The Classifier evaluates indexed content, determines topic metadata, and routes the final structured document to the Doc Repo.
+
+
