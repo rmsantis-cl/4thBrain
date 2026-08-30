@@ -1,9 +1,9 @@
 ---
 name: INDEX
 description: none
-date: 2026-08-29
+date: 2026-08-30
 metadata:
-  version: 1.35
+  version: 1.36
   created-by: Claude Code
 ---
 
@@ -91,3 +91,14 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/HANDOUT-28-08-2026.md` | [2026-08-28] Created — session handoff for continuing from a different machine: git state, chronological summary of Story 12.2 (implemented) and Story 13.3 (planned), next steps, working notes |
 | `documets/bugs/Bug-1-Unauthorized-Schema-Table-Additions.md` | [2026-08-28] Created, filed and closed — unauthorized process/job_document/document_tag tables and UUID keys added to schema.sql/classes.md without Story/design authorization; addressed by Story 12.2 |
 | `documets/PLAN-29-08-2026.md` | [2026-08-29] Created — ingestion pipeline implementation plan (Stories 1.1/1.2/2.1/3.1/4.1): job queue processor design, Clipper/Extractor/RAG Indexing/Classification actuators, `document.parent`/`author` schema addition, leveled (INFO/WARNING/ERROR) logging with centralized start/end audit trail, real ZIP/TAR/`.Z` archive extraction scoped for this pass; tracks its own implementation-status checklist<br>[2026-08-29] Corrected `created-by` metadata to Claude Sonnet 5 |
+| `documets/bugs/Bug-2-Repository-Layer-Schema-Mismatch.md` | [2026-08-30] Created, filed and closed inline — `document`/`job`/`tag`/`classification` repositories referenced columns removed by the Story 12.2 schema redesign (confirmed empirically: `createIngestJob` threw `no such column: description`), breaking Story 6.1's web ingestion path end-to-end since 2026-08-28; fixed as a prerequisite to implementing Stories 1.1/4.1 |
+| `server/lib/repositories/document.js`, `job.js`, `tag.js`, `classification.js`, `jobFile.js` | [2026-08-30] Rewritten to match `documets/design/schema.sql` (Bug 2 fix); `job.js` gained `markRunning`/`markCompleted`/`markFailed`/`listPending`/`listByStatus`, `jobFile.js` gained `listForJob`/`findByPath`/`listLocked`/`clearLock`, `document.js` gained `setStatus` |
+| `server/lib/ingest-service.js` | [2026-08-30] Fixed `document.create()` call to the corrected signature and status casing (`"New"`); added a `job_file` record so a job has a queryable link to the file it should process |
+| `server/config.js` | [2026-08-30] Added `vaultDirIncoming` ($VAULT_DIR/incoming) for Story 1.1 |
+| `server/lib/ingestion/file-validator.js`, `path-resolver.js`, `vault-writer.js`, `ingest-executor.js`, `watcher.js` | [2026-08-30] Created — Story 1.1 (Direct Structured Vault Ingestion): MIME/extension classification, collision-safe path resolution, byte-for-byte vault copy, the `job_type='ingest'` executor, and a chokidar watcher on `$RAW_DIR/inbox` deduped against the web-form path |
+| `batch/lock-manager.js`, `job-executors.js`, `cleanup.js`, `worker.js` | [2026-08-30] Created — Story 4.1 (Background Sweep & Queue Execution): file-based PID lock (ADR10 concurrency=1), job-type dispatch table, orphan cleanup, one-sweep-per-invocation worker (`runCycle()`) |
+| `server/test/`, `batch/test/` | [2026-08-30] Created — 73 tests (`node:test`) covering the Bug 2 regression and every Story 1.1/4.1 module, including a full end-to-end sweep test |
+| `documets/story/story-1.1.md` | [2026-08-25] Created — abstract, observations, ADR14 reference, TODO placeholder<br>[2026-08-30] Implemented; documents design decisions (scope boundary vs. topic routing, watcher/web-form dedup, `canHandle()`/`execute()` split) and known limitations |
+| `documets/story/story-4.1.md` | [2026-08-30] Created — implemented; reconciles `story-4.1-plan.md` against the live schema (job_type enum drift, no `created_at` column) and against ADR5 (Node.js, not PowerShell) and ADR10 (concurrency=1, not `THREAD_COUNT>1`) |
+| `documets/BACKLOG-TRACKER.md`, `documets/PROJECT-SUMMARY.md`, `documets/DESIGN-DEBT.md`, `documets/INDEX.md` | [2026-08-30] Updated — Stories 1.1/4.1 READY → WIP with implementation notes; Design Debt item 3 logged (Story 1.1 vs. 3.1 ownership conflict in `story-6.1.md`'s actuator table, found while implementing 1.1); `documets/INDEX.md` also updated in parallel with this file — see `ctx-research/context-usage-report.md` "Findings" for the resulting duplicate-index gap this surfaced |
+| `ctx-research/context-usage-report.md`, `ctx-research/proposed-context-loading-rules.md` | [2026-08-30] Created — audit of every markdown file loaded into context during the Story 1.1/4.1 session (auto-injected vs. explicitly read, useful vs. inert), and six concrete proposed rules for right-sizing what auto-loads, each traced to a specific finding |
