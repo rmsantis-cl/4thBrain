@@ -24,7 +24,7 @@ function defaultLog(entry) {
  * before calling runCycle, not by anything in this function — runCycle
  * itself has no opinion about locking, which keeps it trivially testable.
  */
-function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLog, registeredExecutors = executors } = {}) {
+async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLog, registeredExecutors = executors } = {}) {
   const repos = createRepositories(db);
   const summary = { attempted: 0, completed: 0, failed: 0, skipped: 0 };
 
@@ -54,7 +54,12 @@ function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLog, reg
     log({ level: "info", event: "job_started", jobId: job.id, jobType: job.job_type });
 
     try {
-      const result = executor.execute(db, claimed, cfg);
+      // await, not a bare call: transcode-executor.js (Story 1.2) needs
+      // real async I/O (pdf-parse/mammoth are Promise-based), unlike
+      // ingest-executor.js's synchronous copy. Awaiting a plain (non-Promise)
+      // return value is a no-op, so this stays compatible with every
+      // executor written before this one.
+      const result = await executor.execute(db, claimed, cfg);
       repos.job.markCompleted(job.id);
       summary.completed += 1;
       log({ level: "info", event: "job_completed", jobId: job.id, jobType: job.job_type, result });
@@ -75,7 +80,7 @@ function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLog, reg
 /** Real entrypoint: acquires the concurrency=1 lock, runs one sweep against
  *  the real database/config, releases the lock. Exits 0 whether or not work
  *  was found — "another instance is already running" is not an error. */
-function main() {
+async function main() {
   const { buildConfig } = require("../server/config");
   const { getDatabase } = require("../server/db/init");
 
@@ -89,7 +94,7 @@ function main() {
   const cfg = buildConfig();
   const db = getDatabase();
   try {
-    const summary = runCycle(db, cfg);
+    const summary = await runCycle(db, cfg);
     defaultLog({ level: "info", event: "sweep_completed", summary });
   } finally {
     db.close();
@@ -98,7 +103,10 @@ function main() {
 }
 
 if (require.main === module) {
-  main();
+  main().catch((err) => {
+    defaultLog({ level: "error", event: "sweep_crashed", error: err.message });
+    process.exitCode = 1;
+  });
 }
 
 module.exports = { runCycle, main, DEFAULT_LOCK_FILE };

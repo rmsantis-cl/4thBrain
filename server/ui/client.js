@@ -124,6 +124,9 @@ const CLIENT_JS = `
       .catch(function () { statusGrid.innerHTML = '<div class="stat-card"><div class="label">Failed to load</div></div>'; });
   }
 
+  var jobsGrid = document.getElementById('jobs-grid');
+  var jobsFailed = document.getElementById('jobs-failed');
+
   function renderStatus(data) {
     var s = data.sources;
     statusGrid.innerHTML =
@@ -139,6 +142,38 @@ const CLIENT_JS = `
       div.innerHTML = '<div class="path">' + item.path + '</div><div class="reason">' + item.reason + '</div>';
       statusSkipped.appendChild(div);
     });
+
+    var jobs = data.jobs || { counts: { active: 0, pending: 0, failed: 0, completed: 0 }, failed: [] };
+    var c = jobs.counts;
+    jobsGrid.innerHTML =
+      '<div class="stat-card missing"><div class="label">Active</div><div class="value">' + c.active + '</div></div>' +
+      '<div class="stat-card"><div class="label">Pending</div><div class="value">' + c.pending + '</div></div>' +
+      '<div class="stat-card skipped"><div class="label">Failed</div><div class="value">' + c.failed + '</div></div>' +
+      '<div class="stat-card current"><div class="label">Completed</div><div class="value">' + c.completed + '</div></div>';
+
+    jobsFailed.innerHTML = '';
+    (jobs.failed || []).forEach(function (job) {
+      var div = document.createElement('div');
+      div.className = 'skip-item';
+      div.innerHTML =
+        '<div class="path">Job #' + job.id + ' (' + job.jobType + ')</div>' +
+        '<div class="reason">' + job.reason + '</div>';
+      var retryBtn = document.createElement('button');
+      retryBtn.className = 'btn secondary';
+      retryBtn.type = 'button';
+      retryBtn.textContent = 'Retry';
+      retryBtn.style.marginTop = '6px';
+      retryBtn.addEventListener('click', function () { retryJob(job.id); });
+      div.appendChild(retryBtn);
+      jobsFailed.appendChild(div);
+    });
+  }
+
+  function retryJob(jobId) {
+    fetch('/api/status/retry/' + jobId, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function (res) { return res.json(); })
+      .then(function () { loadStatus(); })
+      .catch(function () { loadStatus(); });
   }
 
   statusRefreshBtn.addEventListener('click', loadStatus);

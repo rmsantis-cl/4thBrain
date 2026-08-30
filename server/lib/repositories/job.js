@@ -30,6 +30,11 @@ class JobRepository {
     return this.db.prepare(`SELECT ${COLUMNS} FROM job WHERE status = ? ORDER BY id`).all(status);
   }
 
+  /** Story 6.3 dashboard: SELECT status, COUNT(*) FROM job GROUP BY status. */
+  countsByStatus() {
+    return this.db.prepare("SELECT status, COUNT(*) as count FROM job GROUP BY status").all();
+  }
+
   create(jobType, status, documentId, parentJobId) {
     if (!jobType) throw new ValidationError("job_type is required");
     if (!status) throw new ValidationError("status is required");
@@ -78,6 +83,18 @@ class JobRepository {
   markFailed(id) {
     if (!id) throw new ValidationError("id is required");
     this.db.prepare(`UPDATE job SET status = 'Failed', end_date = ${NOW} WHERE id = ?`).run(id);
+    return this.get(id);
+  }
+
+  /** Story 6.3 "Retry" action: re-queues a Failed job by resetting it to New,
+   *  clearing the previous run's timestamps. Only applies from status='Failed'
+   *  so a concurrent retry click can't re-queue a job twice. */
+  retry(id) {
+    if (!id) throw new ValidationError("id is required");
+    const result = this.db
+      .prepare("UPDATE job SET status = 'New', start_date = NULL, end_date = NULL WHERE id = ? AND status = 'Failed'")
+      .run(id);
+    if (result.changes === 0) return null; // not found, or not currently Failed
     return this.get(id);
   }
 
