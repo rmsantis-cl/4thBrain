@@ -14,6 +14,28 @@ class JobFileRepository {
     return this.db.prepare("SELECT id, name, path, mime_type, directory, job_id, status, lock_by_PID FROM job_file ORDER BY id").all();
   }
 
+  listForJob(jobId) {
+    return this.db.prepare("SELECT id, name, path, mime_type, directory, job_id, status, lock_by_PID FROM job_file WHERE job_id = ? ORDER BY id").all(jobId);
+  }
+
+  /** Used to detect a file that's already tracked by a job (e.g. by the web
+   *  ingestion form) before a directory watcher would otherwise re-register
+   *  it as a duplicate job. */
+  findByPath(filePath) {
+    return this.db.prepare("SELECT id, name, path, mime_type, directory, job_id, status, lock_by_PID FROM job_file WHERE path = ? ORDER BY id DESC LIMIT 1").get(filePath);
+  }
+
+  /** Rows currently claimed by a worker process — used by cleanup to detect
+   *  and clear locks left behind by a crashed process. */
+  listLocked() {
+    return this.db.prepare("SELECT id, name, path, mime_type, directory, job_id, status, lock_by_PID FROM job_file WHERE lock_by_PID IS NOT NULL ORDER BY id").all();
+  }
+
+  clearLock(id) {
+    this.db.prepare("UPDATE job_file SET lock_by_PID = NULL WHERE id = ?").run(id);
+    return this.get(id);
+  }
+
   create(name, path, mimeType, directory, jobId, status, lockByPID) {
     if (!name) throw new ValidationError("name is required");
     if (!jobId) throw new ValidationError("job_id is required");

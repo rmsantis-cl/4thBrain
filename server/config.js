@@ -18,11 +18,14 @@ function buildConfig() {
   const rawDir = params.raw_dir;
   const rawDirInbox = path.join(rawDir, "inbox");
   const rawDirClipping = path.join(rawDir, "clipping");
+  const vaultDirIncoming = path.join(params.vault_dir, "incoming");
   ensureDir(rawDirInbox);
   ensureDir(rawDirClipping);
+  ensureDir(vaultDirIncoming);
 
   return {
     vaultDir: params.vault_dir,
+    vaultDirIncoming,
     smartEnvDir: params.smart_env_dir,
     rawDir,
     rawDirInbox,

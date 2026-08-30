@@ -1,4 +1,4 @@
-const { ValidationError, NotFoundError } = require("./errors");
+const { ValidationError } = require("./errors");
 const { assertExists } = require("./helpers");
 
 class ClassificationRepository {
@@ -7,18 +7,18 @@ class ClassificationRepository {
   }
 
   get(name) {
-    return this.db.prepare("SELECT name, parent, description FROM classification WHERE name = ?").get(name);
+    return this.db.prepare("SELECT name, parent FROM classification WHERE name = ?").get(name);
   }
 
   list() {
-    return this.db.prepare("SELECT name, parent, description FROM classification ORDER BY name").all();
+    return this.db.prepare("SELECT name, parent FROM classification ORDER BY name").all();
   }
 
-  create(name, parent, description) {
+  create(name, parent) {
     if (!name) throw new ValidationError("name is required");
     if (parent) assertExists(this.db, "classification", "name", parent, "parent classification");
     try {
-      this.db.prepare("INSERT INTO classification (name, parent, description) VALUES (?, ?, ?)").run(name, parent || null, description || null);
+      this.db.prepare("INSERT INTO classification (name, parent) VALUES (?, ?)").run(name, parent || null);
       return this.get(name);
     } catch (err) {
       if (err.message.includes("UNIQUE constraint failed")) {
@@ -28,10 +28,10 @@ class ClassificationRepository {
     }
   }
 
-  update(name, parent, description) {
+  update(name, parent) {
     if (!name) throw new ValidationError("name is required");
     if (parent) assertExists(this.db, "classification", "name", parent, "parent classification");
-    this.db.prepare("UPDATE classification SET parent = ?, description = ? WHERE name = ?").run(parent || null, description || null, name);
+    this.db.prepare("UPDATE classification SET parent = ? WHERE name = ?").run(parent || null, name);
     return this.get(name);
   }
 

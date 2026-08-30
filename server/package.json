@@ -5,10 +5,12 @@
   "description": "4thBrain single-page web UI + ingestion/chat API (EP6)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test test/*.test.js ../batch/test/*.test.js"
   },
   "dependencies": {
     "@scalar/express-api-reference": "^0.10.17",
+    "chokidar": "^4.0.3",
     "express": "^4.19.2",
     "mime-types": "^2.1.35",
     "multer": "^2.0.0",
