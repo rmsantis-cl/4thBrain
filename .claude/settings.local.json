@@ -1,10 +1,43 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__smart-connections__lookup",
+      "Bash(git mv *)",
+      "Bash(mv vault/params.json params.json)",
+      "Bash(VAULT=\"/c/Users/rsant/desar/Local Vault/Local Vault\"; ls -la \"$VAULT\" 2>&1 | head -30; echo \"---smart-env---\"; ls -la \"$VAULT/.smart-env\" 2>&1 | head -50; echo \"---obsidian---\"; ls -la \"$VAULT/.obsidian\" 2>&1 | head -50)",
+      "PowerShell(npx --yes @mermaid-js/mermaid-cli -i \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\documets\\\\design\\\\classes.mmd\" -o \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\documets\\\\design\\\\classes.png\" -b white 2>&1)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(mkdir -p \"styles/swiss-chat\")",
+      "Bash(wsl.exe --version)",
+      "Read(//proc/**)",
+      "Bash(ls -la ~/.claude.json 2>/dev/null; ls -la ~/.claude/ 2>/dev/null | head -30)",
+      "Bash(python3 -c ' *)",
+      "Bash(sqlite3 --version)",
+      "Bash(rm -f /tmp/schema-test.db)",
+      "Bash(sqlite3 /tmp/schema-test.db)",
+      "Bash(sqlite3 /tmp/schema-test.db \".tables\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"SELECT name, parent FROM classification ORDER BY name;\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"SELECT name, description FROM job_status;\")",
+      "Bash(sqlite3 /tmp/schema-test.db \".schema job_file\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"PRAGMA foreign_key_check;\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"INSERT INTO classification \\(name, parent\\) VALUES \\('VAULT_DIR', NULL\\);\")",
+      "Bash(sqlite3 /tmp/schema-test.db \"PRAGMA foreign_keys = ON; INSERT INTO job \\(job_type, status\\) VALUES \\('ingest', 'Bogus'\\);\")",
+      "Bash(sqlite3 /tmp/schema-test.db 'PRAGMA foreign_keys = ON; *)",
+      "Bash(sqlite3 /tmp/schema-test.db \"UPDATE tag SET end_date = datetime\\('now'\\), active = 0 WHERE name = 'urgent'; SELECT name, end_date, active FROM tag;\")",
+      "PowerShell(cd \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\server\"; npm install 2>&1 | Out-Null; if \\($?\\) { \"✓ npm install succeeded\" } else { \"✗ npm install failed \\(exit code $LASTEXITCODE\\)\" })",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" restart)",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" stop)",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" start)",
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" status)",
+      "PowerShell(git -C \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\" status)",
+      "PowerShell(git -C \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\" branch -a)",
+      "PowerShell(git -C \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\" diff --name-status v03..v03-eth)"
+    ]
+  },
   "enabledMcpjsonServers": [
     "smart-connections"
   ],
-  "permissions": {
-    "allow": [
-      "mcp__smart-connections__lookup"
-    ]
-  }
+  "showThinkingSummaries": false
 }

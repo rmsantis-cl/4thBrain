@@ -1,0 +1,36 @@
+erDiagram
+    STATUS {
+        integer id PK
+        text name UK "New | Processing | Indexed | Failed | Archived"
+        text description
+    }
+
+    CLASSIFICATION {
+        text id PK "UUID"
+        text name
+        text parent_id FK "self-reference, nullable"
+    }
+
+    DOCUMENT {
+        text id PK "UUID"
+        text name
+        text uri_location "file: https: http: obsidian:"
+        integer status_id FK
+        text created
+        text updated
+        text classification_id FK "nullable"
+    }
+
+    JOB {
+        text id PK "UUID"
+        text job_type
+        text start_date "nullable"
+        text end_date "nullable"
+        text status "execution status string, not FK"
+        text parent_job_id FK "self-reference, nullable"
+    }
+
+    STATUS ||--o{ DOCUMENT : "status_id"
+    CLASSIFICATION ||--o{ DOCUMENT : "classification_id"
+    CLASSIFICATION ||--o{ CLASSIFICATION : "parent_id"
+    JOB ||--o{ JOB : "parent_job_id"

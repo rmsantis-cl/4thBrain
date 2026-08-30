@@ -1,0 +1,42 @@
+@startuml
+autonumber
+
+actor Coordinator
+participant Ingestor
+participant WebClipper
+participant TextExtractor
+participant Indexer
+participant Classifier
+database "Raw Repo" as RawRepo
+database "Notes Repo" as NotesRepo
+database "Doc Repo" as DocRepo
+
+Coordinator -> Ingestor : Deliver Document
+
+par Binary Processing
+    Ingestor -> TextExtractor : Send Binaries
+    alt Extraction Success
+        TextExtractor -> Ingestor : Send Extracted Text
+        Ingestor -> Indexer : Send Text
+    else Extraction Failure
+        TextExtractor -> RawRepo : Save Unprocessed File
+    end
+else URL Processing
+    Ingestor -> WebClipper : Send URL
+    WebClipper -> WebClipper : Fetch Web Content
+    WebClipper -> Ingestor : Send Retrieved File
+else Text Processing
+    Ingestor -> Indexer : Send Text
+end
+
+alt Indexing Success
+    Indexer -> Indexer : Embed Text
+    Indexer -> Classifier : Send Indexed Document
+    Classifier -> Classifier : Determine Topic
+    Classifier -> DocRepo : Save Document
+else Indexing Failure
+    Indexer -> NotesRepo : Save Document
+end
+
+@enduml
+

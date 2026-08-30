@@ -1,0 +1,62 @@
+classDiagram
+    class Document {
+        *id*: TEXT, PK, not null
+        *name*: TEXT, not null
+        *uri_location*: TEXT, not null
+        *status_id*: INTEGER, FK Status(id), not null
+        *created*: TEXT, not null
+        *updated*: TEXT, not null
+        *topic_id*: TEXT, FK Classification(id)
+    }
+
+    class Status {
+        *id*: INTEGER, PK, not null
+        *name*: TEXT, not null
+        *description*: TEXT
+    }
+
+    class Classification {
+        *id*: TEXT, PK, not null
+        *name*: TEXT, not null
+        *parent_id*: TEXT, FK Classification(id)
+    }
+
+    class Job {
+        *id*: TEXT, PK, not null
+        *job_type_id*: TEXT, FK JobType(id), not null
+        *start_date*: TEXT
+        *end_date*: TEXT
+        *status*: TEXT, not null
+        *parent_job_id*: TEXT, FK Job(id)
+    }
+
+    class JobType {
+        *id*: TEXT, PK, not null
+        *name*: TEXT, not null
+        *description*: TEXT
+    }
+
+    class Process {
+        *id*: TEXT, PK, not null
+        *name*: TEXT, not null
+        *description*: TEXT
+        *environment*: TEXT
+    }
+
+    class JobDocument {
+        *id*: TEXT, PK, not null
+        *job_id*: TEXT, FK Job(id), not null
+        *doc_id*: TEXT, FK Document(id), not null
+        *process_id*: TEXT, FK Process(id), not null
+        *pid*: TEXT
+        *status*: TEXT, not null
+    }
+
+    Status --> Document : status_id
+    Classification --> Document : topic_id
+    Classification --> Classification : parent_id
+    JobType --> Job : job_type_id
+    Job --> Job : parent_job_id
+    Job --> JobDocument : job_id
+    Document --> JobDocument : doc_id
+    Process --> JobDocument : process_id
