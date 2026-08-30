@@ -65,15 +65,13 @@ Capture screenshots of each page in baseline state (tagged with `@visual`):
 - **global-setup.js**: Pre-flight port 3100 check, fail fast if already bound (avoid silent timeout)
 - **helpers.js**: `gotoPanel`, `collectConsoleIssues`, `assertNoHorizontalOverflow`, `uniqueName`
 
-### 5. CI/CD Integration
-**File:** `.github/workflows/ui-tests.yml` (new)
+### 5. Local Test Execution
 
-Runs on every push to `main` and `develop`:
-- Install root and server dependencies (`npm ci` in both)
-- Install Playwright browsers (`npx playwright install --with-deps`)
-- Run Playwright tests (`npx playwright test`; webServer auto-starts with isolation env vars)
-- Upload HTML report on failure for visual inspection
-- Report results to PR/commit status
+Tests run locally on developer machines via:
+- `npm run test:ui` — run all tests headless
+- `npm run test:ui:functional` — run without visual regression tests (avoids Windows/Linux baseline diffs)
+- `npx playwright test --debug` — interactive step-through debugging
+- `npx playwright show-report` — view HTML report with screenshots and traces
 
 ### 6. Documentation
 **Files:** `tests/ui/README.md`, `CLAUDE.md` (Testing section added)

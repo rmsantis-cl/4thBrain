@@ -78,19 +78,18 @@ See `documets/design/Gantt Chart.md` for exact story-level day scheduling and de
 
 ## Testing
 
-**Story 13.4** (Automated UI Testing & Visual Regression Suite) implements a Playwright-based test suite covering the web UI.
+**Story 13.4** (Automated UI Testing & Visual Regression Suite) implements a Playwright-based browser test suite covering the web UI.
 
 **Quick start:**
 ```bash
 npm run test:ui                    # Run all tests
 npm run test:ui:functional         # Run without visual-diff noise (local Windows dev)
 npx playwright show-report         # View test report after running
-npx playwright test --debug        # Step through a test
+npx playwright test --debug        # Step through a test interactively
 ```
 
 **Key details:**
 - Tests run against an isolated server instance with its own database and temporary vault directory — zero risk to production data
-- Runs automatically in CI on every push via `.github/workflows/ui-tests.yml`
 - Full documentation in `tests/ui/README.md`
 - Test specs: `core.spec.js` (shell/nav), `ingestion.spec.js` (job creation), `admin.spec.js` (table browser), `api-docs.spec.js`, `dev-gating.spec.js` (auth/gating), `mobile.spec.js` (responsiveness)
-- Visual baselines must be generated inside the official Playwright Docker image (CI runs on Linux; Windows-native baselines would diverge) — see `tests/ui/README.md` for Docker command or CI-artifact fallback method
+- Visual baselines generated locally; for Docker-based baseline generation on Windows, see `tests/ui/README.md`

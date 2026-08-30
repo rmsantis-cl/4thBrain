@@ -192,17 +192,9 @@ Tests tagged with `@visual` are excluded from `npm run test:ui:functional`.
 | `dev-gating.spec.js` | Verify dev-only routes return 403 in prod mode |
 | `mobile.spec.js` | Mobile viewport responsiveness |
 
-## CI/CD Integration
+## Running Tests
 
-Tests run automatically on every push and PR via `.github/workflows/ui-tests.yml`:
-
-- Runs on `ubuntu-latest` (Linux)
-- Node 22 (latest)
-- Installs Playwright with browser binaries
-- Uploads HTML report on failure
-- Timeout: 20 minutes
-
-**Note:** CI runs on Linux, so visual baselines must be Linux-generated (hence the Docker recommendation for baseline updates on Windows).
+Tests are run manually on your machine via `npm run test:ui` or through the Playwright CLI. There is no automated CI/CD pipeline — all test execution is local.
 
 ## Troubleshooting
 
