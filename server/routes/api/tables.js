@@ -5,11 +5,19 @@ const { ValidationError, NotFoundError } = require("../../lib/repositories/error
 
 router.use(devOnly);
 
+// Tables the generic /:table dispatcher may serve. document_tag is deliberately
+// excluded — it has no list/get/create/update/remove and is only reachable via
+// the nested /document/:id/tags routes below.
+const GENERIC_TABLES = new Set([
+  "status", "job_status", "job_type", "classification",
+  "tag", "document", "job", "job_file",
+]);
+
 // Generic table routes
 router.get("/:table", (req, res, next) => {
   try {
+    if (!GENERIC_TABLES.has(req.params.table)) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const repo = req.app.locals.repositories[req.params.table];
-    if (!repo) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const rows = repo.list();
     res.json(rows);
   } catch (err) {
@@ -19,8 +27,8 @@ router.get("/:table", (req, res, next) => {
 
 router.post("/:table", (req, res, next) => {
   try {
+    if (!GENERIC_TABLES.has(req.params.table)) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const repo = req.app.locals.repositories[req.params.table];
-    if (!repo) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const row = repo.create(...Object.values(req.body));
     res.status(201).json(row);
   } catch (err) {
@@ -30,8 +38,8 @@ router.post("/:table", (req, res, next) => {
 
 router.get("/:table/:key", (req, res, next) => {
   try {
+    if (!GENERIC_TABLES.has(req.params.table)) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const repo = req.app.locals.repositories[req.params.table];
-    if (!repo) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const row = repo.get(isNaN(req.params.key) ? req.params.key : parseInt(req.params.key, 10));
     if (!row) return res.status(404).json({ error: "Not found" });
     res.json(row);
@@ -42,8 +50,8 @@ router.get("/:table/:key", (req, res, next) => {
 
 router.patch("/:table/:key", (req, res, next) => {
   try {
+    if (!GENERIC_TABLES.has(req.params.table)) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const repo = req.app.locals.repositories[req.params.table];
-    if (!repo) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const key = isNaN(req.params.key) ? req.params.key : parseInt(req.params.key, 10);
     const row = repo.update(key, ...Object.values(req.body));
     res.json(row);
@@ -54,8 +62,8 @@ router.patch("/:table/:key", (req, res, next) => {
 
 router.delete("/:table/:key", (req, res, next) => {
   try {
+    if (!GENERIC_TABLES.has(req.params.table)) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     const repo = req.app.locals.repositories[req.params.table];
-    if (!repo) return res.status(404).json({ error: `Table '${req.params.table}' not found` });
     repo.remove(isNaN(req.params.key) ? req.params.key : parseInt(req.params.key, 10));
     res.status(204).send();
   } catch (err) {
