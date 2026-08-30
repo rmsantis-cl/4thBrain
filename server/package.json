@@ -5,7 +5,8 @@
   "description": "4thBrain single-page web UI + ingestion/chat API (EP6)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "cross-env NODE_ENV=development node index.js"
   },
   "dependencies": {
     "@scalar/express-api-reference": "^0.10.17",
@@ -15,5 +16,8 @@
     "multer": "^2.0.0",
     "openai": "^4.55.0",
     "tar": "^6.2.1"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

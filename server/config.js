@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const PARAMS_FILE = path.join(__dirname, "..", "params.json");
+const PARAMS_FILE = process.env.FOURTHBRAIN_PARAMS_FILE
+  ? path.resolve(process.env.FOURTHBRAIN_PARAMS_FILE)
+  : path.join(__dirname, "..", "params.json");
 
 function loadParams() {
   const raw = fs.readFileSync(PARAMS_FILE, "utf-8");
@@ -13,6 +15,16 @@ function ensureDir(dir) {
 }
 
 function buildConfig() {
+  // Fail-loud guard: if running under test harness, isolation env vars must be present
+  if (process.env.FOURTHBRAIN_TEST_HARNESS) {
+    if (!process.env.FOURTHBRAIN_PARAMS_FILE || !process.env.FOURTHBRAIN_DB_PATH) {
+      throw new Error(
+        "Test harness marker detected (FOURTHBRAIN_TEST_HARNESS=1) but isolation env vars are missing. " +
+        "Both FOURTHBRAIN_PARAMS_FILE and FOURTHBRAIN_DB_PATH must be set to protect the real vault/DB."
+      );
+    }
+  }
+
   const params = loadParams();
 
   const rawDir = params.raw_dir;
@@ -35,7 +47,9 @@ function buildConfig() {
     rawDirInbox,
     rawDirClipping,
     tmpDir,
-    port: params.server_port,
+    port: process.env.FOURTHBRAIN_PORT_OVERRIDE
+      ? Number(process.env.FOURTHBRAIN_PORT_OVERRIDE)
+      : params.server_port,
     bindHost: params.server_bind_host,
     ollamaBaseUrl: params.ollama_base_url,
     ollamaChatModel: params.ollama_chat_model,

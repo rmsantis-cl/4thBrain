@@ -1,0 +1,13 @@
+{
+  "name": "4thbrain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "4thBrain document ingestion, classification, and chat application",
+  "scripts": {
+    "test:ui": "playwright test",
+    "test:ui:functional": "playwright test --grep-invert @visual"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.0"
+  }
+}

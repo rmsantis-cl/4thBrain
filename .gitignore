@@ -1,2 +1,5 @@
 .backup/
 .firecrawl/
+tests/ui/.tmp/
+playwright-report/
+test-results/

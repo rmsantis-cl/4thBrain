@@ -17,12 +17,12 @@ Build an automated browser-based test suite that verifies all UI surfaces work c
 
 ## Observations
 
-- All previous UI stories (6.4 shell, 6.1 ingestion, 6.2 search, 13.1 admin, 13.3 API docs) now exist and need validation
+- UI stories 6.4 (shell), 6.1 (ingestion), 13.1 (admin), 13.3 (API docs) are built; 6.2 (search) and 6.3 (dashboard) are not yet (will defer their coverage to a future pass)
 - Manual QA screenshots became tedious; automated snapshot testing prevents visual regressions and drift
 - Test suite should be fast, deterministic, and runnable in CI/CD (headless browser support)
 - Covers: page load, navigation, form submission, button clicks, error states, mobile viewport responsiveness
-- Existing test framework in `tests/` (currently unit/integration focused); extend with browser automation
 - Every story-critical UI element must have corresponding test (accessibility, button functionality, form validation)
+- Tests verify synchronous ingestion job creation but do NOT wait for async pipeline completion (which requires Ollama/extractors unavailable in CI)
 
 ## Deliverable
 
@@ -39,59 +39,78 @@ Setup using Playwright (Node.js, headless-capable, cross-platform):
 
 | Test | Scope | Verifies |
 |------|-------|----------|
-| **Landing & Redirect** | `GET /` → `/chat` | 302 redirect works, `/chat` loads |
-| **Chat Shell Layout** | `/chat` page load | Sidebar, nav items, main panel visible; no console errors |
-| **Navigation Links** | Sidebar clicks | Ingestion, Search, Dashboard, Admin links navigate correctly |
-| **Form Submission** | `/chat` → Ingestion form | Form fields focusable, submit button clickable, POST succeeds |
-| **Search Input** | `/chat` → Search | Input accepts text, search button clickable, results display |
-| **Admin Menu** | `/admin` page load | Menu visible, links to `/admin/db` and `/api/docs` present |
-| **Admin DB Tables** | `/admin/db` page load | Table selector dropdown visible, schema preview displays, pagination controls present |
-| **API Docs** | `/api/docs` page load | Scalar UI loads, endpoints listed, no JS errors |
+| **Landing & Redirect** | `GET /` → `/chat` | 302 redirect works, `/chat` loads correctly |
+| **Chat Shell Layout** | `/chat` page load | Sidebar, nav items (ingestion/status/chat), main panel visible; no console errors |
+| **Panel Navigation** | Sidebar panel switches | Each `.nav-item[data-panel]` switches active panel correctly |
+| **Ingestion Form** | `/chat` ingestion panel | Form fields focusable, submit button clickable, API accepts POST; job row created immediately |
+| **Admin Menu** | `/admin` page load | Menu visible, links to `/admin/db` and `/api/docs` present and navigate correctly |
+| **Admin DB Tables** | `/admin/db` page load | Table selector dropdown visible, table data displays with pagination controls; filter/sort/detail/edit/delete lifecycle works |
+| **API Docs** | `/api/docs` page load | Scalar UI loads, endpoints listed, openapi.json is valid, no JS errors |
+| **Dev-Only Gating** | Admin/DB/API routes with NODE_ENV≠development | Routes return 403; non-gated routes still return 200 |
 | **Mobile Responsiveness** | All pages (360px viewport) | Text readable, buttons clickable, no horizontal scroll at 360px width |
-| **Error States** | Form validation | Empty submit shows error, invalid input shows feedback, DB error shows message |
 
 ### 3. Visual Regression Testing
-**Location:** `tests/ui/snapshots/`
+**Location:** `tests/ui/*-snapshots/`
 
-Capture screenshots of each page in baseline state:
-- Filenames: `landing-redirect.png`, `chat-shell.png`, `ingestion-form.png`, `search-results.png`, `dashboard.png`, `admin-menu.png`, `admin-db-tables.png`, `api-docs.png`
-- Baseline stored in Git; CI runs test, compares to baseline, fails if visual diff > 2% (configurable threshold)
-- Flag for human review: `--update-snapshots` to accept new baseline
+Capture screenshots of each page in baseline state (tagged with `@visual`):
+- Baselines auto-saved under `tests/ui/<spec>-snapshots/<name>-<project>-<platform>.png`
+- Stored in Git; CI runs tests, compares to baselines, fails if visual diff > 2% (configurable threshold)
+- Update baseline with `npx playwright test --update-snapshots` (must run inside official Playwright Docker image for CI OS compatibility)
+- Alternative: generate first baselines from CI failure artifacts if Docker unavailable locally
 
 ### 4. Test Configuration & Helpers
-**File:** `tests/ui/helpers.js`
+**Files:** `playwright.config.js`, `tests/ui/global-setup.js`, `tests/ui/helpers.js`
 
-```javascript
-// Example helper functions
-async function navigateTo(page, path)
-async function fillForm(page, fields)  // { selector, value }[]
-async function clickButton(page, selector)
-async function waitForElement(page, selector, timeout)
-async function takeScreenshot(page, name)
-async function checkConsoleErrors(page)
-async function setViewport(page, width, height)
-```
+- **playwright.config.js**: Single `webServer` (port 3100, `NODE_ENV=development`), two projects (`desktop-chromium`, `mobile-360`), `@visual` snapshot threshold 0.02 (2%), `reuseExistingServer: false` to prevent absorption by stray real dev server
+- **global-setup.js**: Pre-flight port 3100 check, fail fast if already bound (avoid silent timeout)
+- **helpers.js**: `gotoPanel`, `collectConsoleIssues`, `assertNoHorizontalOverflow`, `uniqueName`
 
 ### 5. CI/CD Integration
 **File:** `.github/workflows/ui-tests.yml` (new)
 
 Runs on every push to `main` and `develop`:
-```yaml
-- Install dependencies (npm i)
-- Start server (npm run dev)
-- Run Playwright tests (npx playwright test)
-- Upload screenshots (on failure) to artifact storage
-- Report results to PR/commit
-```
+- Install root and server dependencies (`npm ci` in both)
+- Install Playwright browsers (`npx playwright install --with-deps`)
+- Run Playwright tests (`npx playwright test`; webServer auto-starts with isolation env vars)
+- Upload HTML report on failure for visual inspection
+- Report results to PR/commit status
 
 ### 6. Documentation
-**File:** `tests/ui/README.md`
+**Files:** `tests/ui/README.md`, `CLAUDE.md` (Testing section added)
 
-- How to run locally: `npm run test:ui`
-- How to update snapshots: `npm run test:ui -- --update-snapshots`
-- How to debug: `npm run test:ui -- --debug` or `PWDEBUG=1`
-- Adding new tests: template and naming conventions
-- Troubleshooting: common failures and fixes
+- **README.md**: how to run (`npm run test:ui`), run functional only (`npm run test:ui:functional`), view report, update snapshots (Docker method + CI-artifact fallback), debug (`--debug` / `PWDEBUG=1`), isolation env vars and real-vault rationale, `@visual` tag convention
+- **CLAUDE.md**: add short Testing section pointing to `tests/ui/README.md`
+
+---
+
+## Test Isolation Configuration
+
+**Problem:** `params.json`'s `vault_dir` points to the user's actual Obsidian vault, and `server/index.js` starts the job-queue poller unconditionally on every boot, which writes into `vault_dir/incoming` and `vault_dir/raw`. Tests must not touch the real vault or database.
+
+**Solution:** Add optional environment variable overrides (backward-compatible, unused when unset):
+
+| Env Var | File | Purpose |
+|---------|------|---------|
+| `FOURTHBRAIN_PARAMS_FILE` | `server/config.js` | Override the path to `params.json` (enables isolated vault/raw dirs) |
+| `FOURTHBRAIN_DB_PATH` | `server/db/init.js` | Override the path to `4thbrain-metadata.db` (enables isolated test DB) |
+| `FOURTHBRAIN_PORT_OVERRIDE` | `server/config.js` | Override `params.server_port` (allows parallel server instances on different ports) |
+| `FOURTHBRAIN_TEST_HARNESS` | `server/config.js` | Marker set only by Playwright config; triggers fail-loud guard if overrides are missing |
+
+**Implementation:**
+- `server/config.js`: read env vars, assert both isolation vars are set if test-harness marker is present (fail loud, not silent)
+- `server/db/init.js`: read env var override
+- `server/routes/admin-db.js`: import `dbPath` from `db/init.js` instead of hardcoding (also fixes a pre-existing bug where `/admin`'s file-size display wouldn't reflect a DB path change)
+
+**Effect:** Playwright's `playwright.config.js` sets all four env vars when spawning each server instance, pointing to `tests/ui/.tmp/`, which is wiped on every config load. Each test run starts from a clean isolated directory tree with zero risk to the real vault or production DB.
+
+---
+
+## Out of Scope
+
+This story does **not** verify end-to-end ingestion pipeline completion:
+- Tests assert that ingestion endpoints (`POST /api/ingest/text`, `/file`, `/url`) synchronously create a job row and return success — this is verified
+- Tests do **not** wait for the async job-queue pipeline to complete (classification, vault file writes, etc.) — the pipeline requires Ollama/extractors which are unavailable in CI
+- Search and Dashboard features (Stories 6.2, 6.3) are not yet built, so coverage of those UI surfaces is deferred to a future pass
 
 ---
 
@@ -139,11 +158,11 @@ Runs on every push to `main` and `develop`:
 
 ## Dependencies
 
-- Depends on Story 6.4 (UI shell exists)
-- Depends on Story 6.1 (Ingestion form exists)
-- Depends on Story 13.1 (Admin DB UI exists)
-- Depends on Story 13.3 (API docs page exists)
-- Depends on all stories providing stable `/chat`, `/ingestion`, `/search`, `/dashboard`, `/admin`, `/admin/db`, `/api/docs` routes
+- Depends on Story 6.4 (UI shell exists) ✓
+- Depends on Story 6.1 (Ingestion form exists) ✓
+- Depends on Story 13.1 (Admin DB UI exists) ✓
+- Depends on Story 13.3 (API docs page exists) ✓
+- Note: Stories 6.2 (Search) and 6.3 (Dashboard) are not yet built; coverage deferred to a future pass
 
 ---
 

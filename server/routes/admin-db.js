@@ -2,6 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const devOnly = require("../middleware/dev-only");
+const { dbPath } = require("../db/init");
 
 const router = express.Router();
 
@@ -20,7 +21,6 @@ router.get("/", (req, res) => {
     });
 
     // Get database file stats
-    const dbPath = path.join(__dirname, "..", "4thbrain-metadata.db");
     const stats = fs.statSync(dbPath);
     const dbSizeKb = Math.round(stats.size / 1024);
     const dbModified = stats.mtime.toISOString();
