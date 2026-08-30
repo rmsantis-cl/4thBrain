@@ -8,7 +8,12 @@ const TMP_ROOT = path.join(ROOT, "tests", "ui", ".tmp");
 
 // Wipe and recreate the isolated fixture area on every config load (every run
 // starts clean; nothing here ever touches the real vault_dir/raw_dir/db).
-fs.rmSync(TMP_ROOT, { recursive: true, force: true });
+try {
+  fs.rmSync(TMP_ROOT, { recursive: true, force: true });
+} catch (err) {
+  // SQLite database might still be locked — just continue; the next run will clean it
+  if (err.code !== "EBUSY") throw err;
+}
 fs.mkdirSync(path.join(TMP_ROOT, "vault"), { recursive: true });
 fs.mkdirSync(path.join(TMP_ROOT, "raw"), { recursive: true });
 

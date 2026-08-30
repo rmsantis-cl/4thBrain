@@ -1,36 +1,36 @@
-const net = require("net");
+const http = require("http");
 
 const PORT = 3100;
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000;
 
-async function checkPortAvailable() {
+async function isServerReady(attempt = 0) {
   return new Promise((resolve) => {
-    const server = net.createServer();
+    const req = http.get(`http://127.0.0.1:${PORT}/chat`, (res) => {
+      resolve(true);
+    });
 
-    server.once("error", (err) => {
-      if (err.code === "EADDRINUSE") {
-        console.error(
-          `\n❌ FATAL: Port ${PORT} is already in use.\n` +
-          `This usually means a stray test runner or manual server is still running.\n` +
-          `Kill the process bound to port ${PORT} and try again.\n`
-        );
-        resolve(false);
+    req.on("error", (err) => {
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => {
+          resolve(isServerReady(attempt + 1));
+        }, RETRY_DELAY);
       } else {
+        console.error(
+          `\n❌ FATAL: Could not connect to server on port ${PORT} after ${MAX_RETRIES} retries.\n` +
+          `The webServer may not have started properly.\n`
+        );
         resolve(false);
       }
     });
 
-    server.once("listening", () => {
-      server.close();
-      resolve(true);
-    });
-
-    server.listen(PORT, "127.0.0.1");
+    req.setTimeout(2000);
   });
 }
 
 module.exports = async () => {
-  const available = await checkPortAvailable();
-  if (!available) {
+  const ready = await isServerReady();
+  if (!ready) {
     process.exit(1);
   }
 };
