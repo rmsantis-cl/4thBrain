@@ -1,16 +1,18 @@
 const { ValidationError } = require("./errors");
 
+const COLUMNS = "name, start_date, end_date, active";
+
 class TagRepository {
   constructor(db) {
     this.db = db;
   }
 
   get(name) {
-    return this.db.prepare("SELECT name, start_date, end_date, active FROM tag WHERE name = ?").get(name);
+    return this.db.prepare(`SELECT ${COLUMNS} FROM tag WHERE name = ?`).get(name);
   }
 
   list() {
-    return this.db.prepare("SELECT name, start_date, end_date, active FROM tag ORDER BY name").all();
+    return this.db.prepare(`SELECT ${COLUMNS} FROM tag ORDER BY name`).all();
   }
 
   create(name) {
@@ -26,15 +28,18 @@ class TagRepository {
     }
   }
 
+  /** Tags have no mutable fields beyond active/end_date (see remove/upsert) — update() exists for
+   *  interface symmetry with other repositories but there's nothing to change on an existing tag. */
   update(name) {
     if (!name) throw new ValidationError("name is required");
     const existing = this.get(name);
     if (!existing) throw new ValidationError(`tag '${name}' does not exist`);
-    return this.get(name);
+    return existing;
   }
 
+  /** End-dates the tag rather than deleting the row (tags must stay attributable to past documents). */
   remove(name) {
-    this.db.prepare("UPDATE tag SET end_date = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), active = 0 WHERE name = ?").run(name);
+    this.db.prepare("UPDATE tag SET end_date = datetime('now'), active = 0 WHERE name = ?").run(name);
   }
 
   upsert(name) {

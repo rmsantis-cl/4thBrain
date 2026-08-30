@@ -1,0 +1,17 @@
+{
+  "vault_dir": "C:\\Users\\rsant\\desar\\github\\4thBrain\\tests\\ui\\.tmp\\vault",
+  "smart_env_dir": ".smart-env",
+  "mcp_server_name": "smart-connections",
+  "mcp_package": "@yejianye/smart-connections-mcp",
+  "obsidian_vault_env_var": "OBSIDIAN_VAULT",
+  "raw_dir": "C:\\Users\\rsant\\desar\\github\\4thBrain\\tests\\ui\\.tmp\\raw",
+  "server_port": 3000,
+  "server_bind_host": "127.0.0.1",
+  "ollama_base_url": "http://localhost:11434/v1",
+  "ollama_chat_model": "llama3.2:3b",
+  "thread_count": 1,
+  "job_poll_interval_ms": 5000,
+  "log_level": "info",
+  "smart_connections_poll_interval_ms": 3000,
+  "smart_connections_poll_timeout_ms": 60000
+}

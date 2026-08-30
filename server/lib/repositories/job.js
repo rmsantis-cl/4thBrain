@@ -1,92 +1,83 @@
 const { ValidationError } = require("./errors");
 const { assertExists } = require("./helpers");
 
+const COLUMNS = "id, job_type, document_id, start_date, end_date, status, parent_job_id";
+const NOW = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
+
 class JobRepository {
   constructor(db) {
     this.db = db;
   }
 
   get(id) {
-    return this.db.prepare("SELECT id, job_type, status, document_id, parent_job_id, start_date, end_date FROM job WHERE id = ?").get(id);
+    return this.db.prepare(`SELECT ${COLUMNS} FROM job WHERE id = ?`).get(id);
   }
 
-  list(limit = null) {
-    const sql = "SELECT id, job_type, status, document_id, parent_job_id, start_date, end_date FROM job ORDER BY id";
-    if (limit) {
-      return this.db.prepare(sql + " LIMIT ?").all(limit);
-    }
-    return this.db.prepare(sql).all();
+  list() {
+    return this.db.prepare(`SELECT ${COLUMNS} FROM job ORDER BY id`).all();
   }
 
-  listNew(limit) {
-    return this.db.prepare("SELECT id, job_type, status, document_id, parent_job_id, start_date, end_date FROM job WHERE status = 'New' ORDER BY id LIMIT ?").all(limit);
+  /** Jobs in a given status for a given job_type, oldest (by id — no created_at column) first. */
+  listPending(jobTypes, status = "New", limit = 10) {
+    if (!Array.isArray(jobTypes) || jobTypes.length === 0) return [];
+    const placeholders = jobTypes.map(() => "?").join(", ");
+    return this.db
+      .prepare(`SELECT ${COLUMNS} FROM job WHERE status = ? AND job_type IN (${placeholders}) ORDER BY id LIMIT ?`)
+      .all(status, ...jobTypes, limit);
   }
 
-  create(jobType, documentId = null, parentJobId = null) {
+  listByStatus(status) {
+    return this.db.prepare(`SELECT ${COLUMNS} FROM job WHERE status = ? ORDER BY id`).all(status);
+  }
+
+  create(jobType, status, documentId, parentJobId) {
     if (!jobType) throw new ValidationError("job_type is required");
+    if (!status) throw new ValidationError("status is required");
 
     assertExists(this.db, "job_type", "name", jobType, "job_type");
+    assertExists(this.db, "job_status", "name", status, "status");
     if (documentId) assertExists(this.db, "document", "id", documentId, "document");
     if (parentJobId) assertExists(this.db, "job", "id", parentJobId, "parent_job");
 
-    this.db.prepare("INSERT INTO job (job_type, status, document_id, parent_job_id) VALUES (?, ?, ?, ?)").run(jobType, "New", documentId || null, parentJobId || null);
+    this.db
+      .prepare("INSERT INTO job (job_type, status, document_id, parent_job_id) VALUES (?, ?, ?, ?)")
+      .run(jobType, status, documentId || null, parentJobId || null);
     const id = this.db.prepare("SELECT last_insert_rowid() as id").get().id;
     return this.get(id);
   }
 
-  createChild(jobType, documentId, parentJobId) {
-    return this.create(jobType, documentId, parentJobId);
+  update(id, jobType, status, documentId, parentJobId) {
+    if (!id) throw new ValidationError("id is required");
+    if (jobType) assertExists(this.db, "job_type", "name", jobType, "job_type");
+    if (status) assertExists(this.db, "job_status", "name", status, "status");
+    if (documentId) assertExists(this.db, "document", "id", documentId, "document");
+    if (parentJobId) assertExists(this.db, "job", "id", parentJobId, "parent_job");
+
+    this.db
+      .prepare("UPDATE job SET job_type = ?, status = ?, document_id = ?, parent_job_id = ? WHERE id = ?")
+      .run(jobType || null, status || null, documentId || null, parentJobId || null, id);
+    return this.get(id);
   }
 
+  /** Transition New -> Running, stamping start_date. Only applies from status='New' to avoid a double-pickup race. */
   markRunning(id) {
     if (!id) throw new ValidationError("id is required");
-
-    this.db.prepare("UPDATE job SET status = 'Running', start_date = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?").run(id);
+    const result = this.db
+      .prepare(`UPDATE job SET status = 'Running', start_date = ${NOW} WHERE id = ? AND status = 'New'`)
+      .run(id);
+    if (result.changes === 0) return null; // already claimed by another worker, or not New
     return this.get(id);
   }
 
   markCompleted(id) {
     if (!id) throw new ValidationError("id is required");
-
-    this.db.prepare("UPDATE job SET status = 'Completed', end_date = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?").run(id);
+    this.db.prepare(`UPDATE job SET status = 'Completed', end_date = ${NOW} WHERE id = ?`).run(id);
     return this.get(id);
   }
 
   markFailed(id) {
     if (!id) throw new ValidationError("id is required");
-
-    this.db.prepare("UPDATE job SET status = 'Failed', end_date = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?").run(id);
-    return this.get(id);
-  }
-
-  update(id, { jobType, documentId, parentJobId } = {}) {
-    if (!id) throw new ValidationError("id is required");
-
-    if (jobType) assertExists(this.db, "job_type", "name", jobType, "job_type");
-    if (documentId) assertExists(this.db, "document", "id", documentId, "document");
-    if (parentJobId) assertExists(this.db, "job", "id", parentJobId, "parent_job");
-
-    const updates = [];
-    const values = [];
-
-    if (jobType !== undefined) {
-      updates.push("job_type = ?");
-      values.push(jobType);
-    }
-    if (documentId !== undefined) {
-      updates.push("document_id = ?");
-      values.push(documentId);
-    }
-    if (parentJobId !== undefined) {
-      updates.push("parent_job_id = ?");
-      values.push(parentJobId);
-    }
-
-    if (updates.length > 0) {
-      values.push(id);
-      this.db.prepare(`UPDATE job SET ${updates.join(", ")} WHERE id = ?`).run(...values);
-    }
-
+    this.db.prepare(`UPDATE job SET status = 'Failed', end_date = ${NOW} WHERE id = ?`).run(id);
     return this.get(id);
   }
 
