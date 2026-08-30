@@ -1,4 +1,4 @@
-const { ValidationError, NotFoundError } = require("./errors");
+const { ValidationError } = require("./errors");
 const { assertExists } = require("./helpers");
 
 class ClassificationRepository {
@@ -14,7 +14,7 @@ class ClassificationRepository {
     return this.db.prepare("SELECT name, parent FROM classification ORDER BY name").all();
   }
 
-  create(name, parent = null) {
+  create(name, parent) {
     if (!name) throw new ValidationError("name is required");
     if (parent) assertExists(this.db, "classification", "name", parent, "parent classification");
     try {
@@ -28,23 +28,11 @@ class ClassificationRepository {
     }
   }
 
-  update(name, parent = null) {
+  update(name, parent) {
     if (!name) throw new ValidationError("name is required");
     if (parent) assertExists(this.db, "classification", "name", parent, "parent classification");
     this.db.prepare("UPDATE classification SET parent = ? WHERE name = ?").run(parent || null, name);
     return this.get(name);
-  }
-
-  upsert(name, parent = null) {
-    if (!name) throw new ValidationError("name is required");
-    const existing = this.get(name);
-    if (existing) {
-      if (parent && existing.parent !== parent) {
-        return this.update(name, parent);
-      }
-      return existing;
-    }
-    return this.create(name, parent);
   }
 
   remove(name) {

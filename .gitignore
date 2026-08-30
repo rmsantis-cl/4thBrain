@@ -1,5 +1,3 @@
 .backup/
 .firecrawl/
-tests/ui/.tmp/
-playwright-report/
-test-results/
+batch/.worker.lock
