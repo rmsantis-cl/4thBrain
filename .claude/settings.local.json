@@ -1,5 +1,4 @@
 {
-	"showThinkingSummaries": false,
   "permissions": {
     "allow": [
       "mcp__smart-connections__lookup",
@@ -31,10 +30,14 @@
       "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" restart)",
       "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" stop)",
       "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" start)",
-      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" status)"
+      "PowerShell(& \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\\\\scripts\\\\ui-server.ps1\" status)",
+      "PowerShell(git -C \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\" status)",
+      "PowerShell(git -C \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\" branch -a)",
+      "PowerShell(git -C \"C:\\\\Users\\\\rsant\\\\desar\\\\github\\\\4thBrain\" diff --name-status v03..v03-eth)"
     ]
   },
   "enabledMcpjsonServers": [
     "smart-connections"
-  ]
+  ],
+  "showThinkingSummaries": false
 }
