@@ -89,3 +89,36 @@ test("JobRepository.create rejects an unknown job_type", () => {
   const repo = new JobRepository(db);
   assert.throws(() => repo.create("not-a-real-type", "New", null, null), /job_type not found/);
 });
+
+test("JobRepository.countsByStatus groups jobs by status (Story 6.3 dashboard)", () => {
+  const db = createTestDb();
+  const repo = new JobRepository(db);
+  const j1 = repo.create("ingest", "New", null, null);
+  repo.create("ingest", "New", null, null);
+  repo.markRunning(j1.id);
+
+  const counts = repo.countsByStatus();
+  const byStatus = Object.fromEntries(counts.map((row) => [row.status, row.count]));
+  assert.equal(byStatus.New, 1);
+  assert.equal(byStatus.Running, 1);
+});
+
+test("JobRepository.retry re-queues a Failed job and clears its timestamps", () => {
+  const db = createTestDb();
+  const repo = new JobRepository(db);
+  const job = repo.create("ingest", "New", null, null);
+  repo.markRunning(job.id);
+  repo.markFailed(job.id);
+
+  const retried = repo.retry(job.id);
+  assert.equal(retried.status, "New");
+  assert.equal(retried.start_date, null);
+  assert.equal(retried.end_date, null);
+});
+
+test("JobRepository.retry is a no-op (returns null) for a job that isn't Failed", () => {
+  const db = createTestDb();
+  const repo = new JobRepository(db);
+  const job = repo.create("ingest", "New", null, null);
+  assert.equal(repo.retry(job.id), null);
+});

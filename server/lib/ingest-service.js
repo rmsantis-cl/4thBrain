@@ -2,6 +2,7 @@ const path = require("path");
 const { createRepositories } = require("./repositories");
 const { withTransaction } = require("./repositories/tx");
 const { getDatabase } = require("../db/init");
+const fileValidator = require("./ingestion/file-validator");
 
 function parseTags(raw) {
   if (!raw) return [];
@@ -34,8 +35,13 @@ function createIngestJob(db, { name, uriLocation, mimeType, charset, tags }) {
       repos.document_tag.link(document.id, tagName);
     });
 
-    // Create job
-    const job = repos.job.create("ingest", "New", document.id);
+    // Story 1.2: files that need transcoding (per file-validator's classification)
+    // are queued as job_type 'convert' instead of 'ingest', so the worker
+    // (Story 4.1) routes them to transcode-executor.js rather than
+    // ingest-executor.js, which only handles directly-indexable text/md/html.
+    const classification = fileValidator.classify({ path: uriLocation, mime_type: mimeType });
+    const jobType = classification.kind === "indexable" ? "ingest" : "convert";
+    const job = repos.job.create(jobType, "New", document.id);
 
     // Record the staged file the job should act on. Without this, a worker
     // (Story 4.1) picking up the job has no queryable path to process.

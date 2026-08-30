@@ -75,11 +75,15 @@ function renderAddUrlPanel() {
 function renderStatusPanel() {
   return `
     <section class="panel" id="panel-ingest-status">
-      <h1>Ingest status <span class="mock-badge">mocked — Story 6.3</span></h1>
-      <p class="subtitle">Sample data — Story 6.3 wires this to server/lib/smart-connections-status.js for real.</p>
-      <div class="stat-grid" id="status-grid"></div>
+      <h1>Ingest status</h1>
+      <p class="subtitle">Live Smart Connections indexing status and job queue counts.</p>
       <button class="btn" id="status-refresh" type="button">Refresh</button>
+      <h2 class="section-heading">Smart Connections</h2>
+      <div class="stat-grid" id="status-grid"></div>
       <div class="skip-list" id="status-skipped"></div>
+      <h2 class="section-heading">Job queue</h2>
+      <div class="stat-grid" id="jobs-grid"></div>
+      <div class="skip-list" id="jobs-failed"></div>
     </section>`;
 }
 

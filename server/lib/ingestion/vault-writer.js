@@ -21,4 +21,22 @@ function copyToVaultIncoming(sourcePath, cfg, desiredName) {
   return destPath;
 }
 
-module.exports = { copyToVaultIncoming };
+/**
+ * Story 1.2 / ADR14: archives a binary original into cfg.vaultDirRaw, byte-for-
+ * byte, once transcode-executor.js has produced its indexable MD/text
+ * counterpart. Mirrors copyToVaultIncoming exactly, just targeting /raw
+ * instead of /incoming — kept as a separate export (not a shared param)
+ * because the two destinations have distinct collision domains and callers
+ * should never be able to confuse which one they meant.
+ */
+function archiveToVaultRaw(sourcePath, cfg, desiredName) {
+  if (!fs.existsSync(sourcePath)) {
+    throw new Error(`source file does not exist: ${sourcePath}`);
+  }
+
+  const destPath = resolveDestination(cfg.vaultDirRaw, desiredName);
+  fs.copyFileSync(sourcePath, destPath, fs.constants.COPYFILE_EXCL);
+  return destPath;
+}
+
+module.exports = { copyToVaultIncoming, archiveToVaultRaw };

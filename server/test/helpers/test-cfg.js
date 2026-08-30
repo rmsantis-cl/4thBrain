@@ -13,8 +13,9 @@ function createTestCfg() {
   const rawDirClipping = path.join(rawDir, "clipping");
   const vaultDir = path.join(root, "vault");
   const vaultDirIncoming = path.join(vaultDir, "incoming");
+  const vaultDirRaw = path.join(vaultDir, "raw");
 
-  for (const dir of [rawDirInbox, rawDirClipping, vaultDirIncoming]) {
+  for (const dir of [rawDirInbox, rawDirClipping, vaultDirIncoming, vaultDirRaw]) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
@@ -22,6 +23,7 @@ function createTestCfg() {
     _root: root,
     vaultDir,
     vaultDirIncoming,
+    vaultDirRaw,
     rawDir,
     rawDirInbox,
     rawDirClipping,

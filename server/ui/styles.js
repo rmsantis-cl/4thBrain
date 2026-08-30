@@ -259,6 +259,7 @@ const CSS = `
   .result-msg.visible { display: block; }
 
   /* ---------- Status panel ---------- */
+  .section-heading { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; margin: 20px 0 10px; }
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
   .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }

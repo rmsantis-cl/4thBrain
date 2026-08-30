@@ -7,7 +7,7 @@ class DocumentTagRepository {
   }
 
   listForDocument(documentId) {
-    return this.db.prepare("SELECT tag_name FROM document_tag WHERE document_id = ?").all().map(row => row.tag_name);
+    return this.db.prepare("SELECT tag_name FROM document_tag WHERE document_id = ?").all(documentId).map(row => row.tag_name);
   }
 
   link(documentId, tagName) {
