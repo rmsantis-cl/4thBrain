@@ -1,0 +1,15 @@
+[CONTEXT & OBJECTIVE]
+Submit to batch ${task description}
+
+
+[AUTONOMOUS DIRECTIVES]
+- Proceed end-to-end without asking any clarifying questions.
+- I am away from my keyboard and cannot respond to interactive prompts.
+- Make all reasonable technical and architectural decisions independently based on existing patterns in the codebase.
+- Document any assumptions you make in ASSUMPTIONS.md (or at the bottom of your final summary).
+
+[EXECUTION PROTOCOL]
+1. Explore: Inspect the necessary files and tests to understand the structure.
+2. Implement: Modify or add the required files.
+3. Validate: Run the relevant test suite and linter. If errors occur, diagnose and self-correct automatically until the suite passes.
+4. Conclude: Output a concise final report detailing changes made and exit.

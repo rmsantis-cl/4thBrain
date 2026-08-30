@@ -163,6 +163,19 @@
 > * **Dependencies:** depends on Story 4.1, depends on Story 6.4, must be worked with Story 6.1  
 > * **Status:** To Do
 
+### **Story 6.5: Chat with Llama — Local Ollama Chat Panel**
+
+> * **Abstract:** Wire the "Chat with Llama" sidebar panel to a real local Ollama call, replacing the scripted mock responses shipped with Story 6.4.  
+> * **Description:** `server/routes/chat-llama.js` currently returns one of three canned strings from `POST /api/chat/llama` with an artificial delay, and `server/ui/client.js`/`server/ui/page.js` both explicitly label the panel "mocked — Story 6.5" and cite this story number in comments — but no formal Story 6.5 existed anywhere in this design document or `documets/BACKLOG-TRACKER.md` before this entry. Replace the mock handler body with a real call to the local Ollama endpoint (`config.ollamaBaseUrl`, per `server/config.js`'s `checkOllamaReachable`), preserving the existing request/response shape (`{ message, history }` in, `{ reply }` out) so `client.js` needs no changes.  
+> * **Acceptance Criteria:**  
+  * `POST /api/chat/llama` calls the real local Ollama chat endpoint instead of returning a canned reply.  
+  * Conversation history (`llamaHistory` in `client.js`) is passed through to the model so multi-turn context works.  
+  * If Ollama is unreachable, the endpoint returns a clear error the client already surfaces ("Error reaching the chat endpoint.") rather than throwing an unhandled exception.  
+  * The `mock-badge` label on the "Chat with Llama" panel heading (`server/ui/page.js`) is removed once wired for real.  
+  * No outbound cloud calls are introduced — local Ollama only, per ADR12.  
+> * **Dependencies:** depends on Story 6.4, depends on Story 7.1/7.2 (Ollama reachable) — see `documets/PLAN-30-08-2026-EP1-Completion.md`'s dependency-check note on Stories 7.1/7.2 status before treating this as blocked  
+> * **Status:** To Do
+
 ## **EP7: System Infrastructure & Host Runtime**
 
 **Associated Requirements:** NFR1 through NFR12

@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.7
+  version: 1.8
   created-by: Claude Code
   date: 2026-08-30
 ---
@@ -28,6 +28,7 @@ Master tracking document for all project stories across all epics. Status values
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1, 6.4 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
 | 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1, 6.4 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
 | 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
+| 6.5 | Chat with Llama — Local Ollama Chat Panel | READY | 6.4, 7.1, 7.2 | UI | [[6.5](#story-65-chat-with-llama--local-ollama-chat-panel)] |
 | 7.1 | WSL2 Runtime & Resource Bound Configuration | READY | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
 | 7.2 | Process Lifecycle & MCP Server Setup | READY | 7.1 | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
 | 7.3 | SQLite Database Setup for Processing-State Persistence | COMPLETED | 7.1, 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
@@ -42,7 +43,7 @@ Master tracking document for all project stories across all epics. Status values
 | 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
 | 12.2 | Schema Redesign | READY | none | Design | [[12.2](#story-122-schema-redesign)] |
 | 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
-| 13.2 | Review Mobile UI | READY | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
+| 13.2 | Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu | COMPLETED | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
 | 13.3 | Unified Data-Access API | COMPLETED | 12.2, 6.4, 13.1, 6.1 | UI | [[13.3](#story-133-unified-data-access-api)] |
 
 ---
@@ -193,6 +194,19 @@ Master tracking document for all project stories across all epics. Status values
 | **Acceptance Criteria** | • Written style guide documents color palette, typography, spacing scale, and component patterns, reusable across Stories 6.1–6.3.<br>• Static HTML/CSS mockup demonstrates the shell (sidebar nav, greeting, quick-capture bar) rendered in a browser.<br>• Sidebar nav items and quick-capture bar are labeled for 4thBrain's actual surfaces, not copied verbatim from Claude.ai. |
 | **Status** | COMPLETED |
 | **Working Notes** | [[story-6.4.md](./story/story-6.4.md)] |
+
+---
+
+### Story 6.5: Chat with Llama — Local Ollama Chat Panel
+
+| Field | Value |
+|---|---|
+| **Abstract** | Wire the "Chat with Llama" sidebar panel to a real local Ollama call, replacing the scripted mock responses shipped with Story 6.4. |
+| **Description** | `server/routes/chat-llama.js` returns one of three canned strings from `POST /api/chat/llama`; `server/ui/client.js` and `server/ui/page.js` both cite "Story 6.5" in comments/UI badges as the story that replaces this, but no formal story existed until this entry (found during a 2026-08-30 UI orphan-page/mock-inventory review). Replace the mock handler body with a real call to the local Ollama endpoint (`config.ollamaBaseUrl`), preserving the existing `{ message, history }` request / `{ reply }` response shape so the client needs no changes. |
+| **Dependencies** | depends on Story 6.4, depends on Story 7.1/7.2 (Ollama reachable) — see `documets/PLAN-30-08-2026-EP1-Completion.md`'s note that 7.1/7.2's READY status doesn't block work that doesn't touch WSL2/Ollama process supervision directly; this story does need Ollama actually reachable, so treat that part of 7.1/7.2 as a real prerequisite here even though it wasn't for EP1 |
+| **Acceptance Criteria** | • `POST /api/chat/llama` calls the real local Ollama chat endpoint instead of returning a canned reply.<br>• Conversation history (`llamaHistory`) is passed through so multi-turn context works.<br>• Ollama-unreachable case returns a clean error, not an unhandled exception.<br>• The `mock-badge` label on the panel heading is removed once wired for real.<br>• No outbound cloud calls — local Ollama only, per ADR12. |
+| **Status** | READY |
+| **Working Notes** | none yet |
 
 ---
 
@@ -386,7 +400,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Delete `renderAdminPanel()` from `server/ui/page.js`, its call site in `renderChatPage()`, and the matching "Admin panel" block in `server/ui/client.js` and `server/ui/styles.js`. Add `GET /` returning a 302 redirect to `/chat`. Add a new dev-gated `GET /admin` page with a menu linking to `/admin/db` and `/api/docs`. The sidebar's "Admin" nav item becomes a plain link to `/admin` instead of an in-page panel toggle. `server/routes/admin-db.js` is unchanged. This story supersedes the larger draft in `documets/PLAN-28-08-2026.md` (which proposed rewiring `/admin` to `/api/tables/*` and deleting `admin-db.js`). The mobile-responsiveness audit originally scoped to this story is deferred. |
 | **Dependencies** | depends on Story 6.4 (UI shell), depends on Story 13.1 (the panel being removed) |
 | **Acceptance Criteria** | • `GET /` returns a 302 redirect to `/chat`.<br>• `GET /admin` (dev-only) returns 200 with links to `/admin/db` and `/api/docs`; 403 in non-dev mode.<br>• `GET /admin/db` is unchanged — no internal changes.<br>• `/chat` contains no embedded admin panel markup or `fetch('/admin/db/api/...')` calls.<br>• The sidebar's "Admin" nav item is a link (`<a href="/admin">`), not a panel toggle; clicking it navigates without JS errors. |
-| **Status** | REVIEW |
+| **Status** | COMPLETED — verified 2026-08-30 (UI-orphan-pages review): `server/index.js:29` has the redirect, `server/routes/admin-page.js` serves the dev-gated menu with both links, `server/ui/page.js`'s `NAV_ITEMS` renders Admin as `<a href="/admin">` not a panel, no embedded admin markup remains in `renderChatPage()`. Summary table previously mislabeled this row "Review Mobile UI" at status READY — corrected to match this section, which was already accurate. |
 
 ---
 
@@ -419,6 +433,7 @@ Master tracking document for all project stories across all epics. Status values
 - **2026-08-28** — Added Story 13.3 (Unified Data-Access API), READY, continuation of Story 13.1/6.1; formally created from its draft in `documets/PLAN-28-08-2026.md`
 - **2026-08-30** — Stories 1.1 and 4.1 moved READY → WIP: implemented and tested (32 + 18 passing tests respectively), not yet run against the real WSL2/Windows target environment. Fixed Bug 2 (repository layer out of sync with the Story 12.2 schema redesign) as a prerequisite — see `documets/bugs/Bug-2-Repository-Layer-Schema-Mismatch.md`.
 - **2026-08-30** — Story 13.3 moved READY → COMPLETED: the code was already fully implemented (commit `67e7d64`) but the tracker was never updated. Closed out by fixing two bugs found in a fresh audit against the story spec — `documentTag.js`'s `listForDocument()` never bound its query parameter, and `repositories/index.js`'s registry let `document_tag` leak into the generic `/api/tables/:table` dispatcher (which the story explicitly excludes it from), causing a 500 instead of a clean 404. Added regression coverage in `server/test/repositories.documentTag.test.js`. Also fixed unrelated leftover git conflict markers in 12 `server/test/*.js` files from the `v03-eth` merge that had silently broken `npm test` (syntax errors), and ran `npm install` to pick up the `chokidar` dependency the merge had added to `package.json` but never installed.
+- **2026-08-30** — UI orphan-page / mocked-action review (fork task): added **Story 6.5** (Chat with Llama — real Ollama wiring), READY — code already cited this story number in three places (`server/routes/chat-llama.js`, `server/ui/client.js`, `server/ui/page.js`) but it never formally existed in this doc or the design doc, a design-before-implementation gap now closed. Corrected **Story 13.2**'s summary-table row: it was titled "Review Mobile UI" at status READY, but its own detail section (correct title: "Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu") was already at REVIEW — verified against running code that all 5 acceptance criteria are actually met, moved to COMPLETED. Confirmed the mock-badge-labeled "Ingest status" (Story 6.3, still READY) and "Chat with Llama" (now Story 6.5) panels are the only two mocked UI actions; the sidebar's static "Recent" activity list (`server/ui/page.js`) is hardcoded fake data with no backing Story at all — logged as `documets/DESIGN-DEBT.md` item 4 rather than a new story, since scope (real vs. recent-N-jobs vs. something else) needs a decision first. Story 6.2 (search) has zero UI presence — no panel exists yet, not an orphan, just not started. No code files were modified in this pass, only tracking docs.
 
 ---
 
