@@ -29,9 +29,7 @@ CREATE TABLE document (
   status TEXT NOT NULL REFERENCES status(name),
   created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  topic TEXT REFERENCES classification(name),
-  parent INTEGER REFERENCES document(id),
-  author TEXT
+  topic TEXT REFERENCES classification(name)
 );
 
 CREATE TABLE tag (
@@ -76,7 +74,6 @@ CREATE TABLE job_file (
 -- Indexes on all foreign keys for query performance
 CREATE INDEX idx_document_status ON document(status);
 CREATE INDEX idx_document_topic ON document(topic);
-CREATE INDEX idx_document_parent ON document(parent);
 CREATE INDEX idx_classification_parent ON classification(parent);
 CREATE INDEX idx_document_tag_tag ON document_tag(tag_name);
 CREATE INDEX idx_job_type ON job(job_type);

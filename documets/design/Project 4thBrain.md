@@ -367,22 +367,3 @@
   * `tagRepository`, `statusRepository`, and `jobTypeRepository`'s `update()` reject changes to the `name` column (the primary key) — renaming means end-dating the old row and inserting a new one, not an in-place `UPDATE`.  
 > * **Dependencies:** depends on Story 12.2 (corrected schema), depends on Story 6.4, depends on Story 13.1, depends on Story 6.1  
 > * **Status:** Approved for implementation planning
-
-### **Story 13.4: Automated UI Testing & Visual Regression Suite**
-
-> * **Abstract:** Build an automated browser-based test suite that verifies all UI surfaces work correctly, captures visual snapshots for regression detection, and validates interactive elements (forms, buttons, navigation).
-> * **Description:** Extend the existing `tests/` directory with Playwright-based browser automation tests covering all user-facing pages and flows (landing redirect, chat shell, navigation, ingestion form, search, dashboard, admin menu, database inspector, API docs). Each page gets a visual snapshot baseline committed to Git; CI runs tests on every push and detects visual regressions (>2% pixel diff) and functional failures (page load, button clicks, form submission). Tests run headless (for CI) and headed (for debugging), and support mobile viewport (360px) to verify mobile-responsive design. Screenshot artifacts on CI failure help QA investigate breaks.
-> * **Acceptance Criteria:**  
-  * `tests/ui/` directory contains Playwright test configuration and test suite (`core.spec.js`).  
-  * At least 10 tests cover: landing/redirect, chat shell layout, sidebar navigation, ingestion form, search input, admin menu, database inspector, API docs, mobile viewport, and error states.  
-  * All tests are deterministic (pass consistently on repeated runs without flakiness).  
-  * Visual snapshots captured and baseline stored in `tests/ui/snapshots/` and committed to Git.  
-  * `.github/workflows/ui-tests.yml` runs tests on every push; PR shows pass/fail status.  
-  * No unhandled JavaScript errors on any page (test checks `console.error`).  
-  * All button/link clicks succeed (no 404s or network errors).  
-  * Forms submit successfully and show confirmation or results page.  
-  * Mobile viewport (360px width) renders without horizontal scroll on all pages.  
-  * `tests/ui/README.md` documents how to run tests locally, debug, update snapshots, and add new tests.  
-  * CI test run time is < 5 minutes (goal for fast feedback).  
-> * **Dependencies:** depends on Story 6.4 (UI shell), depends on Story 6.1 (Ingestion form), depends on Story 6.2 (Search), depends on Story 13.1 (Admin DB), depends on Story 13.3 (API docs)  
-> * **Status:** Ready

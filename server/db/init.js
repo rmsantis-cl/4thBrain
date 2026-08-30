@@ -2,9 +2,7 @@ const sqlite = require("node:sqlite");
 const fs = require("fs");
 const path = require("path");
 
-const dbPath = process.env.FOURTHBRAIN_DB_PATH
-  ? path.resolve(process.env.FOURTHBRAIN_DB_PATH)
-  : path.join(__dirname, "..", "4thbrain-metadata.db");
+const dbPath = path.join(__dirname, "..", "4thbrain-metadata.db");
 
 function initDatabase() {
   const schemaPath = path.join(__dirname, "..", "..", "documets", "design", "schema.sql");

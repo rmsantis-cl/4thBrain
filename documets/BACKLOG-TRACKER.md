@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.5
+  version: 1.6
   created-by: Claude Code
-  date: 2026-08-28
+  date: 2026-08-30
 ---
 
 # BACKLOG TRACKER — 4thBrain Stories
@@ -17,12 +17,12 @@ Master tracking document for all project stories across all epics. Status values
 
 | ID | Story | Status | Dependencies | Area | [[Detail](#story-details)] |
 |---|---|---|---|---|---|
-| 1.1 | Direct Structured Vault Ingestion | READY | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
+| 1.1 | Direct Structured Vault Ingestion | WIP | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
 | 1.2 | Unstructured Text Parsing & Sanitization | READY | 1.1 | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
 | 2.1 | Local LLM Metadata & Tag Inference | READY | 1.1, 7.1 | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
 | 3.1 | Smart Connections Vector Indexing Pipeline | READY | 1.1, 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
-| 4.1 | Background Sweep & Queue Execution Script | READY | 1.1, 2.1 | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
+| 4.1 | Background Sweep & Queue Execution Script | WIP | 1.1, 2.1 | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
 | 5.1 | Multi-Source Briefing Synthesis Engine | READY | 2.1, 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
 | 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1, 6.4 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
@@ -57,7 +57,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Build local pipeline handlers that watch `$RAW_DIR` (outside the vault) for incoming files. Text, Markdown, and HTML files are already indexable, so they are copied directly to `$VAULT_DIR/incoming` without transformation, preserving existing frontmatter and structure. See ADR14 for the full directory layout. |
 | **Dependencies** | depends on Story 7.1, depends on Story 7.2 |
 | **Acceptance Criteria** | • Text, Markdown, and HTML files placed in `$RAW_DIR` are copied to `$VAULT_DIR/incoming` without modification.<br>• Ingested files maintain original frontmatter schema and metadata.<br>• Target subfolder path resolution writes files directly to designated locations without file corruption. |
-| **Status** | READY |
+| **Status** | WIP |
+| **Implementation** | `server/lib/ingestion/{file-validator,path-resolver,vault-writer,ingest-executor,watcher}.js` — 32 passing tests. Not yet run against the real WSL2/Windows target environment. Fixed Bug 2 (repository/schema mismatch) as a prerequisite. |
 | **Working Notes** | [[story-1.1.md](./story/story-1.1.md)] |
 
 ---
@@ -124,8 +125,9 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Build a scheduled background execution worker that processes queued ingestion items, executes batch classification, cleans up orphaned data, and validates local links. |
 | **Dependencies** | depends on Story 1.1, depends on Story 2.1 |
 | **Acceptance Criteria** | • Batch worker executes unattended against pending queue items.<br>• Job state flags (pending, completed, failed) update correctly upon processing completion. |
-| **Status** | READY |
-| **Working Notes** | [[story-4.1.md](./story/story-4.1.md)] (not yet created) |
+| **Status** | WIP |
+| **Implementation** | `batch/{lock-manager,job-executors,cleanup,worker}.js` — one-sweep-per-invocation model (not an in-process poll loop), 18 passing tests including a full end-to-end sweep against Story 1.1's executor. Scheduling (systemd timer/cron) not exercised — no real WSL2 host here. |
+| **Working Notes** | [[story-4.1.md](./story/story-4.1.md)] |
 
 ---
 
@@ -415,6 +417,7 @@ Master tracking document for all project stories across all epics. Status values
 - **2026-08-28** — Added Story 12.2 (Schema Redesign), READY, continuation of Story 12.1; closes Bug 1
 - **2026-08-28** — Appended "Follow-up Tasks" section: documentation backpropagation for the Story 12.2 schema redesign
 - **2026-08-28** — Added Story 13.3 (Unified Data-Access API), READY, continuation of Story 13.1/6.1; formally created from its draft in `documets/PLAN-28-08-2026.md`
+- **2026-08-30** — Stories 1.1 and 4.1 moved READY → WIP: implemented and tested (32 + 18 passing tests respectively), not yet run against the real WSL2/Windows target environment. Fixed Bug 2 (repository layer out of sync with the Story 12.2 schema redesign) as a prerequisite — see `documets/bugs/Bug-2-Repository-Layer-Schema-Mismatch.md`.
 
 ---
 

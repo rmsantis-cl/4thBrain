@@ -72,24 +72,6 @@ See `documets/design/Gantt Chart.md` for exact story-level day scheduling and de
 
 ## Working in This Repository
 
-- Real application code exists under `server/` — start it via `scripts/ui-server.ps1 start` (sets `NODE_ENV=development` for the admin panel) or `cd server && npm start` directly.
+- Real application code exists under `server/` — start it via `scripts/ui-server.ps1 start` (sets `NODE_ENV=development` for the admin panel) or `cd server && npm start` directly. No automated test suite exists yet (Story 8.1, To Do).
 - Before writing or editing any code, it must trace to an existing Epic+Story and a design artifact — see `.claude/rules/design-before-implementation.md`. If either is missing, stop and log a Design Debt entry rather than implementing around the gap.
 - Use the `dictation` skill's persona/interview/pause protocol when the user is dictating requirements or specs hands-free.
-
-## Testing
-
-**Story 13.4** (Automated UI Testing & Visual Regression Suite) implements a Playwright-based browser test suite covering the web UI.
-
-**Quick start:**
-```bash
-npm run test:ui                    # Run all tests
-npm run test:ui:functional         # Run without visual-diff noise (local Windows dev)
-npx playwright show-report         # View test report after running
-npx playwright test --debug        # Step through a test interactively
-```
-
-**Key details:**
-- Tests run against an isolated server instance with its own database and temporary vault directory — zero risk to production data
-- Full documentation in `tests/ui/README.md`
-- Test specs: `core.spec.js` (shell/nav), `ingestion.spec.js` (job creation), `admin.spec.js` (table browser), `api-docs.spec.js`, `dev-gating.spec.js` (auth/gating), `mobile.spec.js` (responsiveness)
-- Visual baselines generated locally; for Docker-based baseline generation on Windows, see `tests/ui/README.md`

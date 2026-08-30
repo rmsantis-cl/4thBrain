@@ -1,9 +1,9 @@
 ---
 name: PROJECT-SUMMARY
 description: Single-page current-state summary of 4thBrain — read this first instead of rescanning the repo
-date: 2026-08-27
+date: 2026-08-30
 metadata:
-  version: 1.1
+  version: 1.2
   created-by: Claude Code
 ---
 
@@ -19,19 +19,21 @@ A privacy-first, locally hosted "second brain": captures notes/transcripts/links
 
 Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) are complete. Phase 5 (Story Creation / Dev / Release) is **in progress** — several stories are implemented despite `documets/PLAN.md` still saying "all Stories = To Do" (that file is stale; trust `documets/BACKLOG-TRACKER.md` instead).
 
-## Current story status (source: `documets/BACKLOG-TRACKER.md`, 2026-08-26)
+## Current story status (source: `documets/BACKLOG-TRACKER.md`, 2026-08-30)
 
 **COMPLETED**
 - 3.2 — Smart Connections indexing-status spike
 - 6.4 — Common UI Shell & Design System
-- 6.1 — Web Ingestion Form & Submission Handler
+- 6.1 — Web Ingestion Form & Submission Handler (see 2026-08-30 note below — its backend dependency, Bug 2, was only fixed this pass)
 - 7.3, 7.4, 7.5 — SQLite setup, schema DDL, seed data
 - 12.1 — DB schema design (`documets/design/schema.sql`, `classes.md`)
 - 13.1 — Database Inspector / Admin panel (`server/routes/admin-db.js`, `/admin/db`, dev-mode protected)
 
-**READY (not started)** — 1.1, 1.2, 2.1, 3.1, 4.1, 5.1, 6.2, 6.3, 7.1, 7.2, 8.1, 8.2, 9.1, 10.1, 11.1, 13.2 (mobile UI review)
+**WIP**
+- 1.1 — Direct Structured Vault Ingestion (`server/lib/ingestion/`, 32 tests; not run against the real WSL2/Windows target)
+- 4.1 — Background Sweep & Queue Execution Script (`batch/`, 18 tests; one-sweep-per-invocation, scheduling not exercised)
 
-No story is currently WIP as of last update.
+**READY (not started)** — 1.2, 2.1, 3.1, 5.1, 6.2, 6.3, 7.1, 7.2, 8.1, 8.2, 9.1, 10.1, 11.1, 13.2 (mobile UI review)
 
 ## Epics (EP1–EP13, see `documets/design/Project 4thBrain.md`)
 
@@ -79,6 +81,8 @@ EP7 (Infrastructure/WSL2/Ollama) is the foundation gating almost everything. EP1
 - Proposed NFR13 (Auth & Local Access Control) and NFR14 (Backup & Recovery) not yet formally scope-locked — EP9/EP10 inherit acceptance criteria from these pending items.
 - `documets/PLAN.md` is stale (dated 2026-08-24, predates the completed stories above) — don't treat it as current state; this file supersedes it for status purposes.
 - Email/Calendar OAuth handling and onboarding/first-run config UX flagged as lower-confidence scope gaps, not yet epics.
+- `documets/design/classes.mmd`/`classes.png` and `documets/design/database-schema.md` still describe the pre-Story-12.2 schema shape (documented gap from 2026-08-28, still open as of 2026-08-30 — see BACKLOG-TRACKER's "Follow-up Tasks").
+- Story 6.1's ingestion path (`server/lib/ingest-service.js`) was silently broken from 2026-08-28 (the Story 12.2 schema redesign) until 2026-08-30 — the repository layer referenced columns the redesign had removed. Fixed as Bug 2; see `documets/bugs/Bug-2-Repository-Layer-Schema-Mismatch.md`. Worth an actual smoke test against the live server next time a schema change lands, not just a doc backpropagation pass.
 
 ## Working preferences (from user feedback memory)
 
@@ -86,5 +90,6 @@ EP7 (Infrastructure/WSL2/Ollama) is the foundation gating almost everything. EP1
 
 ## Changelog
 
+- 2026-08-30: Stories 1.1 and 4.1 moved READY → WIP (implemented and tested, not run against the real WSL2/Windows target — this session had no WSL2 host available). Fixed Bug 2 (repository layer out of sync with the Story 12.2 schema redesign) as a prerequisite; noted as a new open gap above. Implemented both stories together in one pass at the user's explicit request, a deliberate exception to the "build one story at a time" working preference below — they share the same job-queue plumbing and the two are meant to be invoked together (4.1's worker calls 1.1's executor).
 - 2026-08-27: Added "Data & Infrastructure" section documenting SQLite location, tables, constraints (ADR17), and Smart Connections findings from Spike 3.2.
 - 2026-08-27: Created as the canonical quick-reference summary, sourced from PLAN.md, BACKLOG-TRACKER.md, DESIGN-DEBT.md, and recent commit history.
