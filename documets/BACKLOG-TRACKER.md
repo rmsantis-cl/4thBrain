@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.9
+  version: 1.10
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -29,7 +29,7 @@ Master tracking document for all project stories across all epics. Status values
 | 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1, 6.4 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
 | 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
 | 6.5 | Chat with Llama — Local Ollama Chat Panel | READY | 6.4, 7.1, 7.2 | UI | [[6.5](#story-65-chat-with-llama--local-ollama-chat-panel)] |
-| 7.1 | WSL2 Runtime & Resource Bound Configuration | READY | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
+| 7.1 | WSL2 Runtime & Resource Bound Configuration | WIP | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
 | 7.2 | Process Lifecycle & MCP Server Setup | READY | 7.1 | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
 | 7.3 | SQLite Database Setup for Processing-State Persistence | COMPLETED | 7.1, 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
 | 7.4 | Create Database Schema from DDL | COMPLETED | 7.3 | Infrastructure | [[7.4](#story-74-create-database-schema-from-ddl)] |
@@ -219,8 +219,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Establish base system configuration files (.wslconfig, systemd/PM2 supervisor, Ollama service) to enforce local execution limits, concurrency caps (concurrency: 1), and host memory protection. |
 | **Dependencies** | None (Foundation Task) |
 | **Acceptance Criteria** | • Node.js and Ollama run inside WSL2 with GPU acceleration active.<br>• WSL2 RAM usage stays within configured bounds without host OOM errors.<br>• Concurrency locks prevent multiple simultaneous local LLM calls from overwhelming memory. |
-| **Status** | READY |
-| **Working Notes** | [[story-7.1.md](./story/story-7.1.md)] (not yet created) |
+| **Status** | WIP — GPU acceleration spiked and proven working (real inference, 29/29 layers offloaded to the Intel iGPU via SYCL/Level Zero), but not yet made permanent; `.wslconfig` and the generalized concurrency gate are still outstanding. See `documets/PLAN-31-08-2026-EP7-Completion.md`. |
+| **Working Notes** | [[story-7.1.md](./story/story-7.1.md)], [[spike-gpu-ollama.md](./story/spike-gpu-ollama.md)] |
 
 ---
 
@@ -428,6 +428,7 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Changelog
 
+- **2026-08-31** — Story 7.1 moved READY → WIP: a timeboxed GPU-acceleration spike (`documets/story/spike-gpu-ollama.md`) confirmed Intel iGPU passthrough works end-to-end inside this host's WSL2 guest — Fedora's native `intel-compute-runtime`/`intel-level-zero` packages plus Intel's IPEX-LLM Ollama build achieved real, verified GPU offload (29/29 model layers, live inference test). Not COMPLETED: the working build is a spike artifact, not yet installed permanently or wired into systemd; `.wslconfig` and the generalized Ollama-call concurrency gate remain outstanding. See `documets/PLAN-31-08-2026-EP7-Completion.md` for the full decision trail and defined next step.
 - **2026-08-31** — Story 1.1 moved WIP → COMPLETED: real-environment verification pass per `documets/PLAN-30-08-2026-EP1-Completion.md`'s "close out WIP → COMPLETED" section. Server started natively (`scripts/ui-server.ps1 start`) against real `params.json` paths; real `.md`/`.txt`/`.html` files dropped into `$RAW_DIR/inbox` were picked up by the watcher and filed byte-for-byte into `$VAULT_DIR/incoming` with frontmatter intact; a file submitted through `POST /api/ingest/file` (Story 6.1's `/chat` form path) produced exactly one job — the watcher's `job_file.findByPath()` dedup correctly skipped the resulting filesystem event; `/api/tables/document` and `/api/tables/job` confirmed `document.status="Processing"`, real `uri_location`, and `job_file.status="filed"` across all 13 jobs processed. The flagged UNC/network-share timing risk did not materialize — `raw_dir` is a plain local NTFS path. Found and fixed a real gap during this pass: `server/index.js` never called `createWatcher()` — the module was fully unit-tested but dead in production, so a file dropped outside the web form would never have been picked up by the live server. Fixed with a 2-line addition (import + `createWatcher(config, db, {...})` call) that only activates the already-designed (ADR14) and already-tested `watcher.js`; no new ingestion logic introduced.
 - **2026-08-31** — Story 1.2 moved READY → WIP: real code (`server/lib/ingestion/transcode-executor.js`, `url-relocator.js`) was implemented and tested on 2026-08-30 (per `documets/PLAN-30-08-2026-EP1-Completion.md`) but this tracker was never updated to match — corrected. Same pass swapped the PDF extraction library `pdf-parse` → OpenDataLoader PDF per new ADR19, verified live against a real Java 11 CLI invocation. Not marked COMPLETED: 2 of 5 acceptance criteria are only met for PDF/DOCX, not for HTML/web clips — `text/html` bypasses this story's code entirely via Story 1.1's direct-copy path, and no HTML sanitization exists yet. That gap is tracked by `documets/story/spike-webclipping.md` (now COMPLETED, recommends Playwright + Readability + Turndown), but the sanitization code itself hasn't been built.
 - **2026-08-26** — Initial backlog tracker created with all 23 stories across 13 epics; current status snapshot

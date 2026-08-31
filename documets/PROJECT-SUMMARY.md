@@ -3,7 +3,7 @@ name: PROJECT-SUMMARY
 description: Single-page current-state summary of 4thBrain — read this first instead of rescanning the repo
 date: 2026-08-31
 metadata:
-  version: 1.4
+  version: 1.5
   created-by: Claude Code
 ---
 
@@ -34,8 +34,9 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 **WIP**
 - 1.2 — Unstructured Text Parsing & Sanitization (`server/lib/ingestion/transcode-executor.js`, `url-relocator.js`; PDF via OpenDataLoader PDF per ADR19 — swapped 2026-08-31 from `pdf-parse`, verified live against a real Java CLI; `.docx` via `mammoth`; 12+5 tests. HTML/web-clip sanitization not implemented — the `spike-webclipping` design work is done, but the sanitization code itself isn't built yet)
 - 4.1 — Background Sweep & Queue Execution Script (`batch/`, 18 tests; one-sweep-per-invocation, scheduling not exercised)
+- 7.1 — WSL2 Runtime & Resource Bound Configuration (GPU acceleration spiked and proven working live — Intel iGPU offload via IPEX-LLM/SYCL inside the host's real WSL2 guest, 29/29 model layers offloaded, see `documets/story/spike-gpu-ollama.md`; not yet permanent — `.wslconfig` and the generalized Ollama-call concurrency gate still outstanding, see `documets/PLAN-31-08-2026-EP7-Completion.md`)
 
-**READY (not started)** — 2.1, 3.1, 5.1, 6.2, 6.3, 7.1, 7.2, 8.1, 8.2, 9.1, 10.1, 11.1, 13.2 (mobile UI review)
+**READY (not started)** — 2.1, 3.1, 5.1, 6.2, 6.3, 7.2, 8.1, 8.2, 9.1, 10.1, 11.1, 13.2 (mobile UI review)
 
 *13.3 was code-complete since commit `67e7d64` but untracked here until 2026-08-30, when two bugs found in a fresh audit (`document_tag` leaking into the generic `/api/tables/:table` dispatcher; an unbound query parameter in `documentTag.js`) were fixed and it was formally closed out.*
 
@@ -94,6 +95,7 @@ EP7 (Infrastructure/WSL2/Ollama) is the foundation gating almost everything. EP1
 
 ## Changelog
 
+- 2026-08-31: Story 7.1 moved READY → WIP after a GPU-acceleration spike (`documets/story/spike-gpu-ollama.md`) confirmed real Intel iGPU offload works inside this host's actual WSL2 guest — previous sessions' "no WSL2 host available" caveat no longer holds; this session had live WSL2/Ollama access and used it. Fedora's natively-packaged `intel-compute-runtime`/`intel-level-zero` plus Intel's IPEX-LLM Ollama build achieved verified full offload (29/29 layers, live inference test). Not COMPLETED — the working build is a spike artifact, not yet a permanent systemd-managed install; `.wslconfig` and the generalized Ollama-call concurrency gate remain open. Next step defined in `documets/PLAN-31-08-2026-EP7-Completion.md`.
 - 2026-08-31: Story 1.1 moved WIP → COMPLETED after a real-environment verification pass (server started natively against real `params.json` paths; watcher/executor/web-form/dedup/API checks all passed; UNC-timing risk did not materialize since `raw_dir` is a plain local NTFS path). Found and fixed a real wiring gap in the same pass: `server/index.js` never called `createWatcher()`, so the fully-tested watcher module was dead code in production — fixed with a 2-line addition.
 - 2026-08-31: Story 1.2 moved READY → WIP (its 2026-08-30 implementation, `server/lib/ingestion/transcode-executor.js`/`url-relocator.js`, was never reflected here — this file and BACKLOG-TRACKER both still showed READY/no-code). Same pass swapped the PDF extraction library `pdf-parse` → OpenDataLoader PDF (`@opendataloader/pdf`) per new ADR19, verified live against a real Java 11 CLI invocation. Not COMPLETED: HTML/web-clip sanitization is unimplemented (`text/html` bypasses this story's code via Story 1.1's direct-copy path) — the `spike-webclipping` design work is done (recommends Playwright + Readability + Turndown), but the sanitization code itself hasn't been built.
 - 2026-08-30: Stories 1.1 and 4.1 moved READY → WIP (implemented and tested, not run against the real WSL2/Windows target — this session had no WSL2 host available). Fixed Bug 2 (repository layer out of sync with the Story 12.2 schema redesign) as a prerequisite; noted as a new open gap above. Implemented both stories together in one pass at the user's explicit request, a deliberate exception to the "build one story at a time" working preference below — they share the same job-queue plumbing and the two are meant to be invoked together (4.1's worker calls 1.1's executor).

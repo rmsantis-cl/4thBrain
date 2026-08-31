@@ -2,7 +2,7 @@
 name: INDEX
 description: Master index of all artifacts, specs, and foundational documents in 4thBrain
 metadata:
-  version: 1.3
+  version: 1.4
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -13,6 +13,10 @@ Master catalog of all artifacts, specification documents, interview logs, and fo
 
 | File Name | History |
 |-----------|---------|
+| EPIC-TRACKER.md | [2026-08-31] Created — epic-level rollup (name, status, open stories, show stoppers) sourced from BACKLOG-TRACKER.md and DESIGN-DEBT.md |
+| PLAN-31-08-2026-EP7-Completion.md | [2026-08-31] Created — plan for Stories 7.1/7.2, grounded in a live probe of the host's actual WSL2/Ollama/GPU state<br>[2026-08-31] Recorded user decisions (GPU/concurrency/MCP/RAM cap) and the GPU spike's successful outcome; defined Story 7.1's concrete next step |
+| story/story-7.1.md | [2026-08-31] Created — working notes for Story 7.1 (READY → WIP), summarizing live host findings and the GPU spike outcome |
+| story/spike-gpu-ollama.md | [2026-08-31] Created — GPU acceleration spike for Story 7.1; confirmed real Intel iGPU offload (29/29 layers) via IPEX-LLM/SYCL inside WSL2 |
 | story/story-6.1.md | [2026-08-28] Web Ingestion Form & Submission Handler working notes; added SUB-TASKS for mock implementations (Clipper, Extractor, RAG, Classification) |
 | story/spike-webclipping.md | [2026-08-28] Spike: WebClipping Library Selection — research and evaluate web scraping/content extraction tools<br>[2026-08-31] Completed — recommends Playwright + Mozilla Readability + Turndown for HTML/text, OpenDataLoader PDF (ADR19) for PDF; POC run against 5 live URLs |
 | story/spike-extraction.md | [2026-08-28] Spike: Document Extraction Library Selection — research and evaluate PDF/image/archive extraction tools |

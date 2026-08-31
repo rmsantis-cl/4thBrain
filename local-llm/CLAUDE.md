@@ -1,9 +1,9 @@
 ---
 name: local-llm-CLAUDE
 description: Purpose and scope of the local-llm module
-date: 2026-08-24
+date: 2026-08-31
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Code
 ---
 
@@ -31,4 +31,4 @@ Full Epic/Story text: `documets/design/Project 4thBrain.md` (EP7, EP11). Require
 
 ## Status
 
-Design only — no code yet. Stories tracked in `backlog.md`.
+Story 7.1 is WIP: a GPU-acceleration spike (2026-08-31) proved Intel iGPU offload works end-to-end in this host's real WSL2 guest (see `documets/story/spike-gpu-ollama.md`), but nothing here is a permanent install yet — `.wslconfig`, a systemd-managed Ollama service, and the generalized concurrency gate are still outstanding. See `documets/PLAN-31-08-2026-EP7-Completion.md`. Stories tracked in `backlog.md`.
