@@ -1,9 +1,9 @@
 ---
 name: INDEX
 description: none
-date: 2026-08-30
+date: 2026-08-31
 metadata:
-  version: 1.36
+  version: 1.38
   created-by: Claude Code
 ---
 
@@ -102,3 +102,4 @@ History cells are a list of `[date] comment` entries, most recent last.
 | `documets/story/story-4.1.md` | [2026-08-30] Created — implemented; reconciles `story-4.1-plan.md` against the live schema (job_type enum drift, no `created_at` column) and against ADR5 (Node.js, not PowerShell) and ADR10 (concurrency=1, not `THREAD_COUNT>1`) |
 | `documets/BACKLOG-TRACKER.md`, `documets/PROJECT-SUMMARY.md`, `documets/DESIGN-DEBT.md`, `documets/INDEX.md` | [2026-08-30] Updated — Stories 1.1/4.1 READY → WIP with implementation notes; Design Debt item 3 logged (Story 1.1 vs. 3.1 ownership conflict in `story-6.1.md`'s actuator table, found while implementing 1.1); `documets/INDEX.md` also updated in parallel with this file — see `ctx-research/context-usage-report.md` "Findings" for the resulting duplicate-index gap this surfaced |
 | `ctx-research/context-usage-report.md`, `ctx-research/proposed-context-loading-rules.md` | [2026-08-30] Created — audit of every markdown file loaded into context during the Story 1.1/4.1 session (auto-injected vs. explicitly read, useful vs. inert), and six concrete proposed rules for right-sizing what auto-loads, each traced to a specific finding |
+| `.claude/skills/todo-add/SKILL.md` | [2026-08-31] Added YAML header (was missing per file-format.md requirement)<br>[2026-08-31] Moved to proper skill structure from `.claude/skills/todo-add.md` to `.claude/skills/todo-add/SKILL.md` |
