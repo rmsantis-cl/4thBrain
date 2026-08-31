@@ -2,7 +2,7 @@
 name: INDEX
 description: Master index of all artifacts, specs, and foundational documents in 4thBrain
 metadata:
-  version: 1.4
+  version: 1.5
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -13,6 +13,7 @@ Master catalog of all artifacts, specification documents, interview logs, and fo
 
 | File Name | History |
 |-----------|---------|
+| TODO-TRACKER.md | [2026-08-31] Created — actionable task tracking for open stories (READY/WIP extracted from BACKLOG-TRACKER) and manual implementation/planning tasks |
 | EPIC-TRACKER.md | [2026-08-31] Created — epic-level rollup (name, status, open stories, show stoppers) sourced from BACKLOG-TRACKER.md and DESIGN-DEBT.md |
 | PLAN-31-08-2026-EP7-Completion.md | [2026-08-31] Created — plan for Stories 7.1/7.2, grounded in a live probe of the host's actual WSL2/Ollama/GPU state<br>[2026-08-31] Recorded user decisions (GPU/concurrency/MCP/RAM cap) and the GPU spike's successful outcome; defined Story 7.1's concrete next step |
 | story/story-7.1.md | [2026-08-31] Created — working notes for Story 7.1 (READY → WIP), summarizing live host findings and the GPU spike outcome |
