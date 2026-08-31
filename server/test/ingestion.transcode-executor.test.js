@@ -9,6 +9,7 @@ const { createRepositories } = require("../lib/repositories");
 const transcodeExecutor = require("../lib/ingestion/transcode-executor");
 
 const MAMMOTH_FIXTURE = path.join(__dirname, "..", "node_modules", "mammoth", "test", "test-data", "single-paragraph.docx");
+const REAL_PDF_FIXTURE = path.join(__dirname, "fixtures", "sample.pdf");
 
 function stageAndCreateJob(db, cfg, { fileName, content, mimeType, charset = null, tags }) {
   const sourcePath = path.join(cfg.rawDirInbox, fileName);
@@ -98,6 +99,39 @@ test("execute() extracts real text from a .docx and archives the original", asyn
     const [jobFile] = repos.job_file.listForJob(job.id);
     assert.equal(jobFile.status, "filed");
     assert.equal(jobFile.path, result.destPath);
+  } finally {
+    cleanupTestCfg(cfg);
+  }
+});
+
+test("execute() extracts real text from a PDF via OpenDataLoader PDF and archives the original (ADR19)", async () => {
+  const db = createTestDb();
+  const cfg = createTestCfg();
+  try {
+    const pdfBytes = fs.readFileSync(REAL_PDF_FIXTURE);
+    const { job } = stageAndCreateJob(db, cfg, {
+      fileName: "sample.pdf",
+      content: pdfBytes,
+      mimeType: "application/pdf",
+    });
+
+    const result = await transcodeExecutor.execute(db, job, cfg);
+
+    assert.equal(result.strategy, "pdf");
+    assert.equal(result.destPath, path.join(cfg.vaultDirIncoming, "sample.md"));
+    const written = fs.readFileSync(result.destPath, "utf-8");
+    assert.match(written, /Hello OpenDataLoader Test Document/, "extracted text should land in the transcoded .md");
+    assert.match(written, /^---\nsource_raw: /, "transcoded file should reference the archived original's location");
+
+    assert.equal(result.archivedPath, path.join(cfg.vaultDirRaw, "sample.pdf"));
+    assert.ok(fs.existsSync(result.archivedPath), "original binary should be archived to $VAULT_DIR/raw");
+    assert.deepEqual(fs.readFileSync(result.archivedPath), pdfBytes, "archived original must be byte-identical");
+
+    const repos = createRepositories(db);
+    const doc = repos.document.get(job.document_id);
+    assert.equal(doc.status, "Processing");
+    assert.equal(doc.uri_location, result.destPath);
+    assert.equal(doc.mime_type, "text/markdown");
   } finally {
     cleanupTestCfg(cfg);
   }

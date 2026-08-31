@@ -1,4 +1,5 @@
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { createRepositories } = require("../repositories");
 const { withTransaction } = require("../repositories/tx");
@@ -10,8 +11,8 @@ const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingm
 
 /**
  * Which transcoding strategy applies to a staged binary job_file, per ADR14 /
- * Story 1.2. Two formats get real text extraction (pdf-parse, mammoth — both
- * pure-JS, no native binary, consistent with this repo's Node-only stack).
+ * Story 1.2. Two formats get real text extraction: PDF via OpenDataLoader PDF
+ * (ADR19 — shells out to a bundled Java CLI) and .docx via mammoth (pure-JS).
  * Everything else Story 1.2 doesn't have a text extractor for — images
  * included, since OCR/vision-model extraction is Story 2.1/EP2 territory, not
  * this story's — falls back to "archive-only": the original is still archived
@@ -30,11 +31,25 @@ function detectStrategy(jobFile) {
   return "archive-only";
 }
 
+/**
+ * PDF text extraction via OpenDataLoader PDF (ADR19, replacing pdf-parse).
+ * convert() shells out to a bundled Java CLI and writes output files to
+ * outputDir rather than returning extracted text directly, so this reads the
+ * resulting .md file back in. Requires a Java 11+ JRE on the host (the npm
+ * package's own runtime dependency, not something this repo adds) — a
+ * convert() call rejects if 'java' isn't on PATH or the PDF can't be parsed;
+ * either way transcodeBody()'s catch degrades to the archive-only stub.
+ */
 async function extractPdfText(sourcePath) {
-  const pdfParse = require("pdf-parse");
-  const buffer = fs.readFileSync(sourcePath);
-  const data = await pdfParse(buffer);
-  return data.text;
+  const { convert } = require("@opendataloader/pdf");
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "4thbrain-odl-pdf-"));
+  try {
+    await convert([sourcePath], { outputDir, format: "markdown,json" });
+    const mdPath = path.join(outputDir, `${stemOf(path.basename(sourcePath))}.md`);
+    return fs.readFileSync(mdPath, "utf-8");
+  } finally {
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  }
 }
 
 async function extractDocxText(sourcePath) {
@@ -86,7 +101,8 @@ function canHandle(db, job) {
  * Same job-lifecycle contract as ingest-executor.js: succeed (return a
  * result) or throw (a real failure, e.g. missing source file) — the caller
  * (worker) owns job.status transitions. Unlike ingest-executor.js this is
- * async (pdf-parse/mammoth are Promise-based); batch/worker.js awaits it.
+ * async (OpenDataLoader PDF/mammoth are Promise-based); batch/worker.js
+ * awaits it.
  *
  * Like ingest-executor.js, only the first job_file per job is processed —
  * no current caller produces multi-file jobs.

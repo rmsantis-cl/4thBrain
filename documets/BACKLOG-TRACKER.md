@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.8
+  version: 1.9
   created-by: Claude Code
-  date: 2026-08-30
+  date: 2026-08-31
 ---
 
 # BACKLOG TRACKER — 4thBrain Stories
@@ -17,8 +17,8 @@ Master tracking document for all project stories across all epics. Status values
 
 | ID | Story | Status | Dependencies | Area | [[Detail](#story-details)] |
 |---|---|---|---|---|---|
-| 1.1 | Direct Structured Vault Ingestion | WIP | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
-| 1.2 | Unstructured Text Parsing & Sanitization | READY | 1.1 | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
+| 1.1 | Direct Structured Vault Ingestion | COMPLETED | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
+| 1.2 | Unstructured Text Parsing & Sanitization | WIP | 1.1 | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
 | 2.1 | Local LLM Metadata & Tag Inference | READY | 1.1, 7.1 | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
 | 3.1 | Smart Connections Vector Indexing Pipeline | READY | 1.1, 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
@@ -58,8 +58,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Build local pipeline handlers that watch `$RAW_DIR` (outside the vault) for incoming files. Text, Markdown, and HTML files are already indexable, so they are copied directly to `$VAULT_DIR/incoming` without transformation, preserving existing frontmatter and structure. See ADR14 for the full directory layout. |
 | **Dependencies** | depends on Story 7.1, depends on Story 7.2 |
 | **Acceptance Criteria** | • Text, Markdown, and HTML files placed in `$RAW_DIR` are copied to `$VAULT_DIR/incoming` without modification.<br>• Ingested files maintain original frontmatter schema and metadata.<br>• Target subfolder path resolution writes files directly to designated locations without file corruption. |
-| **Status** | WIP |
-| **Implementation** | `server/lib/ingestion/{file-validator,path-resolver,vault-writer,ingest-executor,watcher}.js` — 32 passing tests. Not yet run against the real WSL2/Windows target environment. Fixed Bug 2 (repository/schema mismatch) as a prerequisite. |
+| **Status** | COMPLETED — verified 2026-08-30 against the real native-Windows environment: server started via `scripts/ui-server.ps1 start` against real `params.json` paths (`$VAULT_DIR` / `$RAW_DIR` on plain local NTFS, no UNC quirks observed); a real `.md`, `.txt`, and `.html` file dropped into `$RAW_DIR/inbox` were each picked up by the watcher within ~1-2s, filed byte-for-byte into `$VAULT_DIR/incoming` with frontmatter intact; a file submitted via `POST /api/ingest/file` (Story 6.1's `/chat` form path) produced exactly one job, with the watcher's `job_file.findByPath()` dedup correctly skipping the filesystem `add` event for the same path; `/api/tables/document` and `/api/tables/job` confirmed `document.status="Processing"`, `document.uri_location` pointing at the real vault path, and `job_file.status="filed"` for all 13 jobs processed in this pass. |
+| **Implementation** | `server/lib/ingestion/{file-validator,path-resolver,vault-writer,ingest-executor,watcher}.js` — 32 passing tests (105 total across the full suite after syncing in Story 1.2/6.3/13.3 work from `v03`). Fixed Bug 2 (repository/schema mismatch) as a prerequisite. **Found and fixed during this verification pass:** `server/index.js` never called `createWatcher()` — `watcher.js` existed and was fully unit-tested but was never wired into the running server, so a file dropped into `$RAW_DIR/inbox` outside the web form would never have been picked up in practice. Wired it in (2-line addition: import + `createWatcher(config, db, {...})` call using the existing `onJobCreated`/`onSkipped`/`onError` callbacks with structured JSON logging matching `batch/worker.js`'s convention) — this only activates the already-designed (ADR14) and already-tested module, no new ingestion logic. |
 | **Working Notes** | [[story-1.1.md](./story/story-1.1.md)] |
 
 ---
@@ -71,8 +71,9 @@ Master tracking document for all project stories across all epics. Status values
 | **Abstract** | Clean, transcode, and normalize unstructured or binary raw payloads. |
 | **Description** | Implement handlers for content that can't be indexed as-is. URLs placed in `$RAW_DIR` are moved to `$RAW_DIR/clipping` for extraction. Binary formats (PDF, images, Word docs, etc.) are transcoded into clean MD/text; the transcoded output is written to `$VAULT_DIR/incoming`, and the original binary is archived to `$VAULT_DIR/raw` with the processed file carrying a reference back to its raw original's location. See ADR14 for the full directory layout. |
 | **Dependencies** | must be worked with Story 1.1 |
-| **Acceptance Criteria** | • Input containing raw HTML, web clips, or special characters is sanitized to clean plain text/Markdown.<br>• Core semantic text content remains fully intact post-sanitization.<br>• URLs submitted for ingestion are relocated to `$RAW_DIR/clipping` prior to extraction.<br>• Binary files are not written into the vault until transcoded; transcoded output lands in `$VAULT_DIR/incoming` and the original is archived to `$VAULT_DIR/raw`.<br>• Each transcoded file in `$VAULT_DIR/incoming` references the archived location of its original raw file. |
-| **Status** | READY |
+| **Acceptance Criteria** | • Input containing raw HTML, web clips, or special characters is sanitized to clean plain text/Markdown. **Met for PDF/DOCX; not met for HTML/web clips** (see Implementation).<br>• Core semantic text content remains fully intact post-sanitization. **Met for PDF/DOCX; not applicable/not met for HTML**, since no HTML sanitization step exists yet.<br>• URLs submitted for ingestion are relocated to `$RAW_DIR/clipping` prior to extraction. **Met** — tested.<br>• Binary files are not written into the vault until transcoded; transcoded output lands in `$VAULT_DIR/incoming` and the original is archived to `$VAULT_DIR/raw`. **Met** — tested.<br>• Each transcoded file in `$VAULT_DIR/incoming` references the archived location of its original raw file. **Met** — tested. |
+| **Status** | WIP |
+| **Implementation** | `server/lib/ingestion/transcode-executor.js` (PDF via OpenDataLoader PDF — `@opendataloader/pdf`, ADR19, swapped 2026-08-31 from `pdf-parse`; `.docx` via `mammoth`; other binaries archive-only), `server/lib/ingestion/url-relocator.js`, `vault-writer.js`'s `archiveToVaultRaw()`. 12 tests in `ingestion.transcode-executor.test.js` (includes a live, non-mocked PDF extraction test against the real Java CLI — Java 11 available in this session) + 5 in `ingestion.url-relocator.test.js`. **Gap:** `text/html` is classified `"indexable"` by `file-validator.js` and bypasses this executor entirely via Story 1.1's direct-copy path, so HTML/web-clip content is never sanitized — blocked on `documets/story/spike-webclipping.md` (now COMPLETED, see spike doc) recommending an extraction library. Not COMPLETED until that gap closes. |
 | **Working Notes** | [[story-1.2.md](./story/story-1.2.md)] |
 
 ---
@@ -427,6 +428,8 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Changelog
 
+- **2026-08-31** — Story 1.1 moved WIP → COMPLETED: real-environment verification pass per `documets/PLAN-30-08-2026-EP1-Completion.md`'s "close out WIP → COMPLETED" section. Server started natively (`scripts/ui-server.ps1 start`) against real `params.json` paths; real `.md`/`.txt`/`.html` files dropped into `$RAW_DIR/inbox` were picked up by the watcher and filed byte-for-byte into `$VAULT_DIR/incoming` with frontmatter intact; a file submitted through `POST /api/ingest/file` (Story 6.1's `/chat` form path) produced exactly one job — the watcher's `job_file.findByPath()` dedup correctly skipped the resulting filesystem event; `/api/tables/document` and `/api/tables/job` confirmed `document.status="Processing"`, real `uri_location`, and `job_file.status="filed"` across all 13 jobs processed. The flagged UNC/network-share timing risk did not materialize — `raw_dir` is a plain local NTFS path. Found and fixed a real gap during this pass: `server/index.js` never called `createWatcher()` — the module was fully unit-tested but dead in production, so a file dropped outside the web form would never have been picked up by the live server. Fixed with a 2-line addition (import + `createWatcher(config, db, {...})` call) that only activates the already-designed (ADR14) and already-tested `watcher.js`; no new ingestion logic introduced.
+- **2026-08-31** — Story 1.2 moved READY → WIP: real code (`server/lib/ingestion/transcode-executor.js`, `url-relocator.js`) was implemented and tested on 2026-08-30 (per `documets/PLAN-30-08-2026-EP1-Completion.md`) but this tracker was never updated to match — corrected. Same pass swapped the PDF extraction library `pdf-parse` → OpenDataLoader PDF per new ADR19, verified live against a real Java 11 CLI invocation. Not marked COMPLETED: 2 of 5 acceptance criteria are only met for PDF/DOCX, not for HTML/web clips — `text/html` bypasses this story's code entirely via Story 1.1's direct-copy path, and no HTML sanitization exists yet. That gap is tracked by `documets/story/spike-webclipping.md` (now COMPLETED, recommends Playwright + Readability + Turndown), but the sanitization code itself hasn't been built.
 - **2026-08-26** — Initial backlog tracker created with all 23 stories across 13 epics; current status snapshot
 - **2026-08-28** — Added Story 12.2 (Schema Redesign), READY, continuation of Story 12.1; closes Bug 1
 - **2026-08-28** — Appended "Follow-up Tasks" section: documentation backpropagation for the Story 12.2 schema redesign

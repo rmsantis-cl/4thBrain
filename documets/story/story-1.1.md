@@ -3,7 +3,7 @@ name: story-1.1
 description: Working notes for Story 1.1 - Direct Structured Vault Ingestion
 date: 2026-08-30
 metadata:
-  version: 2.0
+  version: 2.1
   created-by: Claude Sonnet 5
 ---
 
@@ -119,13 +119,73 @@ watcher behavior against a real Windows-filesystem-backed `$RAW_DIR`
 as a chokidar concern), and end-to-end behavior with Smart Connections
 actually present.
 
+### Real-environment verification (2026-08-30)
+
+Per `documets/PLAN-30-08-2026-EP1-Completion.md`'s "Story 1.1: close out
+WIP → COMPLETED" section. This worktree was 11 commits behind `v03`
+(missing Story 1.2's real transcode/URL executors, Story 6.3's real status
+dashboard, and the Story 13.3 verify-pass) — synced the relevant
+`server/`/`batch/` source and test files from `v03` first so verification
+ran against the current codebase rather than a stale one. Full suite: 105
+tests pass (`npm test` in `server/`).
+
+**Steps and results:**
+
+1. Started the server natively via `scripts/ui-server.ps1 start`
+   (`NODE_ENV=development`) against the real `params.json` paths
+   (`vault_dir` = `C:\Users\rsant\desar\Local Vault\Local Vault`, `raw_dir`
+   = `C:\Users\rsant\desar\Local Vault\RAW_DIR`).
+2. Dropped `story-1.1-verify.md`, `.txt`, and `.html` into
+   `$RAW_DIR/inbox`. The watcher picked up each within ~1-2 seconds,
+   created a job, and the executor copied each byte-for-byte into
+   `$VAULT_DIR/incoming` — diffed source vs. destination for all three,
+   identical, frontmatter intact on the `.md` file. The watcher also
+   correctly picked up 9 pre-existing files already sitting in
+   `$RAW_DIR/inbox` from earlier manual testing sessions (by design —
+   `ignoreInitial: false`), including a `.pdf` that exercised Story 1.2's
+   `convert` executor end to end.
+3. Submitted a file through `POST /api/ingest/file` (Story 6.1's `/chat`
+   web-form path). It staged the file and created exactly one job
+   synchronously; the watcher's `add` event for the same path was correctly
+   skipped (`job_file.findByPath()` dedup) — logged as
+   `{"event":"add_skipped","reason":"already tracked by job_file 13"}`, no
+   second job created.
+4. Ran `batch/worker.js` to process the queue (13 jobs total across both
+   steps above): all completed. `/api/tables/document/13` showed
+   `status: "Processing"` and `uri_location` pointing at the real vault
+   path; `/api/tables/job_file` showed `status: "filed"` for every job_file
+   row, including the web-form one.
+5. UNC/network-share risk did not materialize — `raw_dir` is a plain local
+   NTFS path, not a UNC path, and the watcher responded within 1-2 seconds
+   with no missed or duplicated events across 13 files.
+6. **Gap found and fixed:** `server/index.js` never called
+   `createWatcher()` — `watcher.js` was fully implemented and unit-tested
+   (`server/test/ingestion.watcher.test.js`) but was never invoked outside
+   tests, so a file dropped into `$RAW_DIR/inbox` would never have been
+   picked up by the actual running server (only files submitted via the
+   web form, which register their job directly, would have worked). Fixed
+   with a 2-line addition to `server/index.js` (import +
+   `createWatcher(config, db, { onJobCreated, onSkipped, onError })`,
+   logging in the same structured-JSON style as `batch/worker.js`). This
+   only activates the already-designed (ADR14) and already-tested module —
+   no new ingestion logic was introduced, consistent with
+   design-before-implementation.
+
+**Discrepancy noted, not resolved this pass:** the task instructions for
+this verification stated that Design Debt item 3 (`story-6.1.md`'s
+actuator-table misattribution) had "already been cleared in a separate
+pass." In this worktree and in `v03`, `documets/DESIGN-DEBT.md` item 3
+still shows status **Deferred**, and no commit in the repository's git
+history touches `story-6.1.md` beyond its original creation. Left
+untouched per the explicit instruction not to redo that work.
+
 ## Status
 
-**WIP** — core logic implemented and tested (32 passing tests across the
-ingestion modules + regression coverage). Not yet run against the real
-target environment. Ready for Story 2.1 (classification) to build on top of
-the `Processing`-status documents this leaves behind in
-`$VAULT_DIR/incoming`.
+**COMPLETED** — core logic implemented and tested (105 passing tests across
+the full server suite), and verified 2026-08-30 against the real
+native-Windows target environment (see above). Ready for Story 2.1
+(classification) to build on top of the `Processing`-status documents this
+leaves behind in `$VAULT_DIR/incoming`.
 
 ## Changelog
 
@@ -134,3 +194,10 @@ the `Processing`-status documents this leaves behind in
   ingest-executor, watcher, with 32 tests. Fixed Bug 2 (repository/schema
   mismatch) as a prerequisite. Logged Design Debt item 3 (Story 1.1 vs 3.1
   ownership conflict in story-6.1.md's actuator table).
+- 2026-08-30: Real-environment verification pass — WIP → COMPLETED. All
+  acceptance criteria confirmed against the real vault/raw_dir paths (see
+  "Real-environment verification" above). Fixed a real wiring gap
+  (`server/index.js` never started the watcher) using only the
+  already-designed/tested `watcher.js` module. Design Debt item 3 was
+  expected to already be cleared per this pass's instructions but was
+  found still Deferred — left untouched and flagged rather than redone.

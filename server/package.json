@@ -9,13 +9,13 @@
     "test": "node --test test/*.test.js ../batch/test/*.test.js"
   },
   "dependencies": {
+    "@opendataloader/pdf": "^2.5.5",
     "@scalar/express-api-reference": "^0.10.17",
     "chokidar": "^4.0.3",
     "express": "^4.19.2",
     "mammoth": "^1.8.0",
     "mime-types": "^2.1.35",
     "multer": "^2.0.0",
-    "openai": "^4.55.0",
-    "pdf-parse": "^1.1.1"
+    "openai": "^4.55.0"
   }
 }

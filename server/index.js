@@ -2,6 +2,7 @@ const express = require("express");
 const { buildConfig, checkOllamaReachable } = require("./config");
 const { getDatabase } = require("./db/init");
 const { createRepositories } = require("./lib/repositories");
+const { createWatcher } = require("./lib/ingestion/watcher");
 
 const chatPageRoute = require("./routes/chat-page");
 const ingestRoutes = require("./routes/ingest");
@@ -25,6 +26,22 @@ app.locals.db = db;
 
 // Initialize repositories (Story 13.3)
 app.locals.repositories = createRepositories(db);
+
+// Watch $RAW_DIR/inbox for files that appear outside the web ingestion form
+// (Story 1.1). Never previously wired to a runtime entry point — watcher.js
+// existed and was fully tested (server/test/ingestion.watcher.test.js) but
+// nothing called createWatcher() outside of tests, so files dropped directly
+// into rawDirInbox were never picked up by the running server. Wiring it in
+// here uses only the already-designed/tested module (ADR14 + story-1.1.md);
+// no new ingestion logic is introduced.
+app.locals.watcher = createWatcher(config, db, {
+  onJobCreated: (jobId, filePath) =>
+    console.log(JSON.stringify({ level: "info", component: "ingestion.watcher", event: "job_created", jobId, filePath })),
+  onSkipped: (filePath, reason) =>
+    console.log(JSON.stringify({ level: "info", component: "ingestion.watcher", event: "add_skipped", filePath, reason })),
+  onError: (err, filePath) =>
+    console.error(JSON.stringify({ level: "error", component: "ingestion.watcher", event: "add_failed", filePath, error: err.message })),
+});
 
 app.get("/", (req, res) => res.redirect(302, "/chat"));
 
