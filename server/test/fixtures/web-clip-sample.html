@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Why Local-First Note Systems Beat Cloud Search — Field Notes</title>
+<style>
+  body { font-family: Georgia, serif; margin: 0; background: #fff; color: #222; }
+  .ad-banner { background: #ffcc00; padding: 20px; text-align: center; font-weight: bold; }
+  .sidebar { float: right; width: 200px; background: #eee; padding: 10px; }
+</style>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'UA-00000000-1');
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("tracking pixel fired");
+  });
+</script>
+</head>
+<body>
+  <div class="ad-banner">SUBSCRIBE NOW — 50% OFF YOUR FIRST YEAR</div>
+
+  <nav class="topnav">
+    <ul>
+      <li><a href="/home">Home</a></li>
+      <li><a href="/archive">Archive</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/subscribe">Subscribe</a></li>
+      <li><a href="/contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <header>
+    <h1>Field Notes</h1>
+    <p class="tagline">Dispatches on tools, memory, and personal infrastructure</p>
+  </header>
+
+  <aside class="sidebar">
+    <h3>Popular this week</h3>
+    <ul>
+      <li><a href="/p/1">Ten habits of prolific writers</a></li>
+      <li><a href="/p/2">A better morning routine</a></li>
+      <li><a href="/p/3">Why I quit my note app, again</a></li>
+    </ul>
+  </aside>
+
+  <article>
+    <h1>Why Local-First Note Systems Beat Cloud Search</h1>
+    <p class="byline">By Renata Osei — August 30, 2026</p>
+
+    <p>Most note-taking tools promise that search will save you. Type a few words, and the system surfaces the exact fragment you half-remember writing three months ago. In practice, cloud-hosted search rarely delivers on that promise, and the reason has less to do with algorithms than with where the index actually lives.</p>
+
+    <p>A cloud search index sits behind a network call. Every query pays for a round trip: authentication, request serialization, a remote lookup against a shared index, then a response back down the wire. On a good connection this costs tens of milliseconds. On a bad one, or with the service under load, it can stall for seconds. That latency compounds over a session — a person searching five times while drafting a document notices the friction even if they cannot name its cause.</p>
+
+    <p>A local-first system inverts this. The index lives on the same disk as the notes it describes. A query is a function call, not a network request, so the tool can afford to re-run the search on every keystroke instead of waiting for a submit action. This single property changes how people actually use search: instead of writing a careful, deliberate query and waiting for results, they type provisionally and watch results narrow in real time, refining as they go.</p>
+
+    <h2>The privacy argument is secondary</h2>
+
+    <p>Local-first systems are usually pitched on privacy grounds first, and that argument is real — a vector index built from years of personal notes is a detailed portrait of a person's thinking, and keeping it off a third party's servers matters. But the privacy case, on its own, has not been enough to move most people off cloud tools. What moves people is when the local tool is simply better to use day to day, and privacy comes along as a side effect of the same architecture that makes it fast.</p>
+
+    <p>This is worth remembering when building a local-first pipeline: the architecture has to earn its keep on responsiveness and reliability, not just on the promise that your data never leaves the machine. A local index that takes thirty seconds to update after a note changes has thrown away its main advantage.</p>
+
+    <h2>What this means for ingestion pipelines</h2>
+
+    <p>Any system that captures notes, transcripts, and web clips into a local vault has to treat the path from "raw capture" to "indexed content" as the critical path, not an afterthought. Raw HTML pulled from a web page is a good example of content that looks ready to search but is not: it is full of navigation chrome, advertising markup, and inline scripts that pollute both the visible note and any embedding generated from it. Sanitizing that content down to its actual semantic body — the article text, headings, and structure a reader would actually want to keep — before it lands in the vault is what makes the rest of the pipeline trustworthy.</p>
+
+    <p>Skipping that step does not fail loudly. The note still opens, still displays, still looks like it worked. But search quality quietly degrades, since every embedding now carries noise from a page's chrome instead of its content. By the time anyone notices, months of clipped pages have already been indexed badly, and the fix means walking back through everything captured since the gap was introduced.</p>
+
+    <p>The lesson generalizes past HTML specifically: any format-conversion step in a capture pipeline is not optional polish, it is the thing that determines whether the rest of the system is worth using at all.</p>
+  </article>
+
+  <footer>
+    <p>&copy; 2026 Field Notes. All rights reserved.</p>
+    <ul>
+      <li><a href="/privacy">Privacy Policy</a></li>
+      <li><a href="/terms">Terms of Service</a></li>
+    </ul>
+  </footer>
+</body>
+</html>
