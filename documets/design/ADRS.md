@@ -1,9 +1,9 @@
 ---
 name: ADRS
 description: Architectural Decision Records for 4thBrain
-date: 2026-08-25
+date: 2026-08-30
 metadata:
-  version: 1.1
+  version: 1.2
   created-by: Claude Code
 ---
 
@@ -167,8 +167,26 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-26
 **Date Cancelled:** —
 
+## ADR19: OpenDataLoader PDF (`@opendataloader/pdf`) as the PDF extraction library, replacing `pdf-parse`
+
+**Status:** Closed — user-directed decision, 2026-08-30.
+
+**Description:** PDF-to-text/Markdown extraction uses [OpenDataLoader PDF](https://github.com/opendataloader-project/opendataloader-pdf) (`@opendataloader/pdf` npm package, Java core under the hood via a bundled JVM invocation), replacing `pdf-parse`. This is one shared extractor for every PDF the system handles, regardless of arrival path: a locally-ingested PDF (file upload, directory watcher) and a PDF fetched by the web Clipper both land in `$RAW_DIR` and are routed through the same `job_type='convert'` executor (Story 1.2's `transcode-executor.js`) — there is no separate PDF-handling code path for web-clipped PDFs.
+
+**Why:** `pdf-parse` was picked as an implementation detail during Story 1.2 with no ADR behind it. The user specified OpenDataLoader PDF directly as the replacement. It's open-source (Apache-2.0), runs fully locally in its default/non-hybrid mode (no outbound calls, consistent with ADR12), and its own published benchmarks report #1 overall extraction accuracy (0.907) and table accuracy (0.928) across 200 real-world PDFs (multi-column layouts, scientific papers) — a meaningful upgrade over `pdf-parse`'s flat-text-only output, which discards table structure and reading order entirely. It ships a native Node.js SDK (`@opendataloader/pdf`, `convert(files, { outputDir, format: "markdown,json" })`) matching this repo's Node-only application stack (ADR5), and its Markdown/JSON output (JSON carries per-element bounding boxes) is a better fit for the vault-Markdown target (ADR3) and for future citation/traceability needs than `pdf-parse`'s plain string.
+
+**Trade-off accepted:** OpenDataLoader's core is Java, so it requires a Java 11+ JRE/JDK on the host in addition to Node.js — a new external runtime dependency this stack didn't previously have (ADR1 scoped WSL2/Windows, ADR5 scoped Node.js as the orchestration layer; neither anticipated a JVM dependency). Each `convert()` call spawns its own JVM process, so per-file latency is higher than an in-process JS library — the library's own docs recommend batching multiple files per call rather than one `convert()` per file, which doesn't cleanly fit this system's one-job-at-a-time worker model (Story 4.1). The first real implementation pass should measure actual per-file JVM startup overhead against expected volume (~dozens of jobs per overnight batch run, per ADR18) before treating this as settled. OpenDataLoader's optional hybrid mode (AI-assisted extraction for complex pages, via a separately-run `opendataloader-pdf-hybrid` backend) is explicitly out of scope for now — only the deterministic local mode is adopted, so this stays ADR12-compliant without needing to evaluate the hybrid backend's own model/network behavior.
+
+**Scope:** Applies to Story 1.2's `transcode-executor.js` PDF branch (already shipped with `pdf-parse` — this ADR supersedes that choice and requires a follow-up implementation pass to swap the library) and to the webclipping spike's "PDF via URL" evaluation criterion, which should cite this ADR rather than independently evaluating PDF extraction libraries.
+
+**Source:** User directive, 2026-08-30 — https://github.com/opendataloader-project/opendataloader-pdf (retrieved to the Obsidian vault at `External/Web/github.com/opendataloader-project-opendataloader-pdf.md`, logged in `External/Web/References/references.md`).
+
+**Date Created:** 2026-08-30
+**Date Cancelled:** —
+
 ## Changelog
 
+- 2026-08-30: Logged ADR19 (closed) — OpenDataLoader PDF (`@opendataloader/pdf`) replaces `pdf-parse` for all PDF extraction (Story 1.2's transcode executor and the webclipping spike's PDF handling), per explicit user direction. Notes the new JVM host dependency and per-call JVM-spawn latency as accepted trade-offs.
 - 2026-08-26: Closed ADR17 — SQLite chosen for simplicity and low-volume sequential processing. Critical constraint: keep transactions brief; if long concurrent transactions are needed during implementation, decision must be revisited (migrate to PostgreSQL).
 - 2026-08-26: Logged ADR18 (open) — relational database technology (SQLite vs. PostgreSQL) for processing-state persistence, plus consideration of a separate vector database for pre-vault classification.
 - 2026-08-26: Closed ADR16 — tested Obsidian in WSL via flatpak; no benefit due to UI degradation; keep current setup.

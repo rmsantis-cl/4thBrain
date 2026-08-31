@@ -3,9 +3,9 @@ name: story-6.1
 description: Web Ingestion Form & Submission Handler — working notes and implementation status
 metadata:
   backup-cycle: session
-  version: 1.0
+  version: 1.1
   created-by: Claude Code
-  date: 2026-08-28
+  date: 2026-08-30
 ---
 
 # Story 6.1: Document Ingestion Form
@@ -28,9 +28,9 @@ This story implements "input" state from [[Ingestion-State-Diagram]]
 
 ## USE CASES
 - `url`: Entering a URL creates a document and enqueues it in the Clipper action queue
-- `typed text`: A document is created, saved in TMP_DIR, and submitted to `RAG Indexing`
+- `typed text`: A document is created, saved in TMP_DIR, and submitted to `Vault Filing`
 - `local file path`: File copied to TMP_DIR; MIME type is calculated from extension and content
-  - `text/plain`, `text/markdown`, and other `text/*` are submitted to `RAG Indexing`
+  - `text/plain`, `text/markdown`, and other `text/*` are submitted to `Vault Filing`
   - Other MIME types are submitted to `Extract` action queue 
 - `post document`: A document posted in multipart/form-data format is stored in TMP_DIR and processed like the others.
   
@@ -41,14 +41,18 @@ This story implements "input" state from [[Ingestion-State-Diagram]]
 | actuator | story |
 |---|---|
 | Clipper | 1.2 | 
+| Vault Filing | 1.1 |
 | RAG Indexing | 3.1 |
 | Extractor | 1.2 | 
 | Classification | 2.1 | 
 
 ## Actuators specs
 
-### RAG Indexing (Story 3.1)
+### Vault Filing (Story 1.1)
 - Copies file from TMP_DIR to VAULT_INCOMING
+
+### RAG Indexing (Story 3.1)
+- Runs once the file is already in VAULT_INCOMING (after Vault Filing)
 - Smart Connections will index it and we need to monitor the file status: success or skip
 - On success: document marked indexed; sent to Classification job
 - On skip (file too short, unsupported format): document moved to VAULT_RAW, status marked Failed
@@ -57,13 +61,13 @@ This story implements "input" state from [[Ingestion-State-Diagram]]
 - Fetches HTML content from URL — **implementation tool selection: see [[spike-webclipping]]**
 - Stores HTML/text in TMP_DIR with appropriate MIME type
 - Scans document for embedded URLs and images; creates child Document records for each reference
-- Text files enqueued to RAG Indexing; binary/archive files enqueued to Extractor
+- Text files enqueued to Vault Filing; binary/archive files enqueued to Extractor
 - Monitors Smart Connections to track indexing progress
 
 ### Extractor (Story 1.2)
 - Converts binary files (PDF, Word, images, archives) to plain text — **implementation tool selection: see [[spike-extraction]]**
 - Creates transcription Document record with extracted text
-- Enqueues transcription to RAG Indexing
+- Enqueues transcription to Vault Filing
 - If extraction fails: original file moved to VAULT_RAW, Document marked Failed
 
 ### Classification (Story 2.1)
@@ -124,11 +128,11 @@ For binary file input: returns seeded text content simulating extraction
 - File movement: store mock transcription in TMP_DIR/{document_id}_transcription.txt; archive original to VAULT_RAW
 
 ### SUB-TASK-6.1.3: Implement Mock RAG Indexing Handler
-For text input and extracted text: simulates indexing without actual Smart Connections
+For text input and extracted text: simulates the Vault Filing + RAG Indexing pair without actual Smart Connections (both real actuators are faked together here for state-flow testing — see the corrected Vault Filing/RAG Indexing split under "Actuators specs" for their real per-story ownership)
 - Input: Document with text file reference
 - Mock behavior: mark document as indexed immediately (no actual Smart Connections interaction)
 - State change: document status → "Indexed"
-- File movement: copy text file from TMP_DIR to VAULT_INCOMING/{document_id}.md
+- File movement: copy text file from TMP_DIR to VAULT_INCOMING/{document_id}.md (mocks Vault Filing's copy step)
 
 ### SUB-TASK-6.1.4: Implement Mock Classification Handler
 For indexed documents: returns seeded topic/subtopic/tags

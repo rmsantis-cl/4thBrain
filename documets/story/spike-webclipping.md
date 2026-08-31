@@ -2,9 +2,9 @@
 name: spike-webclipping
 description: Evaluate and select libraries for web document retrieval and HTML extraction
 metadata:
-  version: 1.0
-  created-by: Claude Code
-  date: 2026-08-28
+  version: 2.0
+  created-by: Claude Sonnet 5
+  date: 2026-08-30
 ---
 
 # Spike: WebClipping Library Selection
