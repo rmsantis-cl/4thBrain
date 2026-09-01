@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.10
+  version: 1.11
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -24,7 +24,7 @@ Master tracking document for all project stories across all epics. Status values
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
 | 4.1 | Background Sweep & Queue Execution Script | WIP | 1.1, 2.1 | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
 | 5.1 | Multi-Source Briefing Synthesis Engine | READY | 2.1, 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
-| 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
+| 6.1 | Web Ingestion Form & Submission Handler | WORKING | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1, 6.4 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
 | 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1, 6.4 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
 | 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
@@ -402,6 +402,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Dependencies** | depends on Story 6.4 (UI shell), depends on Story 13.1 (the panel being removed) |
 | **Acceptance Criteria** | • `GET /` returns a 302 redirect to `/chat`.<br>• `GET /admin` (dev-only) returns 200 with links to `/admin/db` and `/api/docs`; 403 in non-dev mode.<br>• `GET /admin/db` is unchanged — no internal changes.<br>• `/chat` contains no embedded admin panel markup or `fetch('/admin/db/api/...')` calls.<br>• The sidebar's "Admin" nav item is a link (`<a href="/admin">`), not a panel toggle; clicking it navigates without JS errors. |
 | **Status** | COMPLETED — verified 2026-08-30 (UI-orphan-pages review): `server/index.js:29` has the redirect, `server/routes/admin-page.js` serves the dev-gated menu with both links, `server/ui/page.js`'s `NAV_ITEMS` renders Admin as `<a href="/admin">` not a panel, no embedded admin markup remains in `renderChatPage()`. Summary table previously mislabeled this row "Review Mobile UI" at status READY — corrected to match this section, which was already accurate. |
+| **Working Notes** | [[story-13.2.md](./story/story-13.2.md)] |
 
 ---
 
@@ -428,6 +429,7 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Changelog
 
+- **2026-08-31** — Close-out pass: (1) Fixed Story 6.1 status inconsistency in summary table (showed COMPLETED but detail section correctly shows WORKING) — corrected to WORKING. (2) Created `documets/story/story-13.2.md` working notes for the COMPLETED Story 13.2 (admin UI restructuring), documenting implementation details and acceptance criteria verification. (3) Bumped version from 1.10 to 1.11.
 - **2026-08-31** — Story 7.1 moved READY → WIP: a timeboxed GPU-acceleration spike (`documets/story/spike-gpu-ollama.md`) confirmed Intel iGPU passthrough works end-to-end inside this host's WSL2 guest — Fedora's native `intel-compute-runtime`/`intel-level-zero` packages plus Intel's IPEX-LLM Ollama build achieved real, verified GPU offload (29/29 model layers, live inference test). Not COMPLETED: the working build is a spike artifact, not yet installed permanently or wired into systemd; `.wslconfig` and the generalized Ollama-call concurrency gate remain outstanding. See `documets/PLAN-31-08-2026-EP7-Completion.md` for the full decision trail and defined next step.
 - **2026-08-31** — Story 1.1 moved WIP → COMPLETED: real-environment verification pass per `documets/PLAN-30-08-2026-EP1-Completion.md`'s "close out WIP → COMPLETED" section. Server started natively (`scripts/ui-server.ps1 start`) against real `params.json` paths; real `.md`/`.txt`/`.html` files dropped into `$RAW_DIR/inbox` were picked up by the watcher and filed byte-for-byte into `$VAULT_DIR/incoming` with frontmatter intact; a file submitted through `POST /api/ingest/file` (Story 6.1's `/chat` form path) produced exactly one job — the watcher's `job_file.findByPath()` dedup correctly skipped the resulting filesystem event; `/api/tables/document` and `/api/tables/job` confirmed `document.status="Processing"`, real `uri_location`, and `job_file.status="filed"` across all 13 jobs processed. The flagged UNC/network-share timing risk did not materialize — `raw_dir` is a plain local NTFS path. Found and fixed a real gap during this pass: `server/index.js` never called `createWatcher()` — the module was fully unit-tested but dead in production, so a file dropped outside the web form would never have been picked up by the live server. Fixed with a 2-line addition (import + `createWatcher(config, db, {...})` call) that only activates the already-designed (ADR14) and already-tested `watcher.js`; no new ingestion logic introduced.
 - **2026-08-31** — Story 1.2 moved READY → WIP: real code (`server/lib/ingestion/transcode-executor.js`, `url-relocator.js`) was implemented and tested on 2026-08-30 (per `documets/PLAN-30-08-2026-EP1-Completion.md`) but this tracker was never updated to match — corrected. Same pass swapped the PDF extraction library `pdf-parse` → OpenDataLoader PDF per new ADR19, verified live against a real Java 11 CLI invocation. Not marked COMPLETED: 2 of 5 acceptance criteria are only met for PDF/DOCX, not for HTML/web clips — `text/html` bypasses this story's code entirely via Story 1.1's direct-copy path, and no HTML sanitization exists yet. That gap is tracked by `documets/story/spike-webclipping.md` (now COMPLETED, recommends Playwright + Readability + Turndown), but the sanitization code itself hasn't been built.

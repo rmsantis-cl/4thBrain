@@ -1,15 +1,95 @@
 [CONTEXT & OBJECTIVE]
-Submit to batch ${task description}
+Submit to batch via Anthropic Batch API: ${task description}
 
 
-[AUTONOMOUS DIRECTIVES]
+[EXECUTION CONTEXT]
+This request runs inside the Anthropic Batch API (asynchronous, lower cost, fully isolated from user's local session). You are Claude/Opus running on Anthropic's infrastructure. Your task description appears above. Deliver results to stdout as a clear, concise report; Anthropic's batch system will capture this output.
+
+[AUTONOMOUS DIRECTIVES - DEFAULT]
 - Proceed end-to-end without asking any clarifying questions.
-- I am away from my keyboard and cannot respond to interactive prompts.
-- Make all reasonable technical and architectural decisions independently based on existing patterns in the codebase.
-- Document any assumptions you make in ASSUMPTIONS.md (or at the bottom of your final summary).
+- Make all reasonable technical and architectural decisions independently based on code patterns.
+- When multiple valid approaches exist, pick the RECOMMENDED option if labeled.
+- Otherwise, choose the most conservative approach: minimal scope, align with existing patterns, prefer proven solutions.
+- Document all non-trivial decisions in DECISIONS.md for later user review — create the file if it doesn't exist.
+- Do not use AskUserQuestion or any blocking tools. Always decide and log, then continue.
+
+[OVERRIDE DIRECTIVES]
+If the task description above contains "[OVERRIDE: DISABLE AUTONOMOUS DIRECTIVES]", replace the above with:
+- Use AskUserQuestion to present decision options to the user.
+- Do NOT proceed until you have user input on major decisions.
+- Log all decisions (user's choices and your reasoning) to DECISIONS.md.
+
+[DECISION-MAKING PROTOCOL]
+When you encounter a decision point:
+
+1. **Identify**: What is being decided? What are the valid options?
+2. **Pick**: Select the RECOMMENDED option if documented. Otherwise, select the most conservative/proven approach.
+3. **Log**: Add one line to DECISIONS.md: `[timestamp] {decision point} → {choice made} | reasoning: {1-2 sentence rationale}`
+4. **Continue**: Do not wait for confirmation. Proceed immediately with the chosen option.
+
+Example DECISIONS.md entry:
+```
+[2026-08-31 15:45:22] Framework choice for new service → Express.js | reasoning: matches existing server/ stack; no new dependencies
+[2026-08-31 15:46:05] Database migration strategy → append new fields to schema.sql | reasoning: avoids backwards-compat risk; matches Story 12.2 pattern
+```
 
 [EXECUTION PROTOCOL]
-1. Explore: Inspect the necessary files and tests to understand the structure.
-2. Implement: Modify or add the required files.
-3. Validate: Run the relevant test suite and linter. If errors occur, diagnose and self-correct automatically until the suite passes.
-4. Conclude: Output a concise final report detailing changes made and exit.
+1. Explore: Inspect necessary files and tests to understand structure.
+2. Implement: Modify or add required files.
+3. Validate: Run relevant test suite and linter. Self-correct on errors until suite passes.
+4. Decide & Log: Add all non-trivial decisions to DECISIONS.md as you proceed.
+5. Conclude: Output a concise final report (stdout):
+   - Changes made (files modified/created)
+   - Decisions logged (DECISIONS.md contents or key excerpts if any)
+   - Test results and validation status
+   - Exit cleanly when done.
+
+[BATCH API NOTES]
+- This task runs asynchronously on Anthropic's infrastructure (not locally).
+- Your output (stdout) and any files created in the working directory will be captured by the batch system.
+- The user retrieves results later using the batch ID.
+- No local git commits or pushes — leave work as uncommitted changes for the user to review.
+
+---
+
+[INVOCATION EXAMPLES]
+
+### Example 1: Standard silent batch submission (AUTONOMOUS DIRECTIVES enabled)
+
+```
+/submit-batch wire the html-sanitize-executor into file-validator and update the ingestion pipeline to use it
+```
+
+**Behavior:** Task is submitted to Anthropic Batch API. Batch ID is returned immediately and logged to BATCH_TRACKER.md. Claude (in the batch job) proceeds silently, picks recommended options for decisions, logs all choices to DECISIONS.md, and outputs a final report when complete. User retrieves results later using the batch ID.
+
+**What you get back immediately:** Batch ID (e.g., `b_1234...`) and metadata stored in BATCH_TRACKER.md.
+
+---
+
+### Example 2: Interactive batch submission (AUTONOMOUS DIRECTIVES disabled)
+
+```
+/submit-batch [OVERRIDE: DISABLE AUTONOMOUS DIRECTIVES] Refactor the database schema for multi-tenancy support. Pause at major decisions (table design, migration strategy, backwards-compatibility) and use AskUserQuestion to get user approval before implementing.
+```
+
+**Behavior:** Task is submitted to Batch API with override directives. When Claude runs the batch job, it will use AskUserQuestion to present decision options instead of picking autonomously. Note: AskUserQuestion in a batch context will block job completion until the user responds in Claude's interface (not ideal for fully asynchronous jobs — recommend using standard mode for fire-and-forget tasks).
+
+---
+
+### Example 3: Gated batch submission (stop on complexity)
+
+```
+/submit-batch Upgrade Jest to v30 across the test suite. GATE: If you encounter more than 2 breaking changes or >30% of tests need rewriting, output COMPLEXITY_DETECTED to DECISIONS.md and stop.
+```
+
+**Behavior:** Task is submitted to Batch API with complexity gate embedded. Claude runs the batch job, explores the task, makes autonomous decisions, and logs them to DECISIONS.md. If complexity threshold is hit, it writes `COMPLEXITY_DETECTED: {reason}` to DECISIONS.md and stops *without* implementing. Final report lists what would break and recommends human review.
+
+---
+
+### Example 4: Hybrid gating (autonomous minor, interactive major)
+
+```
+/submit-batch Add a new /api/v2/search endpoint. GATE_MAJOR: If you need to change document schema, authorization layer, or database indexes, use AskUserQuestion for approval. GATE_MINOR: For code-level decisions (error response shape, pagination defaults), proceed silently.
+```
+
+**Behavior:** Task submitted to Batch API with split directives. Claude distinguishes major decisions (require AskUserQuestion) from minor ones (autonomous, logged). Proceeds on minor decisions, pauses on major ones within the batch job.

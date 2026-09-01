@@ -1,9 +1,11 @@
 ---
 name: submit-batch
-description: Submit a coding task to run unattended in the background as an isolated Claude Code subagent, using the fixed autonomous-execution template in documets/batch-tool.txt (explore, implement, validate, conclude — no clarifying questions, assumptions self-documented). Use whenever the user says "submit to batch", "queue this task", "run this while I'm away from keyboard", or asks for a task to run unattended without further interaction from them.
+description: Submit a coding task to Anthropic's Batch API for unattended, cost-effective processing (half the price of standard API calls). Submits immediately with a batch ID, tracked in BATCH_TRACKER.md, retrievable later when complete. See documets/batch-tool.txt for the template, decision protocol, and invocation examples.
 ---
 
 ## Invocation
+
+### Standard batch submission
 
 ```
 /submit-batch <task description>
@@ -11,28 +13,73 @@ description: Submit a coding task to run unattended in the background as an isol
 
 Example: `/submit-batch add a DELETE /api/tables/job/:id/cancel endpoint that transitions a running job to Failed`
 
-If invoked with no task description, ask the user what task to submit — the autonomous directives in the template govern the *launched agent's* behavior once it's running, they don't excuse skipping the one piece of information this tool can't function without.
+Task is formatted, submitted to Anthropic's Batch API, and a batch ID is returned immediately. Execution is fully asynchronous — you do not wait for results. Batch ID and metadata are logged to `BATCH_TRACKER.md` for later retrieval.
+
+### Interactive mode (override autonomous directives)
+
+```
+/submit-batch [OVERRIDE: DISABLE AUTONOMOUS DIRECTIVES] <task description>
+```
+
+Task is submitted with directives to use `AskUserQuestion` at decision points instead of picking autonomously (processed inside the batch job once it runs).
+
+### Complexity gate
+
+```
+/submit-batch <task description>. GATE: If {condition}, output COMPLEXITY_DETECTED and stop.
+```
+
+Task is submitted with instructions to stop early if complexity threshold is hit (processed inside the batch job).
+
+### Hybrid gating
+
+```
+/submit-batch <task description>. GATE_MAJOR: {interactive}. GATE_MINOR: {autonomous}.
+```
+
+Task is submitted with split decision directives (processed inside the batch job).
+
+---
+
+If invoked with no task description, ask the user what task to submit.
 
 ## What this does
 
-Wraps the given task description in the fixed template at `documets/batch-tool.txt`, launches it as an independent background agent isolated in its own git worktree, and returns control immediately — the task runs unattended while the user does other things, and reports back via the normal task-notification when it finishes (or is checked with `ListAgents` / by resuming it via `SendMessage`).
+Wraps the task description in the Batch API template at `documets/batch-tool.txt`, formats it as a Batch API request (JSONL), submits to Anthropic's infrastructure via the Batch API, and returns control immediately with a batch ID. The request is queued and processed asynchronously at lower cost. Results are retrievable using the batch ID once processing completes.
 
-This is for tasks the user wants to fire-and-forget, not ones needing back-and-forth in this conversation. Multiple invocations queue multiple independent tasks — each gets its own isolated worktree, so they can't collide with each other or with work in progress in this session's own branch.
+Multiple submissions create multiple independent batch jobs, each tracked in `BATCH_TRACKER.md`.
+
+### Key features
+
+- **Cost-effective** — Batch API charges half the standard API rate; ideal for fire-and-forget tasks
+- **Persistent tracking** — Batch IDs stored in `BATCH_TRACKER.md` across sessions; retrieve results anytime
+- **Autonomous execution** — request includes autonomous directives; agent/Claude makes decisions independently and logs to `DECISIONS.md` in the batch request
+- **Override directives** — task can include `[OVERRIDE: DISABLE AUTONOMOUS DIRECTIVES]` to pause at decisions (processed by Claude in the batch job)
+- **Complexity gating** — task can include `GATE:` to stop early on complex problems
+- **Hybrid gating** — split decisions via `GATE_MAJOR:`/`GATE_MINOR:`
 
 ## Steps
 
-1. **Read `documets/batch-tool.txt` fresh** (don't hardcode a copy of it here — the template is the single source of truth and may change). Substitute the user's task description for `${task description}` on the `Submit to batch` line; leave everything else in the file verbatim.
+1. **Read `documets/batch-tool.txt` fresh** (template is the single source of truth). Substitute task description for `${task description}` on the `Submit to batch` line.
 
-2. **Append repo-specific guardrails** the generic template doesn't know about, so "proceed without asking clarifying questions" can't be misread as license to bypass this repo's actual rules. Append this block to the prompt:
+2. **Detect override/gate keywords** in the task description:
+   - `[OVERRIDE: DISABLE AUTONOMOUS DIRECTIVES]` → embedded in batch job, Claude pauses at decisions
+   - `GATE:` → embedded in batch job, Claude stops if threshold hit
+   - `GATE_MAJOR:`/`GATE_MINOR:` → hybrid mode, embedded in batch job
+   - None → standard silent mode, embedded in batch job
 
-   > This repository additionally requires, non-negotiably regardless of the directives above:
-   > - `.claude/rules/design-before-implementation.md`: before writing or editing any application code, confirm it traces to an existing Epic+Story (`documets/design/Project 4thBrain.md`) and a design artifact sufficient to implement from. If either is missing, do not implement around the gap — log a Design Debt entry in `documets/DESIGN-DEBT.md` instead and stop there for that part of the task.
-   > - Do not run `git commit`, `git push`, or any destructive git command (`reset --hard`, `checkout --`, force-push, etc.) unless the task description above explicitly asks for that. Leave finished work as uncommitted changes in the worktree for the user to review.
-   > - Follow this repo's existing conventions (PowerShell only per `.claude/rules/shell.md`, no unnecessary comments, existing test patterns under `server/test/` or `batch/test/`) rather than introducing new ones.
-   > - **Your worktree may be stale relative to the `v03` branch** (it exists locally in this same repository, just checked out on a different ref) — this has caused real problems in prior runs: agents "fixed" bugs that were symptoms of stale files, using a different/incompatible approach than what `v03` already has, and that work had to be discarded by hand afterward. Before modifying any existing file (not new files you're adding), run `git diff v03 -- <path>` first. If `v03`'s version already differs and looks more current/correct — especially in `server/lib/repositories/`, `server/lib/ingest-service.js`, or anything schema-adjacent — treat `v03` as ground truth: pull it in with `git show v03:<path> > <path>` instead of re-deriving your own fix. Only proceed with your own fix if the bug is genuinely also present on `v03`.
+3. **Append repo-specific guardrails** (same as before — design-before-implementation, no destructive git, PowerShell only, etc.). Embed these guardrails in the batch request message.
 
-3. **Launch the agent**: call `Agent` with `subagent_type: "general-purpose"`, `isolation: "worktree"`, a `description` summarizing the task in 3-5 words, and `prompt` set to the filled template + guardrail block from steps 1-2. Do not use `subagent_type: "fork"` — batch tasks should start clean, not inherit this conversation's full history/cost.
+4. **Format and submit the Batch API request**:
+   - Create a JSONL payload: one JSON object per line
+   - Each object: `{"custom_id": "batch-{timestamp}", "params": {"model": "claude-opus-5", "messages": [...], "max_tokens": 4096}}`
+   - Use the Anthropic Python SDK or `curl` to POST to `https://api.anthropic.com/v1/messages/batches`
+   - Capture the returned `id` (batch ID)
 
-4. **Confirm to the user**: report that the task was submitted (name/description of the launched agent), note it's running in an isolated worktree so it won't touch their current branch, and that they'll get a notification when it completes — don't wait on it or poll.
+5. **Track in BATCH_TRACKER.md**:
+   - Add a new row: `| {batch_id} | {description} | {submitted_date} | — | active | {date} |`
+   - Save the file
 
-5. When a batch task's completion notification arrives, relay its final report to the user concisely, and mention the worktree path/branch from the launch result so they know where to review or merge the changes from.
+6. **Confirm to the user**: Report the batch ID, brief description, submission time. Remind them they can check `BATCH_TRACKER.md` anytime to see status, and results are available via the batch ID once complete. No waiting required.
+
+7. **When batch completes** (user checks status or gets external notification): Retrieve results via `anthropic` CLI or API (`batches get {batch_id}`), extract the response from the batch result, and relay to user. Update `BATCH_TRACKER.md` with completion date and status change to `finish`.

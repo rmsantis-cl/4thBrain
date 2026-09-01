@@ -70,7 +70,9 @@
       "Bash(wsl -d FedoraLinux-44 -- bash -c \"grep -i 'gpu\\\\|sycl\\\\|level.zero\\\\|library' /tmp/ollama-spike.log | tail -40\")",
       "PowerShell(wsl -d FedoraLinux-44 -- bash -c \"grep -i 'gpu\\\\|sycl\\\\|level.zero\\\\|library\\\\|OLLAMA_INTEL' /tmp/ollama-spike.log | tail -60\")",
       "PowerShell(wsl -d FedoraLinux-44 -- bash -c \"pkill -f 'ollama-bin' 2>&1; pkill -f 'start-ollama' 2>&1; sleep 1; curl -s -m 2 http://localhost:11434/api/tags || echo 'server stopped, port free'\")",
-      "PowerShell(wsl -d FedoraLinux-44 -- bash -c \"curl -s -m 2 http://localhost:11434/api/tags; echo; ps aux | grep -i ollama | grep -v grep\")"
+      "PowerShell(wsl -d FedoraLinux-44 -- bash -c \"curl -s -m 2 http://localhost:11434/api/tags; echo; ps aux | grep -i ollama | grep -v grep\")",
+      "Bash(npm list *)",
+      "Bash(npm test *)"
     ]
   },
   "enabledMcpjsonServers": [

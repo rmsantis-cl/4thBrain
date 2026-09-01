@@ -2,10 +2,11 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { classify, isIndexable } = require("../lib/ingestion/file-validator");
 
-test("text/plain, text/markdown, text/html are indexable", () => {
-  for (const mimeType of ["text/plain", "text/markdown", "text/html"]) {
+test("text/plain, text/markdown are indexable; text/html requires sanitization", () => {
+  for (const mimeType of ["text/plain", "text/markdown"]) {
     assert.equal(isIndexable({ path: "/x/note", mime_type: mimeType }), true, mimeType);
   }
+  assert.equal(isIndexable({ path: "/x/note.html", mime_type: "text/html" }), false, "text/html goes to Story 1.2 sanitization");
 });
 
 test("MIME check is case-insensitive", () => {
@@ -22,11 +23,11 @@ test("application/pdf is not indexable", () => {
   assert.match(result.reason, /Story 1.2/);
 });
 
-test("null mime_type falls back to extension for .md/.txt/.html", () => {
+test("null mime_type falls back to extension for .md/.txt (not .html)", () => {
   assert.equal(isIndexable({ path: "/x/note.md", mime_type: null }), true);
   assert.equal(isIndexable({ path: "/x/note.txt", mime_type: null }), true);
-  assert.equal(isIndexable({ path: "/x/note.html", mime_type: null }), true);
-  assert.equal(isIndexable({ path: "/x/note.htm", mime_type: null }), true);
+  assert.equal(isIndexable({ path: "/x/note.html", mime_type: null }), false, "HTML goes to Story 1.2 sanitization");
+  assert.equal(isIndexable({ path: "/x/note.htm", mime_type: null }), false, "HTML goes to Story 1.2 sanitization");
 });
 
 test("null mime_type with an unrecognized extension is not indexable", () => {

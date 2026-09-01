@@ -2,7 +2,7 @@
 name: TODO-TRACKER
 description: Actionable task tracking â€” open stories and manual implementation/planning tasks
 metadata:
-  version: 1.3
+  version: 1.7
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -57,9 +57,11 @@ Update this tracker when:
 
 | ID | Task | Description | Depends On | Status |
 |---|---|---|---|---|
-| Task-1 | implement PLAN-31-08-2026-EP7-Completion | Finalize Story 7.1: GPU permanent setup (`.wslconfig`), concurrency gate, verify systemd wiring. See `documets/PLAN-31-08-2026-EP7-Completion.md`. | 7.1 GPU spike | pending |
+| Task-1 | implement PLAN-31-08-2026-EP7-Completion | Finalize Story 7.1: GPU permanent setup (`.wslconfig`), concurrency gate, verify systemd wiring. See `documets/PLAN-31-08-2026-EP7-Completion.md`. | Agent abf58535cfaa7a62f | in-progress |
 | Task-2 | wire html-sanitize-executor into file-validator | After Story 1.2's HTML sanitization code (2026-08-31), route `text/html` MIME type through the new executor instead of direct-copy path (Story 1.1). Currently HTML bypasses sanitization. | 1.2 code | pending |
 | Task-3 | test Story 1.2 HTML sanitization end-to-end | Run the full ingestion pipeline with real HTML files (web clips, saved pages) through the new executor; verify markdown output, archiving, and frontmatter. | 1.2 code + Task-2 | pending |
+| Task-10 | implement PLAN-31-08-2026-Story-2.1 | Implement Story 2.1 classification executor — LLM-based tag/topic inference via Ollama, frontmatter generation, attachment relocation. Depends on Story 1.1 complete + Story 7.1 Ollama reachable. | Agent a7f9efb413b13e7cd | in-progress |
+| Task-12 | create a todo-check skill to sync batch task status and add pending work | Create a `todo-check` skill that queries batch agent status, removes completed tasks from TODO-TRACKER, and adds any new pending work from planning documents to the tracker. | todo-add skill, batch infrastructure | pending |
 
 ### Documentation Follow-ups
 
@@ -68,6 +70,7 @@ Update this tracker when:
 | Task-4 | backpropagate Story 12.2 schema redesign | Update `classes.mmd`, `PROJECT-SUMMARY.md`, `params.json`, per-module backlog files, and `server/db/init.js` (PRAGMA foreign_keys). Blocked on Story 13.3 (API layer) â€” do after implementation. | High (schema docs drift) | pending |
 | Task-5 | resolve DESIGN-DEBT item 4: “Recent activity” UI | Current sidebar hardcoded fake data; decide scope (real recent-N jobs vs. other) and formalize as a Story or defer. | Medium | pending |
 | Task-6 | mobile-responsiveness audit (Story 8.3 deferred) | User Story 13.2 originally scoped mobile-UI review; deferred to later. Schedule once 8.3 lands. | Low | deferred |
+| Task-11 | update TODO-TRACKER when submitting batch tasks | When a task is submitted via /submit-batch, update its status to in-progress and add session/agent reference (e.g., 'Agent abf58535cfaa7a62f'). | Medium | pending |
 
 ### Testing & QA
 
@@ -84,4 +87,8 @@ Update this tracker when:
 - **2026-08-31** â€” Added task “Test” via /todo-add skill (documentation task, low impact, in-progress)
 - **2026-08-31** â€” Added Task IDs (Task-1 through Task-9) to all manual tasks across Active Implementation, Documentation Follow-ups, and Testing & QA sections
 - **2026-08-31** â€” Removed Task-7 (Test) â€” completed
+- **2026-08-31** â€” Created PLAN-31-08-2026-Story-2.1 (4-phase implementation plan: prompt design, executor, job queue integration, testing) and added Task-10 to track its execution
+- **2026-08-31** â€” Added Task-11 (Documentation): update TODO-TRACKER workflow to mark tasks as in-progress with agent reference when submitted to batch
+- **2026-08-31** â€” Added Task-12 (Implementation): create todo-check skill to query batch agent status, remove completed tasks, and sync pending work from planning documents
+- **2026-08-31** â€” Marked Task-1 and Task-10 as in-progress with agent IDs (abf58535cfaa7a62f, a7f9efb413b13e7cd) — submitted to batch processor
 
