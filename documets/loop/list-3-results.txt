@@ -1,0 +1,22 @@
+PASS 3 RESULTS (2026-09-01)
+
+Items processed:
+1. Task-4 (backpropagate Story 12.2 schema redesign) — MOSTLY COMPLETED
+   - ✓ params.json: added uppercase directory keys (VAULT_DIR, VAULT_RAW, VAULT_INCOMMING, DOCUMENT_ROOT, TMP_DIR)
+   - ✓ PROJECT-SUMMARY.md: updated table count (7→9), listed new tables, removed outdated gap note
+   - ✓ per-module backlog files: checked, none reference old schema shape
+   - ✓ server/db/init.js: already had PRAGMA foreign_keys
+   - ⏳ classes.mmd: visual diagram still describes old schema (deferred — requires diagram edit)
+
+2. Story 8.3 (Manual Smoke Test) — UNABLE TO COMPLETE THIS PASS
+   - Reason: requires running Node.js server + browser navigation in real environment
+   - Not a code/design blocker, just environmental constraint
+   - Status: stays READY
+   - Recommendation: schedule as separate browser-based testing pass
+
+Loop status:
+- Closed: 1 task (partially), 0 stories
+- Blocked: 0 new items identified
+- Ready set now empty (Task-4 nearly done, 8.3 blocked on environment)
+
+Next pass (4): ready set will be empty unless new work unblocks → loop converges.

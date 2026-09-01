@@ -380,3 +380,22 @@
   * `tagRepository`, `statusRepository`, and `jobTypeRepository`'s `update()` reject changes to the `name` column (the primary key) — renaming means end-dating the old row and inserting a new one, not an in-place `UPDATE`.  
 > * **Dependencies:** depends on Story 12.2 (corrected schema), depends on Story 6.4, depends on Story 13.1, depends on Story 6.1  
 > * **Status:** Approved for implementation planning
+
+## **EP14: Performance & GPU Acceleration**
+
+**Associated Requirements:** NFR2 (GPU acceleration), NFR11 (Optimized inference turnaround).  
+**Inherited Acceptance Criteria:** Local LLM inference completes within project's performance targets using available hardware acceleration.
+
+### **Story 14.1: Intel iGPU Acceleration via IPEX-LLM**
+
+> * **Abstract:** Replace CPU-only Ollama with Intel's IPEX-LLM build for GPU acceleration on integrated Intel graphics.  
+> * **Description:** Install and configure Intel's IPEX-LLM Ollama build to replace the Fedora-packaged CPU-only Ollama inside WSL2. IPEX-LLM provides SYCL/Level Zero GPU acceleration targeting Intel integrated graphics (tested with Intel Iris Xe). Spike research (documets/story/spike-gpu-ollama.md) confirmed feasibility and achieved real 29/29-layer GPU offload on this project's target model (llama3.2:3b). This story implements the permanent setup: (1) Decide architecture (Option A: keep Fedora package as fallback, run IPEX-LLM from /opt/ollama-ipex-llm/ via new ollama-ipex.service; Option B: uninstall Fedora package, replace entirely); (2) Promote spike build to production; (3) Register systemd unit for auto-start; (4) Verify GPU offload survives WSL2 restart cycles; (5) Confirm port forwarding from Windows to WSL2.  
+> * **Acceptance Criteria:**  
+  * IPEX-LLM Ollama binary installed and auto-starts on WSL2 boot via systemd unit.  
+  * Inference requests show GPU offload in logs (SYCL device detection, layer offloading counts).  
+  * GPU acceleration persists across WSL2 restart cycles.  
+  * Model inference latency is measurably faster than CPU-only baseline (benchmark before/after).  
+  * Windows-native Node.js and tools can reach Ollama across WSL2 boundary (curl http://localhost:11434/api/tags succeeds from PowerShell).  
+> * **Dependencies:** depends on Story 7.1 (WSL2 base environment, .wslconfig, concurrency gate)  
+> * **Status:** READY
+

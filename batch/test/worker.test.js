@@ -101,11 +101,11 @@ test("a job whose job_type has no registered executor at all is left untouched",
   const cfg = createTestCfg();
   try {
     const repos = createRepositories(db);
-    const job = repos.job.create("classify", "New", null, null); // Story 2.1 — no executor registered yet
+    const job = repos.job.create("index", "New", null, null); // Story 3.1 — no executor registered yet
 
     const summary = await runCycle(db, cfg, { log: silentLog });
 
-    // Not even fetched as "pending" — 'classify' isn't a key in registeredExecutors.
+    // Not even fetched as "pending" — 'index' isn't a key in registeredExecutors.
     assert.equal(summary.attempted, 0);
     assert.equal(summary.skipped, 0);
 

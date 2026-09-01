@@ -1,0 +1,12 @@
+i=0
+Loop
+  i++;
+  list of task, story of epics ready to work int list-${i}.txt
+  if list is empty or i>10 STOP;
+  each T in  list(i)
+	Try to complete T
+	if (cant) 
+	    if the reason for not complte R is not in TODO-TRACKER
+			create a new TASK R and set it ready
+		set T not ready depending on R
+	update documentation

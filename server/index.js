@@ -3,6 +3,7 @@ const { buildConfig, checkOllamaReachable } = require("./config");
 const { getDatabase } = require("./db/init");
 const { createRepositories } = require("./lib/repositories");
 const { createWatcher } = require("./lib/ingestion/watcher");
+const { localOnlyMiddleware } = require("./middleware/local-only");
 
 const chatPageRoute = require("./routes/chat-page");
 const ingestRoutes = require("./routes/ingest");
@@ -45,14 +46,16 @@ app.locals.watcher = createWatcher(config, db, {
 
 app.get("/", (req, res) => res.redirect(302, "/chat"));
 
+// Story 9.1 — Local-only access enforcement
+// Protect sensitive endpoints (ingestion, admin, API) from non-local access.
 app.use(chatPageRoute);
-app.use(ingestRoutes);
-app.use(statusRoute);
-app.use(chatLlamaRoute);
-app.use(adminPageRoute);
-app.use("/admin/db", adminDbRoute);
-app.use("/api/tables", apiTablesRouter);
-app.use("/api/docs", apiDocsRouter);
+app.use(localOnlyMiddleware, ingestRoutes);
+app.use(localOnlyMiddleware, statusRoute);
+app.use(localOnlyMiddleware, chatLlamaRoute);
+app.use(localOnlyMiddleware, adminPageRoute);
+app.use("/admin/db", localOnlyMiddleware, adminDbRoute);
+app.use("/api/tables", localOnlyMiddleware, apiTablesRouter);
+app.use("/api/docs", localOnlyMiddleware, apiDocsRouter);
 
 app.listen(config.port, config.bindHost, async () => {
   console.log(`4thBrain — http://${config.bindHost}:${config.port}/chat`);

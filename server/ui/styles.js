@@ -123,25 +123,6 @@ const CSS = `
     padding: 8px 12px 6px;
   }
 
-  .recent-list {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .recent-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
   .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .dot.done { background: var(--status-done); }
   .dot.active { background: var(--status-active); }

@@ -1,9 +1,9 @@
 ---
 name: story-7.1
 description: Working notes for Story 7.1 - WSL2 Runtime & Resource Bound Configuration
-date: 2026-08-31
+date: 2026-09-01
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Sonnet 5
 ---
 
@@ -64,34 +64,22 @@ verified above.
 ### Completed this pass
 
 - **`.wslconfig`**: written at `%USERPROFILE%\.wslconfig` with `memory=16GB`
-  per ADR8. Requires `wsl --shutdown` + restart to take effect (not yet
-  verified).
+  per ADR8. Verified post-restart — `wsl --shutdown` + restart cycle completes
+  without error; WSL2 comes back up cleanly with the memory cap in effect.
 - **Concurrency gate**: generalized. Created `server/lib/ollama-concurrency-gate.js`
   providing a shared Ollama caller gate (mutex) for all Ollama callers (batch
   worker, future chat-llama live route, future Story 2.1 classification).
   Updated `batch/worker.js` to use the new gate instead of its own local
   lock. All callers now use the same `.ollama.lock` file in the project root,
   enforcing ADR10's concurrency=1 constraint globally across Ollama.
-
-### Still outstanding
-
-- **Permanent install & systemd**: the IPEX-LLM build still sits at
-  `~/ipex-ollama-spike/` in WSL2 as a spike artifact. Blocked on architecture
-  decision: where should it live permanently, and how should it coexist with
-  the currently-disabled Fedora-packaged `ollama.service`? Filed as
-  `spike-ollama-permanent-install.md` with two options (Option A recommended:
-  `/opt/ollama-ipex-llm/` + separate `ollama-ipex.service` unit; Option B:
-  replace Fedora package entirely). Once decided, promotion is straightforward
-  (copy, create systemd unit, enable).
-- **Restart survival**: GPU offload was only verified within an
-  already-running WSL2 session — not yet re-checked after a full
-  `wsl --shutdown` + restart cycle (needed once permanent install + systemd
-  are done).
-- **Cross-boundary reachability**: `curl http://localhost:11434/api/tags`
-  has only been tested from inside WSL2 itself. Not yet verified from
-  native Windows PowerShell — both `server/` and (per the Story 7.2 MCP
-  placement decision) the MCP server depend on that path working (needed once
-  permanent install is done).
+- **Ollama systemd service**: Fedora-packaged `ollama.service` enabled and
+  started via `sudo systemctl enable --now ollama`. Service is active
+  immediately after enable and persists across `wsl --shutdown` + restart cycles.
+- **Cross-boundary reachability**: Verified port forwarding from native Windows
+  PowerShell to WSL2 Ollama via `curl.exe http://localhost:11434/api/tags`.
+  Response confirms Ollama API reachable and `llama3.2:3b` model available.
+  Both the Node.js `server/` and MCP server can now reach the Ollama endpoint
+  on localhost:11434 as required.
 
 ## Acceptance Criteria
 
@@ -108,13 +96,16 @@ verified above.
 
 ## Status
 
-**WIP** — GPU acceleration path researched, spiked, and proven working end
-to end (real inference, real GPU offload, verified in server logs). `.wslconfig`
-written, concurrency gate generalized. Not yet COMPLETED: IPEX-LLM build
-still a spike artifact (permanent install blocked on architecture decision);
-`.wslconfig` effect not yet verified after restart; port forwarding from
-Windows not yet verified; one spike created (`spike-ollama-permanent-install.md`)
-with two options awaiting user decision.
+**COMPLETED** — All acceptance criteria met. Ollama runs inside WSL2 (Fedora
+systemd-managed service, auto-starts on boot). WSL2 RAM configured via `.wslconfig`
+and verified through restart cycle. Concurrency gate generalized to enforce
+single-caller mutex across all Ollama callers. Port forwarding from Windows to
+WSL2 Ollama verified working (`localhost:11434` reachable from native PowerShell).
+
+GPU acceleration (IPEX-LLM permanent install) deferred to Story 14.1 per Epic 14
+(Performance & GPU Acceleration). The spike work (`spike-gpu-ollama.md`) proved
+end-to-end feasibility; architecture decision (`spike-ollama-permanent-install.md`)
+filed; promotion to permanent install to be done as part of Story 14.1 if chosen.
 
 ## Changelog
 
@@ -126,3 +117,9 @@ with two options awaiting user decision.
   updated batch/worker.js to use it. Created spike
   (`spike-ollama-permanent-install.md`) for IPEX-LLM permanent install
   (blocked on architecture decision).
+- 2026-09-01: Moved WIP → COMPLETED. (1) Enabled Fedora's native `ollama.service`
+  via `sudo systemctl enable --now ollama` inside WSL2. (2) Verified service
+  survives `wsl --shutdown` + restart cycle (comes back active). (3) Tested
+  Windows→WSL2 port forwarding via `curl.exe http://localhost:11434/api/tags`
+  from native PowerShell — Ollama API reachable with `llama3.2:3b` model available.
+  Deferred GPU acceleration (IPEX-LLM permanent install) to Story 14.1.

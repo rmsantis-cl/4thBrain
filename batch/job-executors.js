@@ -1,6 +1,7 @@
 const ingestExecutor = require("../server/lib/ingestion/ingest-executor");
 const transcodeExecutor = require("../server/lib/ingestion/transcode-executor");
 const htmlSanitizeExecutor = require("../server/lib/ingestion/html-sanitize-executor");
+const classificationExecutor = require("../server/lib/ingestion/classification-executor");
 
 /**
  * job_type -> executor dispatch table. Each executor exposes:
@@ -14,12 +15,15 @@ const htmlSanitizeExecutor = require("../server/lib/ingestion/html-sanitize-exec
  * files first, transcode-executor claims everything else (PDF, .docx,
  * archive-only binaries).
  *
- * 'classify' (Story 2.1) and 'index' (Story 3.1) are valid job_type enum
- * values but have no executor yet — the worker's poll query only looks at
- * registered types, so jobs of those types simply stay 'New' until a later
- * story registers a handler for them. This is deliberate: it keeps jobs
- * visible/queryable instead of silently dropping them or misrepresenting
- * "not yet implemented" as "Failed".
+ * 'classify' (Story 2.1) processes documents already in $VAULT_DIR/incoming,
+ * inferring tags and topic/subtopic via Ollama, then moving the file to its
+ * final vault location.
+ *
+ * 'index' (Story 3.1) is a valid job_type enum value but has no executor yet —
+ * the worker's poll query only looks at registered types, so jobs of those types
+ * simply stay 'New' until a later story registers a handler for them. This is
+ * deliberate: it keeps jobs visible/queryable instead of silently dropping them
+ * or misrepresenting "not yet implemented" as "Failed".
  */
 const executors = {
   ingest: ingestExecutor,
@@ -29,6 +33,7 @@ const executors = {
       ? htmlSanitizeExecutor.execute(db, job, cfg)
       : transcodeExecutor.execute(db, job, cfg),
   },
+  classify: classificationExecutor,
 };
 
 module.exports = { executors };

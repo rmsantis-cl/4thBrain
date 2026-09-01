@@ -1,0 +1,10 @@
+2.1 | Local LLM Metadata & Tag Inference | BACKLOG-TRACKER
+7.2 | Process Lifecycle & MCP Server Setup | BACKLOG-TRACKER
+14.1 | Intel iGPU Acceleration via IPEX-LLM | BACKLOG-TRACKER
+8.3 | Manual Smoke Test — Browser Navigation & Screenshot Verification | BACKLOG-TRACKER
+Task-1 | implement PLAN-31-08-2026-EP7-Completion | TODO-TRACKER
+Task-4 | backpropagate Story 12.2 schema redesign | TODO-TRACKER
+Task-5 | resolve DESIGN-DEBT item 4: Recent activity UI | TODO-TRACKER
+Task-8 | run Story 8.3 smoke test (manual) | TODO-TRACKER
+Task-10 | implement PLAN-31-08-2026-Story-2.1 | TODO-TRACKER
+Task-11 | update TODO-TRACKER when submitting batch tasks | TODO-TRACKER

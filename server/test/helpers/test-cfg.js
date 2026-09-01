@@ -27,6 +27,15 @@ function createTestCfg() {
     rawDir,
     rawDirInbox,
     rawDirClipping,
+    // Uppercase versions (for params.json-style access)
+    VAULT_DIR: vaultDir,
+    VAULT_INCOMMING: vaultDirIncoming,
+    VAULT_RAW: vaultDirRaw,
+    DOCUMENT_ROOT: vaultDir,
+    TMP_DIR: path.join(root, "tmp"),
+    // Ollama config for tests
+    ollamaBaseUrl: "http://localhost:11434/v1",
+    ollamaChatModel: "llama3.2:3b",
   };
 }
 

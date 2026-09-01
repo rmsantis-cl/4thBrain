@@ -90,8 +90,8 @@ function renderStatusPanel() {
 function renderLlamaPanel() {
   return `
     <section class="panel" id="panel-chat-llama">
-      <h1>Chat with Llama <span class="mock-badge">mocked — Story 6.5</span></h1>
-      <p class="subtitle">Scripted replies for now — Story 6.5 wires this to Ollama for real.</p>
+      <h1>Chat with Llama</h1>
+      <p class="subtitle">Local LLM conversation</p>
       <div class="card">
         <div class="chat-window" id="llama-window"></div>
         <form id="llama-form" class="chat-input-row">
@@ -161,13 +161,6 @@ function renderChatPage() {
   <aside class="sidebar">
     <div class="brand"><span class="mark">B4</span> 4thBrain</div>
     <nav class="primary">${renderNav()}</nav>
-    <div class="section-label">Recent</div>
-    <div class="recent-list">
-      <div class="recent-item"><span class="dot done"></span> Q3 planning notes.md</div>
-      <div class="recent-item"><span class="dot done"></span> Clipped: obsidian.md local-rest-api</div>
-      <div class="recent-item"><span class="dot active"></span> Meeting-transcript-08-25.pdf</div>
-      <div class="recent-item"><span class="dot failed"></span> vendor-contract-scan.pdf</div>
-    </div>
     <div class="account-row">
       <div class="avatar">RS</div>
       <div class="account-meta">

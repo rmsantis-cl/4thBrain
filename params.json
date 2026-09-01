@@ -1,12 +1,17 @@
 {
   "vault_dir": "C:\\Users\\rsant\\desar\\Local Vault\\Local Vault",
+  "VAULT_DIR": "C:\\Users\\rsant\\desar\\Local Vault\\Local Vault",
   "smart_env_dir": ".smart-env",
   "mcp_server_name": "smart-connections",
   "mcp_package": "@yejianye/smart-connections-mcp",
   "obsidian_vault_env_var": "OBSIDIAN_VAULT",
   "raw_dir": "C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR",
+  "VAULT_RAW": "C:\\Users\\rsant\\desar\\Local Vault\\Local Vault\\raw",
+  "VAULT_INCOMMING": "C:\\Users\\rsant\\desar\\Local Vault\\Local Vault\\incoming",
+  "DOCUMENT_ROOT": "C:\\Users\\rsant\\desar\\Local Vault\\Local Vault",
+  "TMP_DIR": "C:\\Temp",
   "server_port": 3000,
-  "server_bind_host": "0.0.0.0",
+  "server_bind_host": "127.0.0.1",
   "ollama_base_url": "http://localhost:11434/v1",
   "ollama_chat_model": "llama3.2:3b"
 }
