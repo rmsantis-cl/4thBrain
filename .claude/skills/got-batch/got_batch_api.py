@@ -19,7 +19,7 @@ def load_env():
         sys.exit(1)
 
     api_key = None
-    with open(env_path, 'r') as f:
+    with open(env_path, 'r', encoding='utf-8', errors='replace') as f:
         for line in f:
             line = line.strip()
             if line.startswith("ANTHROPIC_API_KEY="):
@@ -61,7 +61,7 @@ def find_batch_id_in_tracker(friendly_id: str, tracker_path: str = "documets/BAT
         print(f"Error: {tracker_path} not found", file=sys.stderr)
         sys.exit(1)
 
-    with open(tracker_path, 'r', encoding='utf-8') as f:
+    with open(tracker_path, 'r', encoding='utf-8', errors='replace') as f:
         for line in f:
             if re.match(rf"^\|\s*{re.escape(friendly_id)}\s*\|", line):
                 match = re.search(r"<!-- (?:API ID: )?(msgbatch_[a-zA-Z0-9]+) -->", line)
@@ -100,7 +100,7 @@ def update_tracker(friendly_id: str, display_status: str, tracker_path: str = "d
         print(f"Error: {tracker_path} not found", file=sys.stderr)
         sys.exit(1)
 
-    with open(tracker_path, 'r', encoding='utf-8') as f:
+    with open(tracker_path, 'r', encoding='utf-8', errors='replace') as f:
         lines = f.readlines()
 
     now_timestamp = get_est_timestamp()
@@ -124,7 +124,7 @@ def update_tracker(friendly_id: str, display_status: str, tracker_path: str = "d
                 break
 
     if updated:
-        with open(tracker_path, 'w', encoding='utf-8') as f:
+        with open(tracker_path, 'w', encoding='utf-8', errors='replace') as f:
             f.writelines(lines)
         return True
     return False
@@ -142,11 +142,11 @@ def retrieve_results(batch_id: str, api_key: str, friendly_id: str) -> Optional[
 
     try:
         with urllib.request.urlopen(req) as response:
-            results = response.read().decode('utf-8')
+            results = response.read().decode('utf-8', errors='replace')
             filename_safe_id = re.sub(r'[^a-zA-Z0-9_-]', '_', friendly_id)
             results_path = f"batch-results-{filename_safe_id}.jsonl"
 
-            with open(results_path, 'w', encoding='utf-8') as f:
+            with open(results_path, 'w', encoding='utf-8', errors='replace') as f:
                 f.write(results)
 
             return results_path
