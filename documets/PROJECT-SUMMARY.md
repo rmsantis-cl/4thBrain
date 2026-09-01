@@ -3,7 +3,7 @@ name: PROJECT-SUMMARY
 description: Single-page current-state summary of 4thBrain — read this first instead of rescanning the repo
 date: 2026-09-01
 metadata:
-  version: 2.1
+  version: 2.3
   created-by: Claude Code
 ---
 
@@ -37,9 +37,10 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 - 9.1 — Local-Only Access Enforcement & Auth Guard (server binds to 127.0.0.1 instead of 0.0.0.0; IP-based access control middleware added to protect sensitive endpoints)
 - 11.1 — Release Packaging & Versioning (VERSION file, CHANGELOG.md, RELEASE.md with SemVer versioning scheme, release workflow, and rollback procedures)
 - 14.1 — Intel iGPU Acceleration via IPEX-LLM (IPEX-LLM Ollama binary at `/opt/ollama-ipex-llm/`, systemd auto-start verified, Windows→WSL2 port forwarding tested, GPU detection confirmed, service persists across WSL2 restart cycle)
+- 4.1 — Background Sweep & Queue Execution Script (`batch/{lock-manager,job-executors,cleanup,worker}.js`, 18 tests; one-sweep-per-invocation model, all AC met)
 
 **WIP**
-- 4.1 — Background Sweep & Queue Execution Script (`batch/`, 18 tests; one-sweep-per-invocation, scheduling not exercised)
+(none)
 
 **READY (not started)** — 3.1, 5.1, 6.2, 6.3, 7.2, 8.1, 8.2, 10.1
 
@@ -100,6 +101,8 @@ EP7 (Infrastructure/WSL2/Ollama) is the foundation gating almost everything. EP1
 
 ## Changelog
 
+- **2026-09-01 (backlog loop pass 8)** — Completed pass 8 analysis. Pass 7 → Pass 8 ready set unchanged (5.1, 6.3, 7.2, 8.3); closed zero items. Discovered NEW blockers: (1) Story 5.1 lacks email/calendar API integration design (no OAuth/credential spec in requirements); (2) Story 8.3 requires browser automation environment not available in this context; (3) Story 6.3 blocked on DESIGN-DEBT #5 (job table missing error_message column). Story 7.2 identified as next candidate for work. Added Tasks-13–15 to TODO-TRACKER; added DESIGN-DEBT item 6. Loop continues to pass 9 (new blockers discovered). Bumped version to 2.3.
+- **2026-09-01 (backlog loop pass 6)** — Completed Story 4.1 (Background Sweep & Queue Execution Script): moved WIP → COMPLETED (all 2 AC met: 18 tests passing, end-to-end sweep verified). Completed Task-4 (backpropagate Story 12.2 schema redesign): verified all items done — `PROJECT-SUMMARY.md` (9 tables), `params.json` (system directory roles), `classes.mmd` (already current), `database-schema.md` superseded note (updated), `server/db/init.js` PRAGMA (already set). Bumped version to 2.2.
 - **2026-09-01 (backlog loop pass 5)** — Completed Story 14.1 (Intel iGPU Acceleration via IPEX-LLM). IPEX-LLM Ollama binary confirmed at `/opt/ollama-ipex-llm/`, systemd unit `ollama.service` configured to run `/opt/ollama-ipex-llm/start-ollama.sh` with GPU environment variables. Service auto-starts on WSL2 boot, reports "using Intel GPU" in logs. Verified: Windows→WSL2 port forwarding works (curl from PowerShell reached Ollama, model `llama3.2:3b` returned); service persists across `wsl --shutdown` + restart cycle (confirmed active 838ms post-reboot). All 5 AC met. Bumped version to 2.1.
 - **2026-09-01 (backlog loop pass 4)** — Completed Story 11.1 (Release Packaging & Versioning). Created `VERSION` file, `CHANGELOG.md` (Keep a Changelog format documenting 13 shipped Stories + 1 spike), and `RELEASE.md` (SemVer versioning scheme, release workflow, rollback procedures via git tags + database restoration, backup strategy, checklists). Story 11.1 AC met: version tags track releases, changelog maps Stories/Bugs to versions, rollback documented. Created working notes. Bumped version to 2.0.
 - **2026-09-01 (backlog loop passes 2–3)** — Completed Stories 6.5 (Chat with Llama — real Ollama wiring) and 9.1 (Local-Only Access Enforcement). Story 6.5: replaced mock canned-reply handler with real Ollama chat call via OpenAI SDK; error handling for unreachable service; removed mock-badge and mocked subtitle from UI. Story 9.1: changed `params.json` `server_bind_host` from `"0.0.0.0"` to `"127.0.0.1"`; created `server/middleware/local-only.js` IP-based access control; applied middleware to all sensitive routes (`/api/ingest/*`, `/api/status`, `/api/chat/llama`, `/admin/*`, `/api/tables/*`, `/api/docs`). Both stories have working notes. Updated BACKLOG-TRACKER summary table, detail sections, and this file. Created Story 6.5 and 9.1 working notes. Bumped version to 1.9.

@@ -1,15 +1,15 @@
 ---
 name: database-schema
 description: SQLite physical schema for the Document/Status/Classification/Job data model
-date: 2026-08-26
+date: 2026-09-01
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Code
 ---
 
 # Database Schema — Document / Status / Classification / Job
 
-**SUPERSEDED:** This file covers only 4 of the 7 classes in the current `documets/design/classes.md` (Document/Status/Classification/Job). The full schema has been moved to `documets/design/schema.sql`, which includes JobType, Process, and JobDocument. See `documets/design/classes.mmd`/`classes.png` for the current ERD.
+**SUPERSEDED:** This file predates Story 12.2's schema redesign. The current schema in `documets/design/schema.sql` includes 9 tables: Document, Status, Job, JobStatus, JobType, Tag, DocumentTag, JobFile, and Classification (Story 12.2 removed Process and JobDocument, added Tag/DocumentTag/JobFile/JobStatus). See `documets/design/classes.mmd`/`classes.png` for the current ERD, and `documets/design/classes.md` for the domain model.
 
 ---
 
