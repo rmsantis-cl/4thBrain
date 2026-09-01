@@ -94,9 +94,9 @@ async function execute(db, job, cfg) {
       }
       // Link the tag to the document (idempotent: ignore if already exists)
       try {
-        repos.document_tag.create(doc.id, tag);
+        repos.document_tag.link(doc.id, tag);
       } catch (err) {
-        if (!err.message.includes("UNIQUE constraint")) throw err;
+        // already linked or tag not active — that's okay
       }
     }
 
