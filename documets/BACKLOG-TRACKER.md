@@ -17,35 +17,35 @@ Master tracking document for all project stories across all epics. Status values
 
 | ID | Story | Status | Dependencies | Area | [[Detail](#story-details)] |
 |---|---|---|---|---|---|
-| 1.1 | Direct Structured Vault Ingestion | COMPLETED | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
+| 1.1 | Direct Structured Vault Ingestion | COMPLETED | 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
 | 1.2 | Unstructured Text Parsing & Sanitization | COMPLETED | none | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
-| 2.1 | Local LLM Metadata & Tag Inference | COMPLETED | 1.1, 7.1 | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
+| 2.1 | Local LLM Metadata & Tag Inference | COMPLETED | none | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
 | 3.1 | Smart Connections Vector Indexing Pipeline | READY | 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
-| 4.1 | Background Sweep & Queue Execution Script | WIP | 2.1 | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
-| 5.1 | Multi-Source Briefing Synthesis Engine | READY | 2.1, 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
-| 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | 1.1, 6.4 | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
+| 4.1 | Background Sweep & Queue Execution Script | WIP | none | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
+| 5.1 | Multi-Source Briefing Synthesis Engine | READY | 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
+| 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | none | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
 | 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
 | 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
-| 6.5 | Chat with Llama — Local Ollama Chat Panel | COMPLETED | 6.4, 7.1, 7.2 | UI | [[6.5](#story-65-chat-with-llama--local-ollama-chat-panel)] |
+| 6.5 | Chat with Llama — Local Ollama Chat Panel | COMPLETED | 6.4, 7.2 | UI | [[6.5](#story-65-chat-with-llama--local-ollama-chat-panel)] |
 | 7.1 | WSL2 Runtime & Resource Bound Configuration | COMPLETED | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
 | 7.2 | Process Lifecycle & MCP Server Setup | READY | none | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
-| 7.3 | SQLite Database Setup for Processing-State Persistence | COMPLETED | 7.1, 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
+| 7.3 | SQLite Database Setup for Processing-State Persistence | COMPLETED | 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
 | 7.4 | Create Database Schema from DDL | COMPLETED | 7.3 | Infrastructure | [[7.4](#story-74-create-database-schema-from-ddl)] |
 | 7.5 | Seed Constants & Enumerations | COMPLETED | 7.4 | Infrastructure | [[7.5](#story-75-seed-constants--enumerations)] |
 | 8.1 | Automated Test Harness & Regression Suite | READY | 7.2 | QA | [[8.1](#story-81-automated-test-harness--regression-suite)] |
 | 8.2 | Bug & Issue Tracking Workflow | READY | 8.1 | QA | [[8.2](#story-82-bug--issue-tracking-workflow)] |
 | 8.3 | Automated Smoke Test Suite | READY | none | QA | [[8.3](#story-83-automated-smoke-test-suite)] |
-| 9.1 | Local-Only Access Enforcement & Auth Guard | COMPLETED | 7.2, 6.1 | Security | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
+| 9.1 | Local-Only Access Enforcement & Auth Guard | COMPLETED | 7.2 | Security | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
 | 10.1 | Scheduled Vault Snapshot & Restore | READY | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
-| 11.1 | Release Packaging & Versioning | COMPLETED | 7.1, 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
+| 11.1 | Release Packaging & Versioning | COMPLETED | 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
 | 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
 | 12.2 | Schema Redesign | COMPLETED | none | Design | [[12.2](#story-122-schema-redesign)] |
-| 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | 7.3 | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
-| 13.2 | Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu | COMPLETED | 6.4, 13.1 | UI | [[13.2](#story-132-review-mobile-ui)] |
-| 13.3 | Unified Data-Access API | COMPLETED | 12.2, 6.4, 13.1, 6.1 | UI | [[13.3](#story-133-unified-data-access-api)] |
-| 14.1 | Intel iGPU Acceleration via IPEX-LLM | COMPLETED | 7.1 | Performance | [[14.1](#story-141-intel-igpu-acceleration-via-ipex-llm)] |
+| 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | none | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
+| 13.2 | Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu | COMPLETED | none | UI | [[13.2](#story-132-review-mobile-ui)] |
+| 13.3 | Unified Data-Access API | COMPLETED | none | UI | [[13.3](#story-133-unified-data-access-api)] |
+| 14.1 | Intel iGPU Acceleration via IPEX-LLM | COMPLETED | none | Performance | [[14.1](#story-141-intel-igpu-acceleration-via-ipex-llm)] |
 
 ---
 
@@ -85,7 +85,7 @@ Master tracking document for all project stories across all epics. Status values
 |---|---|
 | **Abstract** | Infer tags, metadata, and topic/subtopic placement using local LLM inference. |
 | **Description** | Connect the Node.js processing pipeline to the local Ollama instance to analyze raw note content and generate appropriate tags and YAML header fields based on vault taxonomy. In addition to tags, the LLM infers a topic/subtopic for the note; this topic/subtopic (not the tags) determines the target vault subfolder the note is filed into. If the note references images, documents, or other files, those referenced files are placed in a sibling attachment directory next to the note. See ADR15. |
-| **Dependencies** | depends on Story 1.1, depends on Story 7.1 |
+| **Dependencies** | none (1.1, 7.1 both COMPLETED) |
 | **Acceptance Criteria** | • Generated notes contain syntactically valid YAML frontmatter blocks.<br>• Applied tags strictly align with configured vault taxonomy rules.<br>• Note is filed into the vault subfolder determined by its inferred topic/subtopic.<br>• Files referenced by the note (images, documents, other attachments) are placed in a sibling directory next to the note, not left in `$VAULT_DIR/incoming`. |
 | **Status** | COMPLETED |
 | **Implementation** | `server/lib/ingestion/classification-executor.js` — connects to Ollama via OpenAI SDK; infers tags and topic/subtopic via LLM; ensures classifications exist in database; moves files from `$VAULT_DIR/incoming` to final vault location based on inferred topic; links tags via document_tag table. Integrated into batch/job-executors.js; 8 passing tests in `ingestion.classification-executor.test.js` (mocked Ollama to avoid runtime dependency; real Ollama inference would require live Ollama service). Acceptance criteria all met: YAML frontmatter valid (via document record), tags align with configured taxonomy (configurable via Ollama prompt), note filed by topic/subtopic (via resolveVaultPath), attachment directories planned for future implementation. |
@@ -323,7 +323,7 @@ Master tracking document for all project stories across all epics. Status values
 |---|---|
 | **Abstract** | Restrict Web UI/API access to authenticated local sessions. |
 | **Description** | Add a lightweight auth guard (e.g., local token/session) to the Node.js orchestration server so ingestion, search, and dashboard endpoints (EP6) aren't reachable by arbitrary network callers. |
-| **Dependencies** | depends on Story 7.2, depends on Story 6.1 |
+| **Dependencies** | depends on Story 7.2 |
 | **Acceptance Criteria** | • Unauthenticated requests to ingestion/search/dashboard endpoints are rejected. **Met** — `localOnlyMiddleware` checks IP and returns 403 for non-local requests.<br>• Server binds to localhost/WSL2-internal interface by default, not 0.0.0.0. **Met** — `params.json` updated to `127.0.0.1`. |
 | **Status** | COMPLETED |
 | **Implementation** | `params.json` — Changed `server_bind_host` from `"0.0.0.0"` to `"127.0.0.1"`. `server/middleware/local-only.js` — IP-based access control middleware for localhost-only enforcement. `server/index.js` — Applied middleware to all sensitive routes (`/api/*`, `/admin/*`). Public routes (`/`, `/chat`) remain accessible. |
