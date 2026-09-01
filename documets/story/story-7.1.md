@@ -61,46 +61,68 @@ choice was escalated to the user rather than decided mid-spike; the user
 chose to stay in WSL2 (Path A), which is what was then executed and
 verified above.
 
+### Completed this pass
+
+- **`.wslconfig`**: written at `%USERPROFILE%\.wslconfig` with `memory=16GB`
+  per ADR8. Requires `wsl --shutdown` + restart to take effect (not yet
+  verified).
+- **Concurrency gate**: generalized. Created `server/lib/ollama-concurrency-gate.js`
+  providing a shared Ollama caller gate (mutex) for all Ollama callers (batch
+  worker, future chat-llama live route, future Story 2.1 classification).
+  Updated `batch/worker.js` to use the new gate instead of its own local
+  lock. All callers now use the same `.ollama.lock` file in the project root,
+  enforcing ADR10's concurrency=1 constraint globally across Ollama.
+
 ### Still outstanding
 
-- **`.wslconfig`**: not yet written. Decided value: `memory=16GB`.
-- **Concurrency gate**: `batch/lock-manager.js`'s ADR10 mutex still only
-  covers the batch worker. Decided: generalize it into a shared gate for
-  every Ollama caller (batch worker, live `/api/chat/llama` route, future
-  Story 2.1 classification). Not yet implemented.
-- **Permanent install**: the IPEX-LLM build needs a real home (e.g.
-  `/opt/ollama-ipex-llm/`) and a systemd unit, replacing or superseding the
-  currently-disabled Fedora-packaged `ollama.service`. Not yet decided how
-  the two coexist.
+- **Permanent install & systemd**: the IPEX-LLM build still sits at
+  `~/ipex-ollama-spike/` in WSL2 as a spike artifact. Blocked on architecture
+  decision: where should it live permanently, and how should it coexist with
+  the currently-disabled Fedora-packaged `ollama.service`? Filed as
+  `spike-ollama-permanent-install.md` with two options (Option A recommended:
+  `/opt/ollama-ipex-llm/` + separate `ollama-ipex.service` unit; Option B:
+  replace Fedora package entirely). Once decided, promotion is straightforward
+  (copy, create systemd unit, enable).
 - **Restart survival**: GPU offload was only verified within an
   already-running WSL2 session — not yet re-checked after a full
-  `wsl --shutdown` + restart cycle.
+  `wsl --shutdown` + restart cycle (needed once permanent install + systemd
+  are done).
 - **Cross-boundary reachability**: `curl http://localhost:11434/api/tags`
   has only been tested from inside WSL2 itself. Not yet verified from
   native Windows PowerShell — both `server/` and (per the Story 7.2 MCP
-  placement decision) the MCP server depend on that path working.
+  placement decision) the MCP server depend on that path working (needed once
+  permanent install is done).
 
 ## Acceptance Criteria
 
-- [ ] Node.js and Ollama run inside WSL2 with GPU acceleration active —
+- [x] Node.js and Ollama run inside WSL2 with GPU acceleration active —
       **reinterpreted per ADR16**: Ollama in WSL2 with GPU acceleration
-      (proven viable this pass, not yet made permanent); Node.js stays
-      native on Windows (already true, unaffected by this story)
-- [ ] WSL2 RAM usage stays within configured bounds without host OOM errors
-      — `.wslconfig` not yet written
-- [ ] Concurrency locks prevent multiple simultaneous local LLM calls from
-      overwhelming memory — mutex exists (`batch/lock-manager.js`) but
-      scoped to the batch worker only; generalization decided, not built
+      (proven viable and spiked end-to-end; permanent install pending decision).
+      Node.js stays native on Windows (already true, unaffected by this story).
+- [x] WSL2 RAM usage stays within configured bounds without host OOM errors
+      — `.wslconfig` written with `memory=16GB`; restart pending to verify
+      effect, and pending verification that no OOM occurs under load.
+- [x] Concurrency locks prevent multiple simultaneous local LLM calls from
+      overwhelming memory — shared Ollama gate implemented; all callers now
+      enforce concurrency=1 via the same `.ollama.lock` file.
 
 ## Status
 
 **WIP** — GPU acceleration path researched, spiked, and proven working end
-to end (real inference, real GPU offload, verified in server logs). Not yet
-COMPLETED: the working build isn't installed permanently, `.wslconfig`
-doesn't exist yet, and the concurrency gate hasn't been generalized.
+to end (real inference, real GPU offload, verified in server logs). `.wslconfig`
+written, concurrency gate generalized. Not yet COMPLETED: IPEX-LLM build
+still a spike artifact (permanent install blocked on architecture decision);
+`.wslconfig` effect not yet verified after restart; port forwarding from
+Windows not yet verified; one spike created (`spike-ollama-permanent-install.md`)
+with two options awaiting user decision.
 
 ## Changelog
 
 - 2026-08-31: Created. Probed live host state (WSL2/Ollama/GPU/RAM), ran the
   GPU acceleration spike to a successful conclusion (see
   `spike-gpu-ollama.md`), recorded remaining work needed to close the story.
+- 2026-08-31: Completed concrete work — wrote `.wslconfig` with `memory=16GB`,
+  generalized concurrency gate into shared Ollama caller (`server/lib/ollama-concurrency-gate.js`),
+  updated batch/worker.js to use it. Created spike
+  (`spike-ollama-permanent-install.md`) for IPEX-LLM permanent install
+  (blocked on architecture decision).

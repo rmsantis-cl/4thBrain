@@ -1,11 +1,9 @@
-const path = require("path");
 const { createRepositories } = require("../server/lib/repositories");
 const { cleanupOrphans } = require("./cleanup");
 const { executors } = require("./job-executors");
-const lockManager = require("./lock-manager");
+const ollamaConcurrencyGate = require("../server/lib/ollama-concurrency-gate");
 
 const DEFAULT_JOB_LIMIT = 10;
-const DEFAULT_LOCK_FILE = path.join(__dirname, ".worker.lock");
 
 function defaultLog(entry) {
   console.log(JSON.stringify({ timestamp: new Date().toISOString(), component: "batch.worker", ...entry }));
@@ -77,17 +75,18 @@ async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLo
   return summary;
 }
 
-/** Real entrypoint: acquires the concurrency=1 lock, runs one sweep against
- *  the real database/config, releases the lock. Exits 0 whether or not work
- *  was found — "another instance is already running" is not an error. */
+/** Real entrypoint: acquires the shared Ollama concurrency gate, runs one
+ *  sweep against the real database/config, releases the gate. Exits 0 whether
+ *  or not work was found — "another Ollama caller already holds the gate" is
+ *  not an error. */
 async function main() {
   const { buildConfig } = require("../server/config");
   const { getDatabase } = require("../server/db/init");
 
-  const lockFilePath = process.env.WORKER_LOCK_FILE || DEFAULT_LOCK_FILE;
-  const lock = lockManager.acquire(lockFilePath);
+  const lockFilePath = ollamaConcurrencyGate.getLockFilePath();
+  const lock = ollamaConcurrencyGate.acquire(lockFilePath);
   if (!lock) {
-    defaultLog({ level: "info", event: "sweep_skipped", reason: "another worker instance holds the lock" });
+    defaultLog({ level: "info", event: "sweep_skipped", reason: "another Ollama caller holds the concurrency gate" });
     return;
   }
 
@@ -109,4 +108,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { runCycle, main, DEFAULT_LOCK_FILE };
+module.exports = { runCycle, main };

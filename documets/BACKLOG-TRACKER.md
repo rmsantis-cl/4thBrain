@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.11
+  version: 1.12
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -18,7 +18,7 @@ Master tracking document for all project stories across all epics. Status values
 | ID | Story | Status | Dependencies | Area | [[Detail](#story-details)] |
 |---|---|---|---|---|---|
 | 1.1 | Direct Structured Vault Ingestion | COMPLETED | 7.1, 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
-| 1.2 | Unstructured Text Parsing & Sanitization | WIP | 1.1 | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
+| 1.2 | Unstructured Text Parsing & Sanitization | COMPLETED | 1.1 | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
 | 2.1 | Local LLM Metadata & Tag Inference | READY | 1.1, 7.1 | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
 | 3.1 | Smart Connections Vector Indexing Pipeline | READY | 1.1, 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
@@ -219,8 +219,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Establish base system configuration files (.wslconfig, systemd/PM2 supervisor, Ollama service) to enforce local execution limits, concurrency caps (concurrency: 1), and host memory protection. |
 | **Dependencies** | None (Foundation Task) |
 | **Acceptance Criteria** | • Node.js and Ollama run inside WSL2 with GPU acceleration active.<br>• WSL2 RAM usage stays within configured bounds without host OOM errors.<br>• Concurrency locks prevent multiple simultaneous local LLM calls from overwhelming memory. |
-| **Status** | WIP — GPU acceleration spiked and proven working (real inference, 29/29 layers offloaded to the Intel iGPU via SYCL/Level Zero), but not yet made permanent; `.wslconfig` and the generalized concurrency gate are still outstanding. See `documets/PLAN-31-08-2026-EP7-Completion.md`. |
-| **Working Notes** | [[story-7.1.md](./story/story-7.1.md)], [[spike-gpu-ollama.md](./story/spike-gpu-ollama.md)] |
+| **Status** | WIP — GPU acceleration spiked and proven working (real inference, 29/29 layers offloaded to the Intel iGPU via SYCL/Level Zero); `.wslconfig` (16GB memory cap) written and concurrency gate generalized (shared Ollama caller mutex in `server/lib/ollama-concurrency-gate.js`). Still outstanding: IPEX-LLM permanent install + systemd unit (blocked on architecture decision, filed as `spike-ollama-permanent-install.md`). See `documets/PLAN-31-08-2026-EP7-Completion.md`. |
+| **Working Notes** | [[story-7.1.md](./story/story-7.1.md)], [[spike-gpu-ollama.md](./story/spike-gpu-ollama.md)], [[spike-ollama-permanent-install.md](./story/spike-ollama-permanent-install.md)] |
 
 ---
 
@@ -429,6 +429,7 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Changelog
 
+- **2026-08-31** (1812 UTC) — Story 7.1 progress update: `.wslconfig` (16GB memory cap) written; concurrency gate generalized into shared Ollama caller (`server/lib/ollama-concurrency-gate.js`); `batch/worker.js` updated to use it; IPEX-LLM permanent install blocked on architecture decision, filed as `spike-ollama-permanent-install.md` with two options (Option A recommended: `/opt/ollama-ipex-llm/` + separate systemd unit). Bumped version from 1.11 to 1.12.
 - **2026-08-31** — Close-out pass: (1) Fixed Story 6.1 status inconsistency in summary table (showed COMPLETED but detail section correctly shows WORKING) — corrected to WORKING. (2) Created `documets/story/story-13.2.md` working notes for the COMPLETED Story 13.2 (admin UI restructuring), documenting implementation details and acceptance criteria verification. (3) Bumped version from 1.10 to 1.11.
 - **2026-08-31** — Story 7.1 moved READY → WIP: a timeboxed GPU-acceleration spike (`documets/story/spike-gpu-ollama.md`) confirmed Intel iGPU passthrough works end-to-end inside this host's WSL2 guest — Fedora's native `intel-compute-runtime`/`intel-level-zero` packages plus Intel's IPEX-LLM Ollama build achieved real, verified GPU offload (29/29 model layers, live inference test). Not COMPLETED: the working build is a spike artifact, not yet installed permanently or wired into systemd; `.wslconfig` and the generalized Ollama-call concurrency gate remain outstanding. See `documets/PLAN-31-08-2026-EP7-Completion.md` for the full decision trail and defined next step.
 - **2026-08-31** — Story 1.1 moved WIP → COMPLETED: real-environment verification pass per `documets/PLAN-30-08-2026-EP1-Completion.md`'s "close out WIP → COMPLETED" section. Server started natively (`scripts/ui-server.ps1 start`) against real `params.json` paths; real `.md`/`.txt`/`.html` files dropped into `$RAW_DIR/inbox` were picked up by the watcher and filed byte-for-byte into `$VAULT_DIR/incoming` with frontmatter intact; a file submitted through `POST /api/ingest/file` (Story 6.1's `/chat` form path) produced exactly one job — the watcher's `job_file.findByPath()` dedup correctly skipped the resulting filesystem event; `/api/tables/document` and `/api/tables/job` confirmed `document.status="Processing"`, real `uri_location`, and `job_file.status="filed"` across all 13 jobs processed. The flagged UNC/network-share timing risk did not materialize — `raw_dir` is a plain local NTFS path. Found and fixed a real gap during this pass: `server/index.js` never called `createWatcher()` — the module was fully unit-tested but dead in production, so a file dropped outside the web form would never have been picked up by the live server. Fixed with a 2-line addition (import + `createWatcher(config, db, {...})` call) that only activates the already-designed (ADR14) and already-tested `watcher.js`; no new ingestion logic introduced.

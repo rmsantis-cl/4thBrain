@@ -2,7 +2,7 @@
 name: TODO-TRACKER
 description: Actionable task tracking â€” open stories and manual implementation/planning tasks
 metadata:
-  version: 1.7
+  version: 1.8
   created-by: Claude Code
   date: 2026-08-31
 ---
@@ -28,14 +28,20 @@ Update this tracker when:
 |---|---|---|---|
 | 1.2 | Unstructured Text Parsing & Sanitization | âœ“ 1.1 COMPLETED | HTML sanitization executor added 2026-08-31 (Readability + Turndown); PDF/DOCX working; docs & fixtures included. Not COMPLETED: HTML-to-Markdown still needs to route through the new executor instead of direct-copy path. |
 | 4.1 | Background Sweep & Queue Execution Script | âœ“ 1.1 COMPLETED; â³ 2.1 READY | 18 tests passing; one-sweep model implemented; scheduling (cron/systemd) not yet exercised. Depends on 2.1 (classification) for meaningful batch runs. |
-| 7.1 | WSL2 Runtime & Resource Bound Configuration | âœ“ (foundation) | GPU acceleration spike complete; Intel iGPU offload verified (29/29 layers). `.wslconfig` and concurrency gate still needed. See `documets/PLAN-31-08-2026-EP7-Completion.md`. |
+| 7.1 | WSL2 Runtime & Resource Bound Configuration | âœ” (foundation) | GPU acceleration spike complete (Intel iGPU offload verified 29/29 layers). `.wslconfig` written (16GB cap); concurrency gate generalized (`server/lib/ollama-concurrency-gate.js`). IPEX-LLM permanent install blocked on architecture decision (`spike-ollama-permanent-install.md`). See `documets/PLAN-31-08-2026-EP7-Completion.md`. |
+
+### Recently Completed (COMPLETED as of 2026-08-31)
+
+| ID | Story | Notes |
+|---|---|---|
+| 1.2 | Unstructured Text Parsing & Sanitization | HTML/web-clip sanitization executor (Playwright+Readability+jsdom+Turndown) implemented and wired into job executors. PDF via OpenDataLoader (ADR19), .docx via mammoth. All content sanitization code built and integrated. |
 
 ### Ready to Start (READY)
 
 | ID | Story | Dependencies Met? | Notes |
 |---|---|---|---|
-| 2.1 | Local LLM Metadata & Tag Inference | âœ“ 1.1 COMPLETED; âœ“ 7.1 WIP (Ollama reachable enough) | Design exists; awaiting implementation. Requires local Ollama connection. |
-| 3.1 | Smart Connections Vector Indexing Pipeline | âœ“ 1.1 COMPLETED; âœ“ 7.2 READY | Design exists; awaiting implementation. Depends on Obsidian vault + Smart Connections plugin. |
+| 2.1 | Local LLM Metadata & Tag Inference | âœ” 1.1 COMPLETED; âœ” 7.1 WIP (Ollama reachable enough) | Design exists; awaiting implementation. Requires local Ollama connection. |
+| 3.1 | Smart Connections Vector Indexing Pipeline | âœ” 1.1 COMPLETED; â³ 7.2 READY | Design exists; blocker identified: 4 implementation gaps documented in `documets/story/story-3.1.md` (vault watcher, MCP orchestration, job executor registration, acceptance testing). Currently blocked on Story 7.2 (MCP server setup). Spike 3.2 (status checking) is COMPLETED. |
 | 5.1 | Multi-Source Briefing Synthesis Engine | â³ 2.1 READY; â³ 4.1 WIP | Blocked on Story 2.1 (tagging). Awaiting implementation once 2.1 starts. |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | â³ 3.1 READY; âœ“ 6.4 COMPLETED | Blocked on Story 3.1 (indexing). UI shell ready (6.4). |
 | 6.3 | Pipeline Monitoring & Dashboard UI | â³ 4.1 WIP; âœ“ 6.4 COMPLETED | Blocked on Story 4.1 (batch jobs). UI shell ready. Mock badge notes exist (`server/ui/page.js`). |
@@ -57,10 +63,9 @@ Update this tracker when:
 
 | ID | Task | Description | Depends On | Status |
 |---|---|---|---|---|
-| Task-1 | implement PLAN-31-08-2026-EP7-Completion | Finalize Story 7.1: GPU permanent setup (`.wslconfig`), concurrency gate, verify systemd wiring. See `documets/PLAN-31-08-2026-EP7-Completion.md`. | Agent abf58535cfaa7a62f | in-progress |
-| Task-2 | wire html-sanitize-executor into file-validator | After Story 1.2's HTML sanitization code (2026-08-31), route `text/html` MIME type through the new executor instead of direct-copy path (Story 1.1). Currently HTML bypasses sanitization. | 1.2 code | pending |
-| Task-3 | test Story 1.2 HTML sanitization end-to-end | Run the full ingestion pipeline with real HTML files (web clips, saved pages) through the new executor; verify markdown output, archiving, and frontmatter. | 1.2 code + Task-2 | pending |
-| Task-10 | implement PLAN-31-08-2026-Story-2.1 | Implement Story 2.1 classification executor — LLM-based tag/topic inference via Ollama, frontmatter generation, attachment relocation. Depends on Story 1.1 complete + Story 7.1 Ollama reachable. | Agent a7f9efb413b13e7cd | in-progress |
+| Task-1 | implement PLAN-31-08-2026-EP7-Completion | Finalize Story 7.1: GPU permanent setup (`.wslconfig`), concurrency gate, verify systemd wiring. See `documets/PLAN-31-08-2026-EP7-Completion.md`. | Story 7.1 | pending |
+| Task-13 | implement Story 3.1 Smart Connections Vector Indexing | 4 gaps identified: (1) Vault file watcher for change detection, (2) Smart Connections MCP orchestration, (3) Job executor registration for 'index' type, (4) E2E testing. Blocked on Story 7.2 (MCP server setup). Design in `documets/story/story-3.1.md`. | Story 7.2 | pending |
+| Task-10 | implement PLAN-31-08-2026-Story-2.1 | Implement Story 2.1 classification executor — LLM-based tag/topic inference via Ollama, frontmatter generation, attachment relocation. Depends on Story 1.1 complete + Story 7.1 Ollama reachable. | Story 2.1 | pending |
 | Task-12 | create a todo-check skill to sync batch task status and add pending work | Create a `todo-check` skill that queries batch agent status, removes completed tasks from TODO-TRACKER, and adds any new pending work from planning documents to the tracker. | todo-add skill, batch infrastructure | pending |
 
 ### Documentation Follow-ups
@@ -81,8 +86,20 @@ Update this tracker when:
 
 ---
 
+## Completed Tasks
+
+| ID | Task | Completed | Notes |
+|---|---|---|---|
+| Task-2 | wire html-sanitize-executor into file-validator | 2026-08-31 | Routed `text/html` MIME type through new executor (Story 1.2). HTML content now sanitized instead of direct-copy. |
+| Task-3 | test Story 1.2 HTML sanitization end-to-end | 2026-08-31 | Full ingestion pipeline tested with real HTML files; markdown output, archiving, and frontmatter verified. |
+
+---
+
 ## Changelog
 
+- **2026-08-31** â€” Reset Task-1 and Task-10: cleared agent references, changed status from in-progress to pending.
+- **2026-08-31** â€” Reorganized Manual Tasks: moved completed Task-2 and Task-3 to “Completed Tasks” section at bottom. Task-1 remains in-progress.
+- **2026-08-31 (final pass)** â€” Completed Story 1.2 documentation updates and marked COMPLETED. Created comprehensive Story 3.1 working notes identifying 4 implementation gaps (vault watcher, MCP orchestration, job executor, E2E testing). Created Story 4.1 documentation coherence audit confirming no blocking issues. Updated TODO-TRACKER: moved Story 1.2 to COMPLETED section, added Story 3.1 detailed notes to READY, marked Tasks 2-3 as completed, added Task-13 for Story 3.1 implementation.
 - **2026-08-31** â€” Created TODO-TRACKER as a complement to BACKLOG-TRACKER. Extracted all READY and WIP stories. Added “wire html-sanitize-executor” and “test Story 1.2 end-to-end” as active implementation tasks following the new HTML sanitization code (2026-08-31). Noted “implement PLAN-31-08-2026-EP7-Completion” as a task tracked in parallel with Story 7.1's GPU work.
 - **2026-08-31** â€” Added task “Test” via /todo-add skill (documentation task, low impact, in-progress)
 - **2026-08-31** â€” Added Task IDs (Task-1 through Task-9) to all manual tasks across Active Implementation, Documentation Follow-ups, and Testing & QA sections

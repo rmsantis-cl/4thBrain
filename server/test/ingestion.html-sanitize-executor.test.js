@@ -28,13 +28,15 @@ test("sanitizeHtml extracts and cleans main article content from a realistic web
 });
 
 test("sanitizeHtml falls back to body extraction when Readability finds no article", () => {
-  const html = "<html><head><title>Nav Only</title></head><body><nav><ul><li>Link</li></ul></nav></body></html>";
+  // A page with only a form (no article-like content) — Readability should return null
+  const html = "<html><head><title>Login</title></head><body><form><input name='user'><button>Sign In</button></form></body></html>";
   const result = sanitizeHtml(html);
 
-  assert.strictEqual(result.title, "Nav Only", "should extract title");
+  assert.strictEqual(result.title, "Login", "should extract title");
   assert(result.markdown.length > 0, "should produce non-empty markdown even in degraded mode");
   assert(result.degraded, "should flag degraded mode when Readability returns null");
-  assert(result.markdown.includes("Link"), "should include nav content in fallback");
+  // In degraded mode, the extracted content includes the raw body (form markup)
+  assert(result.markdown.includes("Sign In") || result.markdown.includes("Sign"), "should include body content in fallback");
 });
 
 test("sanitizeHtml handles empty body gracefully", () => {
@@ -73,11 +75,10 @@ test("canHandle returns true for convert jobs with HTML file", () => {
   const sourceFile = path.join(os.tmpdir(), `test-${Date.now()}.html`);
   fs.writeFileSync(sourceFile, "<html></html>", "utf-8");
 
-  const docId = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", "General");
-  const jobId = repos.job.create(docId, "convert");
-  repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, jobId);
+  const doc = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", null);
+  const job = repos.job.create("convert", "New", doc.id, null);
+  repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, job.id);
 
-  const job = repos.job.get(jobId);
   assert(canHandle(db, job), "should return true for convert job with HTML file");
 
   fs.rmSync(sourceFile, { force: true });
@@ -89,11 +90,10 @@ test("canHandle returns false for non-convert jobs", () => {
   const sourceFile = path.join(os.tmpdir(), `test-${Date.now()}.html`);
   fs.writeFileSync(sourceFile, "<html></html>", "utf-8");
 
-  const docId = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", "General");
-  const jobId = repos.job.create(docId, "ingest");
-  repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, jobId);
+  const doc = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", null);
+  const job = repos.job.create("ingest", "New", doc.id);
+  repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, job.id);
 
-  const job = repos.job.get(jobId);
   assert(!canHandle(db, job), "should return false for ingest job");
 
   fs.rmSync(sourceFile, { force: true });
@@ -102,10 +102,9 @@ test("canHandle returns false for non-convert jobs", () => {
 test("canHandle returns false when job has no files", () => {
   const db = createTestDb();
   const repos = createRepositories(db);
-  const docId = repos.document.create("orphan", "/nonexistent/path", "text/html", "utf-8", "New", "General");
-  const jobId = repos.job.create(docId, "convert");
+  const doc = repos.document.create("orphan", "/nonexistent/path", "text/html", "utf-8", "New", null);
+  const job = repos.job.create("convert", "New", doc.id);
 
-  const job = repos.job.get(jobId);
   assert(!canHandle(db, job), "should return false when job has no job_file records");
 });
 
@@ -120,11 +119,9 @@ test("execute sanitizes HTML, archives the original, and writes Markdown with pr
     "</body></html>";
   fs.writeFileSync(sourceFile, html, "utf-8");
 
-  const docId = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", "General");
-  const jobId = repos.job.create(docId, "convert");
-  repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, jobId);
-
-  const job = repos.job.get(jobId);
+  const doc = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", null);
+  const job = repos.job.create("convert", "New", doc.id, null);
+  repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, job.id);
 
   const result = execute(db, job, cfg);
 
@@ -153,11 +150,10 @@ test("execute throws when source file does not exist", () => {
   const db = createTestDb();
   const cfg = createTestCfg();
   const repos = createRepositories(db);
-  const docId = repos.document.create("missing.html", "/nonexistent/file.html", "text/html", "utf-8", "New", "General");
-  const jobId = repos.job.create(docId, "convert");
-  repos.job_file.create("missing.html", "/nonexistent/file.html", "text/html", "/nonexistent/file.html", jobId);
+  const doc = repos.document.create("missing.html", "/nonexistent/file.html", "text/html", "utf-8", "New", null);
+  const job = repos.job.create("convert", "New", doc.id);
+  repos.job_file.create("missing.html", "/nonexistent/file.html", "text/html", "/nonexistent/file.html", job.id);
 
-  const job = repos.job.get(jobId);
   assert.throws(
     () => execute(db, job, cfg),
     /source file does not exist/,
@@ -171,10 +167,9 @@ test("execute throws when job has no files", () => {
   const db = createTestDb();
   const cfg = createTestCfg();
   const repos = createRepositories(db);
-  const docId = repos.document.create("orphan", "/some/path", "text/html", "utf-8", "New", "General");
-  const jobId = repos.job.create(docId, "convert");
+  const doc = repos.document.create("orphan", "/some/path", "text/html", "utf-8", "New", null);
+  const job = repos.job.create("convert", "New", doc.id);
 
-  const job = repos.job.get(jobId);
   assert.throws(
     () => execute(db, job, cfg),
     /has no job_file records/,

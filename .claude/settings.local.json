@@ -72,7 +72,10 @@
       "PowerShell(wsl -d FedoraLinux-44 -- bash -c \"pkill -f 'ollama-bin' 2>&1; pkill -f 'start-ollama' 2>&1; sleep 1; curl -s -m 2 http://localhost:11434/api/tags || echo 'server stopped, port free'\")",
       "PowerShell(wsl -d FedoraLinux-44 -- bash -c \"curl -s -m 2 http://localhost:11434/api/tags; echo; ps aux | grep -i ollama | grep -v grep\")",
       "Bash(npm list *)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(git pull *)",
+      "Bash(openssl enc *)",
+      "Bash(head -c 50 ~/.anthropic/api-key && echo \"\")"
     ]
   },
   "enabledMcpjsonServers": [
