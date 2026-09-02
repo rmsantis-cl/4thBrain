@@ -106,6 +106,50 @@ wait_for_ollama_endpoint() {
   fatal_error "Ollama endpoint (http://localhost:11434) did not respond after ${max_attempts} seconds — service may have crashed"
 }
 
+# Ensure the target model (llama3.2:3b) is loaded
+load_ollama_model() {
+  local model_name="llama3.2:3b"
+  local max_attempts=120  # 2 minutes to pull and load model
+  local attempt=0
+
+  log_json "info" "wsl-init" "model_check_started" "model" "$model_name"
+
+  # Check if model is already loaded
+  if curl -s http://localhost:11434/api/tags | jq -e ".models[] | select(.name == \"$model_name\")" > /dev/null 2>&1; then
+    log_json "info" "wsl-init" "model_already_loaded" "model" "$model_name"
+    return 0
+  fi
+
+  log_json "info" "wsl-init" "model_loading_started" "model" "$model_name"
+
+  # Start ollama run in background to load the model
+  # The model will be pulled if not present, then loaded into memory
+  ollama run "$model_name" /bin/true > /dev/null 2>&1 &
+  local ollama_pid=$!
+
+  # Wait for model to be loaded (check /api/tags until model appears)
+  while [ $attempt -lt $max_attempts ]; do
+    attempt=$((attempt + 1))
+
+    if curl -s http://localhost:11434/api/tags | jq -e ".models[] | select(.name == \"$model_name\")" > /dev/null 2>&1; then
+      log_json "info" "wsl-init" "model_loaded" "model" "$model_name" "attempt" "$attempt"
+      wait $ollama_pid 2>/dev/null || true
+      return 0
+    fi
+
+    if [ $((attempt % 20)) -eq 0 ]; then
+      log_json "info" "wsl-init" "model_loading_in_progress" "model" "$model_name" "attempt" "$attempt" "max_attempts" "$max_attempts"
+    fi
+
+    sleep 1
+  done
+
+  # Model didn't load in time; log warning but don't fail (might still be downloading)
+  log_json "warn" "wsl-init" "model_loading_timeout" "model" "$model_name" "max_attempts" "$max_attempts" "advice" "Model may still be loading; check 'ollama list' manually"
+  kill $ollama_pid 2>/dev/null || true
+  return 0  # Don't fail the boot; model might load in background
+}
+
 # Main sequence
 main() {
   log_json "info" "wsl-init" "init_started" "node_version" "$(node --version 2>/dev/null || echo 'N/A')"
@@ -113,6 +157,7 @@ main() {
   check_ollama_installed
   start_ollama_service
   wait_for_ollama_endpoint
+  load_ollama_model  # Ensure the target model is loaded (Task-17)
 
   log_json "info" "wsl-init" "init_completed"
   exit 0

@@ -2,7 +2,7 @@
 name: TODO-TRACKER
 description: Actionable task tracking -- open stories and manual implementation/planning tasks
 metadata:
-  version: 2.6
+  version: 2.7
   created-by: Claude Code
   date: 2026-09-02
 ---
@@ -55,7 +55,6 @@ Update this tracker when:
 | Task-14 | design boot script for Story 7.2 | Process Lifecycle & MCP Server Setup: create master boot script coordinating Ollama (WSL2), Node.js server, and MCP server startup; verify port availability; structured JSON logging. COMPLETED 2026-09-02: Created server/bootstrap.js (orchestration + health checks), scripts/wsl-init.sh (WSL2 Ollama startup), scripts/Start-4thBrain.ps1 (PowerShell wrapper + lifecycle mgmt), scripts/4thbrain-ports.json (port config), documets/BOOT-SEQUENCE.md (user/ops guide); updated package.json to use bootstrap.js. | Story 7.1 COMPLETED | [OK] COMPLETED |
 | Task-15 | email & calendar API integration design | Story 5.1 (Briefing Synthesis) requires collecting calendar events and emails. Design not yet specified in requirements (OAuth, credential storage, data model). | NFR design gap | blocking Story 5.1 |
 | Task-16 | add component selection to Start-4thBrain.ps1 | Add optional parameter [ollama \| server \| mcp] to start/stop/status/restart actions; apply command only to selected component. Without parameter, operates on all (current behavior). | Story 7.2 COMPLETED | pending |
-| Task-17 | ensure Ollama model is loaded on startup | Ollama service (systemd) starts but model `llama3.2:3b` is not loaded. Add `ollama run llama3.2:3b` to wsl-init.sh or Start-4thBrain.ps1 to ensure model is ready when Node.js bootstrap checks Ollama reachability. | Story 7.1 COMPLETED | pending |
 
 ### Documentation Follow-ups
 
@@ -77,7 +76,7 @@ Update this tracker when:
 
 ## Changelog
 
-- **2026-09-02** — Added Task-17 (ensure Ollama model is loaded on startup): Ollama service starts via systemd but model `llama3.2:3b` is not auto-loaded; need to add `ollama run llama3.2:3b` to startup sequence so model is available when bootstrap checks Ollama.
+- **2026-09-02** — Completed Task-17 (ensure Ollama model is loaded on startup): Added `load_ollama_model()` function to `scripts/wsl-init.sh` that checks if `llama3.2:3b` is loaded, and if not, runs `ollama run llama3.2:3b` in background to pull and load the model. Waits up to 2 minutes for model to be available via `/api/tags` check. Unblocks Story 7.2 acceptance testing.
 - **2026-09-02** — Added Task-16 (add component selection to Start-4thBrain.ps1): Add optional parameter [ollama | server | mcp] to start/stop/status/restart actions to control individual components; default behavior (all) preserved.
 - **2026-09-02** — Completed Task-14 (design boot script for Story 7.2): Created master boot orchestration system coordinating Ollama (WSL2), Node.js server, and MCP server startup. Deliverables: (1) `server/bootstrap.js` — Node.js orchestration script with Ollama reachability checks, port availability verification, Express app initialization, MCP subprocess management, graceful shutdown, and structured JSON logging matching batch/worker.js pattern (ADR20 implementation); (2) `scripts/wsl-init.sh` — WSL2 Fedora init script checking Ollama installation, starting systemd service, waiting for http://localhost:11434/api/tags endpoint; (3) `scripts/Start-4thBrain.ps1` — PowerShell wrapper (start/stop/status/restart actions) coordinating WSL2 init, port checks, Node process spawn, health checks, and cleanup; (4) `scripts/4thbrain-ports.json` — port/service configuration and conflict detection reference; (5) `documets/BOOT-SEQUENCE.md` — comprehensive user/ops guide (quick start, architecture, timeline, logging format, error scenarios, manual startup, graceful shutdown, CI/CD integration); (6) Updated `server/package.json` start script to use bootstrap.js. Story 7.2 (Process Lifecycle & MCP Server Setup) unblocked; dependencies met, ready for acceptance testing.
 - **2026-09-01 (backlog loop pass 9)** — Completed Task-13 (add error_message column to job table) and Story 10.1 (Scheduled Vault Snapshot & Restore). Task-13: Added error_message column to job table schema; updated JobRepository.markFailed() to accept and store error message; wired in error capture in batch/worker.js, batch/cleanup.js, and server/lib/job-queue/poller.js; added regression test (8 tests in repositories.job.test.js, all passing). Unblocks Story 6.3 (Pipeline Monitoring Dashboard). Story 10.1: Implemented snapshot function (batch/snapshot.js), restore function (batch/restore.js), integrated snapshot into batch/worker.js pre-run phase, created comprehensive RESTORE.md documentation, wrote 8 tests (all passing). Story 10.1 moved READY → COMPLETED. Updated Open Stories section to clarify blockers (5.1/7.2 blocked on design gaps Task-15/Task-14; 6.3/8.3 now READY with all blockers cleared). Bumped version to 2.3.
