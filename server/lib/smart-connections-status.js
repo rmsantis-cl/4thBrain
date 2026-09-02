@@ -1,12 +1,33 @@
 /**
+ * Story 3.1 (task 3.1-C) — Smart Connections indexing-state reader.
+ *
  * JS port of vault/check_smart_connections_status.py — see that file's docstring
  * for the full explanation of current/missing/skipped/unexpected terminology
  * (matches Smart Connections' own in-app "Smart Environment" panel). This port
- * returns structured data instead of printing, for the /api/status route.
+ * returns structured data instead of printing, for the /api/status route and for
+ * any Story 3.1 code that needs to know whether a note made it into the index.
+ *
+ * Design basis: `documets/story/spike-3.2.md`.
+ *
+ * The `.ajson` files are NOT valid JSON documents despite the extension. Each is
+ * an append-only log of `"key": {...},` fragments, one per line, with the same
+ * key rewritten every time Smart Connections re-saves that item — so the file
+ * has to be read line by line and reduced last-write-wins. A line whose value is
+ * literally `null` is a tombstone (the item was removed from the collection);
+ * the last write for a key decides whether it exists at all. Measured on the
+ * live vault 2026-09-02: 225 lines → 97 distinct keys → 57 live sources, with 71
+ * keys rewritten at least once and 41 tombstone lines. Parsing the file as JSON,
+ * or taking the first write per key, gives wrong answers on all three counts.
  */
 const fs = require("fs");
 const path = require("path");
 
+/**
+ * Reduce an append-only `.ajson` log to its final state.
+ * Returns `{ key: value }` including `null` tombstone values — callers decide
+ * whether a tombstone means "gone" (it does, for collections) so that this stays
+ * a faithful representation of the log rather than a lossy one.
+ */
 function parseAjson(filePath) {
   const entries = {};
   const lines = fs.readFileSync(filePath, "utf-8").split("\n");
@@ -26,6 +47,7 @@ function parseAjson(filePath) {
       continue;
     }
     try {
+      // Last write wins: a later line for the same key overwrites the earlier one.
       entries[key] = JSON.parse(rawValue);
     } catch {
       continue;
@@ -139,19 +161,47 @@ function summarize(config) {
   };
 }
 
+/**
+ * Per-note lookup by vault-relative path (e.g. "incoming/note.md").
+ * Returns `{ found: false }` for a note Smart Connections has never scanned —
+ * which is different from "scanned and skipped", so callers can tell the two apart.
+ */
 function lookup(config, notePath) {
   const env = loadEnvSettings(config);
   const sources = loadSources(config);
   const entry = sources[notePath];
   if (!entry) {
-    return { found: false };
+    return { found: false, path: notePath, status: "not-found", reason: null };
   }
   const { status, reason } = classifySource(entry, env);
   const result = { found: true, path: notePath, status, reason };
   if (status === "current") {
-    result.embeddedWith = entry.embedding.default;
+    // `embedding` is always present for a "current" item (that's what makes it
+    // current), but guard anyway — the .ajson is written by another process.
+    result.embeddedWith = (entry.embedding || {}).default || null;
   }
   return result;
 }
 
-module.exports = { summarize, lookup };
+/**
+ * Total number of notes Smart Connections holds a current embedding for.
+ * Source-level, not block-level: per ADR21 a note counts as indexed when its
+ * whole-note embedding is current, regardless of how many of its blocks were
+ * skipped for being under the block `min_chars` threshold.
+ */
+function indexedCount(config) {
+  return summarize(config).sources.current;
+}
+
+/**
+ * Notes that did not make it into the index, with the reason.
+ * Per Spike 3.2 (user direction) "skipped" is what this project reports as
+ * failed to index; "unexpected" (a vector exists for an item that is no longer
+ * eligible) is included too, since it also means the index disagrees with the
+ * current policy. "missing" is excluded — that is pending, not failed.
+ */
+function listFailed(config) {
+  return summarize(config).skippedSources;
+}
+
+module.exports = { summarize, lookup, indexedCount, listFailed, parseAjson };

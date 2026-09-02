@@ -1,9 +1,9 @@
 ---
 name: ADRS
 description: Architectural Decision Records for 4thBrain
-date: 2026-08-30
+date: 2026-09-02
 metadata:
-  version: 1.2
+  version: 1.3
   created-by: Claude Code
 ---
 
@@ -184,8 +184,45 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-30
 **Date Cancelled:** —
 
+## ADR21: Block-level embedding skips are expected coverage, not indexing failures
+
+**Status:** Closed — decided 2026-09-02 while scoping Story 3.1 (task 3.1-E).
+
+**Description:** Story 3.1 measures "indexed" at **source (whole-note) level only**. A note counts as indexed when Smart Connections holds a current whole-note embedding for it, regardless of how many of that note's blocks were skipped. Block-level skip counts are reported as informational coverage (the Story 6.3 status panel's "Blocks" row), never as failures: they are excluded from `listFailed()`, from the failed-notes list, and from any Story 3.1 acceptance check. Source-level skips keep the meaning Spike 3.2 assigned them under user direction — a skipped *source* is what this project reports as "failed to index".
+
+**Why:** Spike 3.2 found 720 of 1,045 blocks skipped (68.9%) against only 1 of 31 sources. Re-measured on the same vault 2026-09-02 after it grew: 1,295 of 1,784 blocks skipped (72.6%) against 12 of 57 sources. The ratio is stable across a near-doubling of the vault, which is the signature of a policy threshold rather than a fault — `smart_env.json` sets `smart_blocks.min_chars: 200`, and most Markdown blocks (headings, single-line bullets, short paragraphs, frontmatter fences) are simply shorter than that. Three consequences follow:
+
+1. **No content is lost.** Every one of those blocks belongs to a source that is itself embedded at whole-note level, so semantic retrieval still reaches the text. Block embeddings buy finer-grained retrieval, not coverage.
+2. **Treating them as failures makes the signal useless.** It would leave Story 3.1 permanently unachievable, and would bury the 12 genuinely un-indexed notes under ~1,300 entries with no available remedy — you cannot "fix" a 40-character bullet into a 200-character one.
+3. **There is no action to take.** The only lever is lowering `smart_blocks.min_chars`, which is a retrieval-quality tuning decision, not a defect fix.
+
+**Consequences for implementation:** No filter code is needed — `server/lib/smart-connections-status.js` already scopes `listFailed()`/`skippedSources` to sources and reports blocks only as counts. This ADR pins that behavior so a later pass does not "helpfully" merge block skips into the failure list; `server/test/smart-connections-status.test.js` asserts the source/block split.
+
+**Revisit if:** Story 6.2's semantic half turns out to need block-level granularity to return useful snippets, or the source-level skip ratio starts tracking the block ratio (which would suggest a real ingestion fault rather than a threshold effect).
+
+**Supersedes:** the open question left in `documets/story/spike-3.2.md` ("Decide whether Story 3.1 needs to handle 'unexpected' (orphaned) embeddings, or whether surfacing them via this script is enough for MVP") only as far as *blocks* are concerned. Source-level `unexpected` items stay in the failed list, since a vector that outlived its eligibility is a real disagreement between the index and the current policy.
+
+**Date Created:** 2026-09-02
+**Date Cancelled:** —
+
+## ADR22: SQLite FTS5 as the keyword half of hybrid search, over a derived index rebuilt from vault files
+
+**Status:** Closed — decided 2026-09-02 while implementing Story 6.2 (tasks 6.2-A/6.2-B).
+
+**Description:** Story 6.2's keyword search runs on SQLite's built-in FTS5 full-text extension, against a **derived** index (`document_fts` plus a `document_index_state` bookkeeping table) that the search module creates on demand and keeps in the same `server/4thbrain-metadata.db` file. Body text is read from each document's `uri_location` on disk — the `document` table stores metadata only, never note content, so name/path matching alone could not produce the snippets Story 6.2's acceptance criterion requires. The index syncs incrementally: a document is re-read only when its `document.updated` timestamp is newer than the timestamp recorded when it was last indexed. If a future runtime turns out to lack FTS5, the module falls back to a `LIKE`-based scan over the same stored bodies, with snippets computed in JS; the fallback is a documented degraded mode, not the design target.
+
+**Why:** FTS5 ships inside the `node:sqlite` build this project already runs (verified on Node v22.22.3 — `CREATE VIRTUAL TABLE ... USING fts5`, `bm25()`, and `snippet()` all work), so it adds no dependency, no second process, and no second datastore. It gives ranking (`bm25`) and snippet extraction for free — both are explicit acceptance-criterion requirements — where a `LIKE` scan would give neither without hand-rolling them. Keeping the index in the existing database file keeps ADR17's single-SQLite-file model intact and stays consistent with ADR13 (one repo, no separate subprojects).
+
+**Why derived, and why not in `schema.sql`:** the index holds no source-of-truth data — every row is reconstructible from `document` plus the files on disk — so it is a cache, on the same footing as `.smart-env` rather than as the metadata model. Putting it in the canonical `documets/design/schema.sql` would make a rebuildable artifact look like schema of record and would put an EP6 concern inside EP12's schema. Logged as DESIGN-DEBT item 7 so the placement gets a real EP12 decision rather than being settled by whoever wrote the code first.
+
+**Trade-off accepted:** body text is duplicated between the vault file and the FTS index, and the first search after a batch of ingestions pays the file-read cost for the new documents (sub-second on the current dev dataset; a vault of tens of thousands of notes would want the sync moved into the batch worker instead of onto the request path). Reads are capped so one oversized file cannot stall a query.
+
+**Date Created:** 2026-09-02
+**Date Cancelled:** —
+
 ## Changelog
 
+- 2026-09-02: Logged ADR21 (closed) — block-level embedding skips are expected coverage under Smart Connections' `min_chars` policy, not Story 3.1 indexing failures; indexing is measured at source level. Logged ADR22 (closed) — SQLite FTS5 over a derived, incrementally-synced index as Story 6.2's keyword backend, with a documented LIKE fallback.
 - 2026-08-30: Logged ADR19 (closed) — OpenDataLoader PDF (`@opendataloader/pdf`) replaces `pdf-parse` for all PDF extraction (Story 1.2's transcode executor and the webclipping spike's PDF handling), per explicit user direction. Notes the new JVM host dependency and per-call JVM-spawn latency as accepted trade-offs.
 - 2026-08-26: Closed ADR17 — SQLite chosen for simplicity and low-volume sequential processing. Critical constraint: keep transactions brief; if long concurrent transactions are needed during implementation, decision must be revisited (migrate to PostgreSQL).
 - 2026-08-26: Logged ADR18 (open) — relational database technology (SQLite vs. PostgreSQL) for processing-state persistence, plus consideration of a separate vector database for pre-vault classification.
