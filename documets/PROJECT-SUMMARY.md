@@ -3,7 +3,7 @@ name: PROJECT-SUMMARY
 description: Single-page current-state summary of 4thBrain — read this first instead of rescanning the repo
 date: 2026-09-01
 metadata:
-  version: 2.3
+  version: 2.4
   created-by: Claude Code
 ---
 
@@ -38,11 +38,13 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 - 11.1 — Release Packaging & Versioning (VERSION file, CHANGELOG.md, RELEASE.md with SemVer versioning scheme, release workflow, and rollback procedures)
 - 14.1 — Intel iGPU Acceleration via IPEX-LLM (IPEX-LLM Ollama binary at `/opt/ollama-ipex-llm/`, systemd auto-start verified, Windows→WSL2 port forwarding tested, GPU detection confirmed, service persists across WSL2 restart cycle)
 - 4.1 — Background Sweep & Queue Execution Script (`batch/{lock-manager,job-executors,cleanup,worker}.js`, 18 tests; one-sweep-per-invocation model, all AC met)
+- 10.1 — Scheduled Vault Snapshot & Restore (`batch/{snapshot.js,restore.js}`, RESTORE.md documentation, 8 passing tests; snapshots created pre-batch-run in `$VAULT_DIR/.snapshots/`, restore via CLI with automatic pre-restore backup)
 
 **WIP**
 (none)
 
-**READY (not started)** — 3.1, 5.1, 6.2, 6.3, 7.2, 8.1, 8.2, 10.1
+**READY (not started)** — 3.1, 5.1, 6.2, 6.3, 7.2, 8.1, 8.2
+- 10.1 — Scheduled Vault Snapshot & Restore (COMPLETED per pass 9)
 
 *13.3 was code-complete since commit `67e7d64` but untracked here until 2026-08-30, when two bugs found in a fresh audit (`document_tag` leaking into the generic `/api/tables/:table` dispatcher; an unbound query parameter in `documentTag.js`) were fixed and it was formally closed out.*
 
@@ -101,6 +103,7 @@ EP7 (Infrastructure/WSL2/Ollama) is the foundation gating almost everything. EP1
 
 ## Changelog
 
+- **2026-09-01 (backlog loop pass 9)** — Completed Task-13 (add error_message column) and Story 10.1 (Scheduled Vault Snapshot & Restore). Task-13 unblocks Story 6.3 dashboard (failure reasons now queryable). Story 10.1: Implemented `batch/snapshot.js` (timestamps, recursive copy, excludes .snapshots/.obsidian), `batch/restore.js` (CLI restore with automatic pre-restore backup), integrated snapshot into batch/worker.js pre-run, created RESTORE.md (procedures, safety, troubleshooting), 8 passing tests. Ready set updated to clarify blockers: 5.1/7.2 blocked on design gaps (Task-15/14); 6.3/8.3 unblocked. Bumped version to 2.4.
 - **2026-09-01 (backlog loop pass 8)** — Completed pass 8 analysis. Pass 7 → Pass 8 ready set unchanged (5.1, 6.3, 7.2, 8.3); closed zero items. Discovered NEW blockers: (1) Story 5.1 lacks email/calendar API integration design (no OAuth/credential spec in requirements); (2) Story 8.3 requires browser automation environment not available in this context; (3) Story 6.3 blocked on DESIGN-DEBT #5 (job table missing error_message column). Story 7.2 identified as next candidate for work. Added Tasks-13–15 to TODO-TRACKER; added DESIGN-DEBT item 6. Loop continues to pass 9 (new blockers discovered). Bumped version to 2.3.
 - **2026-09-01 (backlog loop pass 6)** — Completed Story 4.1 (Background Sweep & Queue Execution Script): moved WIP → COMPLETED (all 2 AC met: 18 tests passing, end-to-end sweep verified). Completed Task-4 (backpropagate Story 12.2 schema redesign): verified all items done — `PROJECT-SUMMARY.md` (9 tables), `params.json` (system directory roles), `classes.mmd` (already current), `database-schema.md` superseded note (updated), `server/db/init.js` PRAGMA (already set). Bumped version to 2.2.
 - **2026-09-01 (backlog loop pass 5)** — Completed Story 14.1 (Intel iGPU Acceleration via IPEX-LLM). IPEX-LLM Ollama binary confirmed at `/opt/ollama-ipex-llm/`, systemd unit `ollama.service` configured to run `/opt/ollama-ipex-llm/start-ollama.sh` with GPU environment variables. Service auto-starts on WSL2 boot, reports "using Intel GPU" in logs. Verified: Windows→WSL2 port forwarding works (curl from PowerShell reached Ollama, model `llama3.2:3b` returned); service persists across `wsl --shutdown` + restart cycle (confirmed active 838ms post-reboot). All 5 AC met. Bumped version to 2.1.

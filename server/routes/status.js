@@ -41,10 +41,8 @@ router.post("/api/status", express.json(), (req, res) => {
     jobType: job.job_type,
     documentId: job.document_id,
     endDate: job.end_date,
-    // schema.sql's job table has no persisted error-message column (see
-    // DESIGN-DEBT.md) — reason text is honest about that gap rather than
-    // inventing detail the system doesn't actually capture.
-    reason: "No error detail persisted for this job — see server logs.",
+    // Task-13 added error_message column to job table; capture and display here (Story 6.3)
+    reason: job.error_message || "No error detail persisted for this job — see server logs.",
   }));
 
   res.json({

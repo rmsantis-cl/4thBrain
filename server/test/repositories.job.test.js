@@ -122,3 +122,15 @@ test("JobRepository.retry is a no-op (returns null) for a job that isn't Failed"
   const job = repo.create("ingest", "New", null, null);
   assert.equal(repo.retry(job.id), null);
 });
+
+test("JobRepository.markFailed captures error_message when provided", () => {
+  const db = createTestDb();
+  const repo = new JobRepository(db);
+  const job = repo.create("ingest", "New", null, null);
+  repo.markRunning(job.id);
+
+  const errorMsg = "Something went wrong";
+  const failed = repo.markFailed(job.id, errorMsg);
+  assert.equal(failed.status, "Failed");
+  assert.equal(failed.error_message, errorMsg);
+});

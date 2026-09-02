@@ -20,10 +20,9 @@ const DEFAULT_RUNNING_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour, per the Story 4.1 
  *    long-running executor (e.g. Story 1.2's transcoding step) to use, and
  *    an untested cleanup path is worse than a currently-idle one.
  *
- * The job table has no error/reason column (see documets/story/story-4.1.md,
- * "Known limitations"), so the only record of *why* a job was orphan-failed
- * is this function's structured log line — there's nowhere in the schema to
- * persist it against the job row itself.
+ * The job table's error_message column (added in Story 6.3) captures the
+ * reason a job was marked Failed. This cleanup function stores the orphan
+ * timeout reason in that column (see DESIGN-DEBT #5).
  */
 function cleanupOrphans(db, { runningTimeoutMs = DEFAULT_RUNNING_TIMEOUT_MS, log = defaultLog } = {}) {
   const repos = createRepositories(db);
@@ -36,9 +35,10 @@ function cleanupOrphans(db, { runningTimeoutMs = DEFAULT_RUNNING_TIMEOUT_MS, log
     const startedAt = Date.parse(job.start_date);
     if (Number.isNaN(startedAt)) continue;
     if (now - startedAt > runningTimeoutMs) {
-      repos.job.markFailed(job.id);
+      const errorMessage = `Job orphaned (running timeout: started ${job.start_date}, timeout ${runningTimeoutMs}ms)`;
+      repos.job.markFailed(job.id, errorMessage);
       result.failedJobs.push(job.id);
-      log({ level: "warn", component: "batch.cleanup", event: "orphaned_job_failed", jobId: job.id, startDate: job.start_date });
+      log({ level: "warn", component: "batch.cleanup", event: "orphaned_job_failed", jobId: job.id, startDate: job.start_date, error: errorMessage });
     }
   }
 

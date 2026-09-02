@@ -37,7 +37,7 @@ function startJobQueuePoller({ db, repos, config, handlers, logger }) {
             { id: after.id, name: after.name, status: after.status }
           );
         } catch (err) {
-          repos.job.markFailed(job.id);
+          repos.job.markFailed(job.id, err.message);
           const after = repos.document.get(document.id);
           log.error(
             "actuator_end",

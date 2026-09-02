@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.21
+  version: 1.24
   created-by: Claude Code
-  date: 2026-09-01
+  date: 2026-09-02
 ---
 
 # BACKLOG TRACKER — 4thBrain Stories
@@ -26,7 +26,7 @@ Master tracking document for all project stories across all epics. Status values
 | 5.1 | Multi-Source Briefing Synthesis Engine | READY | 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
 | 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | none | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
-| 6.3 | Pipeline Monitoring & Dashboard UI | READY | 4.1 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
+| 6.3 | Pipeline Monitoring & Dashboard UI | COMPLETED | 4.1 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
 | 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
 | 6.5 | Chat with Llama — Local Ollama Chat Panel | COMPLETED | 6.4, 7.2 | UI | [[6.5](#story-65-chat-with-llama--local-ollama-chat-panel)] |
 | 7.1 | WSL2 Runtime & Resource Bound Configuration | COMPLETED | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
@@ -38,7 +38,7 @@ Master tracking document for all project stories across all epics. Status values
 | 8.2 | Bug & Issue Tracking Workflow | READY | 8.1 | QA | [[8.2](#story-82-bug--issue-tracking-workflow)] |
 | 8.3 | Automated Smoke Test Suite | READY | none | QA | [[8.3](#story-83-automated-smoke-test-suite)] |
 | 9.1 | Local-Only Access Enforcement & Auth Guard | COMPLETED | 7.2 | Security | [[9.1](#story-91-local-only-access-enforcement--auth-guard)] |
-| 10.1 | Scheduled Vault Snapshot & Restore | READY | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
+| 10.1 | Scheduled Vault Snapshot & Restore | COMPLETED | 4.1, 3.1 | Backup | [[101](#story-101-scheduled-vault-snapshot--restore)] |
 | 11.1 | Release Packaging & Versioning | COMPLETED | 7.2, 8.1 | Release | [[11.1](#story-111-release-packaging--versioning)] |
 | 12.1 | Document/Status/Classification/Job Database Schema Design | COMPLETED | none | Design | [[12.1](#story-121-documentstatusclassificationjob-database-schema-design)] |
 | 12.2 | Schema Redesign | COMPLETED | none | Design | [[12.2](#story-122-schema-redesign)] |
@@ -181,8 +181,9 @@ Master tracking document for all project stories across all epics. Status values
 | **Abstract** | Provide real-time status view of active, pending, and failed jobs. |
 | **Description** | Build a status panel showing background execution state, error logs, and controls to re-run failed jobs. |
 | **Dependencies** | depends on Story 4.1, depends on Story 6.4, must be worked with Story 6.1 |
-| **Acceptance Criteria** | • Displays accurate counts for active, pending, and failed processing jobs.<br>• Provides functional "Retry" action button for failed jobs. |
-| **Status** | READY |
+| **Acceptance Criteria** | • Displays accurate counts for active, pending, and failed processing jobs. **Met** — `server/routes/status.js` `/api/status` endpoint returns job counts grouped by status (active/pending/failed/completed).<br>• Provides functional "Retry" action button for failed jobs. **Met** — `server/routes/status.js` `/api/status/retry/:id` endpoint re-queues failed jobs; `server/ui/client.js` wires up retry button with click handler. |
+| **Status** | COMPLETED |
+| **Implementation** | `server/routes/status.js` (GET/POST /api/status fetches Smart Connections summary + job counts + failed jobs list with error_message reason; POST /api/status/retry/:id re-queues); `server/ui/page.js` (renderStatusPanel() UI markup with "Ingest status" heading, stat grids, failed jobs list); `server/ui/client.js` (loadStatus() fetches and displays, retryJob(id) handles retry clicks with confirmation); Task-13 integration: error_message column now displays in failed jobs reason field instead of generic "No error persisted". `server/test/routes.status.test.js` has 5 tests covering status counts, retry logic, error cases — all passing. |
 | **Working Notes** | [[story-6.3.md](./story/story-6.3.md)] (not yet created) |
 
 ---
@@ -235,8 +236,8 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Set up initialization scripts to boot Ollama, launch Node.js services, and expose the Smart Connections MCP server endpoint safely across local boundaries. |
 | **Dependencies** | must be worked with Story 7.1 |
 | **Acceptance Criteria** | • Boot sequence reliably starts Ollama, confirms port availability, and initializes dependent Node.js/MCP processes.<br>• Process logs write structured JSON to stdout/file. |
-| **Status** | READY |
-| **Working Notes** | [[story-7.2.md](./story/story-7.2.md)] (not yet created) |
+| **Status** | READY — Design complete (ADR20, Task-14 COMPLETED 2026-09-02): boot orchestration scripts created (server/bootstrap.js, scripts/wsl-init.sh, scripts/Start-4thBrain.ps1); port config (scripts/4thbrain-ports.json); operational docs (documets/BOOT-SEQUENCE.md); package.json updated to use bootstrap.js. Story 7.2 implementation ready for final verification/acceptance testing. |
+| **Working Notes** | [[story-7.2.md](./story/story-7.2.md)] (not yet created); Design artifacts: ADR20 (adr20-boot-sequence.md), BOOT-SEQUENCE.md (user guide), Task-14 completion log |
 
 ---
 
@@ -338,9 +339,10 @@ Master tracking document for all project stories across all epics. Status values
 | **Abstract** | Periodically snapshot the vault and vector index for recovery. |
 | **Description** | Implement a scheduled backup routine (pre-batch-run snapshot) covering the Markdown vault and .smart-env files, with a documented restore procedure. |
 | **Dependencies** | depends on Story 4.1, depends on Story 3.1 |
-| **Acceptance Criteria** | • Snapshots are taken automatically before each overnight batch run (EP4).<br>• A restore operation returns the vault/index to the last good snapshot without manual file surgery. |
-| **Status** | READY |
-| **Working Notes** | [[story-10.1.md](./story/story-10.1.md)] (not yet created) |
+| **Acceptance Criteria** | • Snapshots are taken automatically before each overnight batch run (EP4). **Met** — `batch/snapshot.js` integrated into `batch/worker.js:runCycle()`, creates timestamped snapshots in `$VAULT_DIR/.snapshots/snapshot-YYYYMMDDHHMMSS/`, excludes .snapshots and .obsidian from copies, logs structured JSON.<br>• A restore operation returns the vault/index to the last good snapshot without manual file surgery. **Met** — `batch/restore.js` implements restore with CLI, automatic pre-restore backup, `RESTORE.md` documents procedures (list snapshots, restore, verify, troubleshoot). |
+| **Status** | COMPLETED |
+| **Implementation** | `batch/snapshot.js` (creates timestamped snapshots, recursively copies vault and .smart-env, excludes certain directories, logs metadata); `batch/restore.js` (restores from snapshot with optional pre-restore backup, validates snapshot structure, implements `restoreSnapshot()` and `listSnapshots()` functions); `batch/worker.js` (integrated snapshot call at start of `runCycle()`, captures result in summary); `RESTORE.md` (comprehensive restore procedures, safety notes, troubleshooting). `batch/test/snapshot-restore.test.js` has 8 tests covering snapshot creation, exclusions, restoration, backup creation, listing, and error cases — all passing. |
+| **Working Notes** | [[story-10.1.md](./story/story-10.1.md)] |
 
 ---
 
@@ -448,6 +450,9 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Changelog
 
+- **2026-09-01 (backlog loop pass 9 continued)** — Completed Story 6.3 (Pipeline Monitoring & Dashboard UI). Status API endpoints already existed in `server/routes/status.js` but lacked error_message support. Updated to include error_message (from Task-13) in failed job reason field. Integrated with UI: `server/ui/page.js` renderStatusPanel() displays "Ingest status" panel, `server/ui/client.js` loadStatus() fetches and renders counts/failed jobs, retryJob() handles retry clicks and calls `/api/status/retry/:id` endpoint. Wrote `server/test/routes.status.test.js` with 5 tests covering status counts, retry logic (success/404/400 cases), and error_message display — all passing. Acceptance criteria verified: accurate job counts displayed, retry functionality working. Bumped version to 1.23.
+- **2026-09-01 (backlog loop pass 9)** — Completed Story 10.1 (Scheduled Vault Snapshot & Restore). Snapshot function (`batch/snapshot.js`) creates timestamped snapshots in `$VAULT_DIR/.snapshots/` with recursive copy of vault and .smart-env, excluding .snapshots/.obsidian. Restore function (`batch/restore.js`) provides CLI-based restore with automatic pre-restore backup, snapshot validation, and `listSnapshots()` utility. Integrated snapshot into `batch/worker.js:runCycle()` pre-run phase (non-blocking, logs result in summary). Created comprehensive documentation (`RESTORE.md`) with procedures, safety notes, manual restore steps, and troubleshooting. All 8 tests pass: snapshot creation/exclusions/error cases, restore with/without backup, listing. Bumped version to 1.22.
+- **2026-09-01 (backlog loop pass 8)** — Completed Task-13 (add error_message column to job table, unblocks Story 6.3). 
 - **2026-09-01 (backlog loop pass 6)** — Completed Story 4.1 (Background Sweep & Queue Execution Script): all 2 acceptance criteria met (18 passing tests, end-to-end sweep verified; scheduling is a deployment concern, not an AC). Moved 4.1 from WIP → COMPLETED in summary table and detail section. Updated dependent stories (5.1, 6.3, 10.1) in TODO-TRACKER to show dependencies now unblocked. Completed Task-4 (backpropagate Story 12.2 schema redesign): verified all backpropagation complete — `classes.mmd` confirmed current, `database-schema.md` superseded note updated to reference Story 12.2 changes (removed Process/JobDocument, added Tag/DocumentTag/JobFile/JobStatus). Bumped version to 1.21.
 - **2026-09-01 (backlog loop pass 5)** — Completed Story 14.1 (Intel iGPU Acceleration via IPEX-LLM). IPEX-LLM Ollama binary confirmed installed at `/opt/ollama-ipex-llm/` with systemd unit `ollama.service` configured to auto-start via `/opt/ollama-ipex-llm/start-ollama.sh`. Verified on Windows→WSL2 port forwarding (curl from PowerShell succeeded, model returned); GPU detection confirmed in service logs; persistence across `wsl --shutdown` + restart cycle verified (service active immediately post-boot). All 5 acceptance criteria met: (1) binary installed + auto-start via systemd, (2) GPU logs show "using Intel GPU", (3) persists across restart, (4) GPU configured (latency not benchmarked vs. CPU baseline), (5) Windows tools reach Ollama. Bumped version to 1.20.
 - **2026-09-01 (backlog loop pass 4)** — Completed Story 11.1 (Release Packaging & Versioning). Created `VERSION` file (0.1.0), `CHANGELOG.md` (Keep a Changelog format, SemVer 2.0.0, documents all 13 shipped Stories + 1 spike in 0.1.0 release), and `RELEASE.md` (comprehensive release workflow: versioning scheme, step-by-step release procedure, rollback via git tags + database restoration, backup strategy, pre/post checklists, version examples). Story 11.1's acceptance criteria met: each release tagged in git with version, changelog maps Stories/Bugs to releases, rollback procedure documented. Created working notes `documets/story/story-11.1.md` with 0.1.0 release manifest. Bumped BACKLOG-TRACKER version to 1.19.

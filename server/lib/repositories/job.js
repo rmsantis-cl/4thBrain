@@ -1,7 +1,7 @@
 const { ValidationError } = require("./errors");
 const { assertExists } = require("./helpers");
 
-const COLUMNS = "id, job_type, document_id, start_date, end_date, status, parent_job_id";
+const COLUMNS = "id, job_type, document_id, start_date, end_date, status, parent_job_id, error_message";
 const NOW = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
 
 class JobRepository {
@@ -80,9 +80,9 @@ class JobRepository {
     return this.get(id);
   }
 
-  markFailed(id) {
+  markFailed(id, errorMessage) {
     if (!id) throw new ValidationError("id is required");
-    this.db.prepare(`UPDATE job SET status = 'Failed', end_date = ${NOW} WHERE id = ?`).run(id);
+    this.db.prepare(`UPDATE job SET status = 'Failed', end_date = ${NOW}, error_message = ? WHERE id = ?`).run(errorMessage || null, id);
     return this.get(id);
   }
 

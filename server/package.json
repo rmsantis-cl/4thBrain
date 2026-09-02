@@ -5,7 +5,7 @@
   "description": "4thBrain single-page web UI + ingestion/chat API (EP6)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node bootstrap.js",
     "test": "node --test test/*.test.js ../batch/test/*.test.js"
   },
   "dependencies": {

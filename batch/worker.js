@@ -2,6 +2,7 @@ const { createRepositories } = require("../server/lib/repositories");
 const { cleanupOrphans } = require("./cleanup");
 const { executors } = require("./job-executors");
 const ollamaConcurrencyGate = require("../server/lib/ollama-concurrency-gate");
+const { createSnapshot } = require("./snapshot");
 
 const DEFAULT_JOB_LIMIT = 10;
 
@@ -24,7 +25,19 @@ function defaultLog(entry) {
  */
 async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLog, registeredExecutors = executors } = {}) {
   const repos = createRepositories(db);
-  const summary = { attempted: 0, completed: 0, failed: 0, skipped: 0 };
+  const summary = { attempted: 0, completed: 0, failed: 0, skipped: 0, snapshot: null };
+
+  // Create a pre-run snapshot of the vault and vector index (Story 10.1)
+  if (cfg.vaultDir) {
+    try {
+      const snapshotResult = createSnapshot(cfg.vaultDir, { log });
+      summary.snapshot = snapshotResult;
+      log({ level: "info", event: "batch_snapshot_completed", snapshotPath: snapshotResult.snapshotPath });
+    } catch (err) {
+      log({ level: "warn", event: "batch_snapshot_failed", error: err.message });
+      // Don't fail the batch run if snapshot fails — continue with job processing
+    }
+  }
 
   const jobTypes = Object.keys(registeredExecutors);
   const pending = repos.job.listPending(jobTypes, "New", jobLimit);
@@ -62,7 +75,7 @@ async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLo
       summary.completed += 1;
       log({ level: "info", event: "job_completed", jobId: job.id, jobType: job.job_type, result });
     } catch (err) {
-      repos.job.markFailed(job.id);
+      repos.job.markFailed(job.id, err.message);
       summary.failed += 1;
       log({ level: "error", event: "job_failed", jobId: job.id, jobType: job.job_type, error: err.message });
     }

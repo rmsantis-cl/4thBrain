@@ -57,7 +57,8 @@ CREATE TABLE job (
   start_date TEXT,
   end_date TEXT,
   status TEXT NOT NULL REFERENCES job_status(name),
-  parent_job_id INTEGER REFERENCES job(id)
+  parent_job_id INTEGER REFERENCES job(id),
+  error_message TEXT
 );
 
 CREATE TABLE job_file (

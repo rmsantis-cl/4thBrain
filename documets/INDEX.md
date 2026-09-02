@@ -2,9 +2,9 @@
 name: INDEX
 description: Master index of all artifacts, specs, and foundational documents in 4thBrain
 metadata:
-  version: 1.2
+  version: 1.3
   created-by: Claude Code
-  date: 2026-08-31
+  date: 2026-09-01
 ---
 
 # INDEX — 4thBrain Documentation & Artifacts
@@ -13,6 +13,7 @@ Master catalog of all artifacts, specification documents, interview logs, and fo
 
 | File Name | History |
 |-----------|---------|
+| design/adr20-boot-sequence.md | [2026-09-01] Boot sequence design for Story 7.2 — orchestrates Ollama/Node.js/MCP startup with structured JSON logging and port verification |
 | BATCH_TRACKER.md | [2026-08-31] Created to persist Anthropic Batch API job tracking across sessions; stores batch ID, description, submission/completion dates, status<br>[2026-08-31] Infrastructure: submit-batch skill refactored to use Anthropic Batch API (half cost), got-batch skill created to check/update status on demand |
 | story/story-13.2.md | [2026-08-31] Working notes created for Story 13.2 (admin UI restructuring); documents implementation, acceptance criteria verification, and deferred mobile-responsiveness audit |
 | story/story-6.1.md | [2026-08-28] Web Ingestion Form & Submission Handler working notes; added SUB-TASKS for mock implementations (Clipper, Extractor, RAG, Classification) |
