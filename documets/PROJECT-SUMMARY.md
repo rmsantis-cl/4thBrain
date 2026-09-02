@@ -36,6 +36,7 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 - 6.5 — Chat with Llama — Local Ollama Chat Panel (real Ollama wiring via OpenAI SDK; error handling for unreachable service; mock-badge removed from UI)
 - 9.1 — Local-Only Access Enforcement & Auth Guard (server binds to 127.0.0.1 instead of 0.0.0.0; IP-based access control middleware added to protect sensitive endpoints)
 - 11.1 — Release Packaging & Versioning (VERSION file, CHANGELOG.md, RELEASE.md with SemVer versioning scheme, release workflow, and rollback procedures)
+- 7.2 — Process Lifecycle & MCP Server Setup (boot orchestration scripts created and tested; scripts/Start-4thBrain.ps1 resaved with UTF-8 BOM encoding for PowerShell 5.1 compatibility; Join-String replaced with -join operator; AC met: boot sequence reliably starts Ollama/Node.js with port verification and structured JSON logging)
 - 14.1 — Intel iGPU Acceleration via IPEX-LLM (IPEX-LLM Ollama binary at `/opt/ollama-ipex-llm/`, systemd auto-start verified, Windows→WSL2 port forwarding tested, GPU detection confirmed, service persists across WSL2 restart cycle)
 - 4.1 — Background Sweep & Queue Execution Script (`batch/{lock-manager,job-executors,cleanup,worker}.js`, 18 tests; one-sweep-per-invocation model, all AC met)
 - 10.1 — Scheduled Vault Snapshot & Restore (`batch/{snapshot.js,restore.js}`, RESTORE.md documentation, 8 passing tests; snapshots created pre-batch-run in `$VAULT_DIR/.snapshots/`, restore via CLI with automatic pre-restore backup)
@@ -43,7 +44,7 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 **WIP**
 (none)
 
-**READY (not started)** — 3.1, 5.1, 6.2, 6.3, 7.2, 8.1, 8.2
+**READY (not started)** — 3.1, 5.1, 6.2, 6.3, 8.1, 8.2
 - 10.1 — Scheduled Vault Snapshot & Restore (COMPLETED per pass 9)
 
 *13.3 was code-complete since commit `67e7d64` but untracked here until 2026-08-30, when two bugs found in a fresh audit (`document_tag` leaking into the generic `/api/tables/:table` dispatcher; an unbound query parameter in `documentTag.js`) were fixed and it was formally closed out.*

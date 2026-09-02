@@ -30,7 +30,7 @@ Master tracking document for all project stories across all epics. Status values
 | 6.4 | Common UI Shell & Design System | COMPLETED | none | UI | [[6.4](#story-64-common-ui-shell--design-system)] |
 | 6.5 | Chat with Llama — Local Ollama Chat Panel | COMPLETED | 6.4, 7.2 | UI | [[6.5](#story-65-chat-with-llama--local-ollama-chat-panel)] |
 | 7.1 | WSL2 Runtime & Resource Bound Configuration | COMPLETED | none | Infrastructure | [[7.1](#story-71-wsl2-runtime--resource-bound-configuration)] |
-| 7.2 | Process Lifecycle & MCP Server Setup | READY | none | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
+| 7.2 | Process Lifecycle & MCP Server Setup | COMPLETED | none | Infrastructure | [[7.2](#story-72-process-lifecycle--mcp-server-setup)] |
 | 7.3 | SQLite Database Setup for Processing-State Persistence | COMPLETED | 7.2 | Infrastructure | [[7.3](#story-73-sqlite-database-setup-for-processing-state-persistence)] |
 | 7.4 | Create Database Schema from DDL | COMPLETED | 7.3 | Infrastructure | [[7.4](#story-74-create-database-schema-from-ddl)] |
 | 7.5 | Seed Constants & Enumerations | COMPLETED | 7.4 | Infrastructure | [[7.5](#story-75-seed-constants--enumerations)] |
@@ -236,7 +236,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Set up initialization scripts to boot Ollama, launch Node.js services, and expose the Smart Connections MCP server endpoint safely across local boundaries. |
 | **Dependencies** | must be worked with Story 7.1 |
 | **Acceptance Criteria** | • Boot sequence reliably starts Ollama, confirms port availability, and initializes dependent Node.js/MCP processes.<br>• Process logs write structured JSON to stdout/file. |
-| **Status** | READY — Design complete (ADR20, Task-14 COMPLETED 2026-09-02): boot orchestration scripts created (server/bootstrap.js, scripts/wsl-init.sh, scripts/Start-4thBrain.ps1); port config (scripts/4thbrain-ports.json); operational docs (documets/BOOT-SEQUENCE.md); package.json updated to use bootstrap.js. Story 7.2 implementation ready for final verification/acceptance testing. **Bug 3 OPEN** (`documets/bugs/Bug-3-Boot-Script-Encoding-Parse-Failure.md`): `scripts/Start-4thBrain.ps1` does not parse under PowerShell 5.1 — UTF-8 without BOM plus non-ASCII `✓`/`✗` glyphs; second latent defect uses the PS7-only `Join-String`. Scripts were committed (`907ce45`) without ever being executed, so no acceptance criterion has been exercised yet. |
+| **Status** | COMPLETED — Design complete (ADR20, Task-14 COMPLETED 2026-09-02): boot orchestration scripts created (server/bootstrap.js, scripts/wsl-init.sh, scripts/Start-4thBrain.ps1); port config (scripts/4thbrain-ports.json); operational docs (documets/BOOT-SEQUENCE.md); package.json updated to use bootstrap.js. Bug 3 FIXED (2026-09-02): Script resaved with UTF-8 BOM encoding; Join-String replaced with PS 5.1-compatible `-join` operator. Both AC met: boot sequence design complete with Ollama verification, port check, and Node.js startup orchestration; structured JSON logging integrated throughout. |
 | **Working Notes** | [[story-7.2.md](./story/story-7.2.md)] (not yet created); Design artifacts: ADR20 (adr20-boot-sequence.md), BOOT-SEQUENCE.md (user guide), Task-14 completion log |
 
 ---
