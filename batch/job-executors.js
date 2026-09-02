@@ -2,6 +2,7 @@ const ingestExecutor = require("../server/lib/ingestion/ingest-executor");
 const transcodeExecutor = require("../server/lib/ingestion/transcode-executor");
 const htmlSanitizeExecutor = require("../server/lib/ingestion/html-sanitize-executor");
 const classificationExecutor = require("../server/lib/ingestion/classification-executor");
+const indexExecutor = require("../vault/index-executor");
 
 /**
  * job_type -> executor dispatch table. Each executor exposes:
@@ -19,11 +20,9 @@ const classificationExecutor = require("../server/lib/ingestion/classification-e
  * inferring tags and topic/subtopic via Ollama, then moving the file to its
  * final vault location.
  *
- * 'index' (Story 3.1) is a valid job_type enum value but has no executor yet —
- * the worker's poll query only looks at registered types, so jobs of those types
- * simply stay 'New' until a later story registers a handler for them. This is
- * deliberate: it keeps jobs visible/queryable instead of silently dropping them
- * or misrepresenting "not yet implemented" as "Failed".
+ * 'index' (Story 3.1) triggers vault change detection and Smart Connections
+ * status verification. The vault watcher detects new/modified notes; the
+ * Smart Connections plugin (Obsidian) handles actual re-indexing.
  */
 const executors = {
   ingest: ingestExecutor,
@@ -34,6 +33,7 @@ const executors = {
       : transcodeExecutor.execute(db, job, cfg),
   },
   classify: classificationExecutor,
+  index: indexExecutor,
 };
 
 module.exports = { executors };

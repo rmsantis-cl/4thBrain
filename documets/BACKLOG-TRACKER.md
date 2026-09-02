@@ -20,7 +20,7 @@ Master tracking document for all project stories across all epics. Status values
 | 1.1 | Direct Structured Vault Ingestion | COMPLETED | 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
 | 1.2 | Unstructured Text Parsing & Sanitization | COMPLETED | none | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
 | 2.1 | Local LLM Metadata & Tag Inference | COMPLETED | none | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
-| 3.1 | Smart Connections Vector Indexing Pipeline | READY | 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
+| 3.1 | Smart Connections Vector Indexing Pipeline | COMPLETED | 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
 | 4.1 | Background Sweep & Queue Execution Script | COMPLETED | none | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
 | 5.1 | Multi-Source Briefing Synthesis Engine | READY | 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
@@ -100,9 +100,10 @@ Master tracking document for all project stories across all epics. Status values
 | **Abstract** | Trigger vector embedding generation for updated vault notes. |
 | **Description** | Ensure newly created or modified Markdown notes in the vault trigger local embedding updates within Smart Connections (.smart-env). |
 | **Dependencies** | depends on Story 1.1, depends on Story 7.2 |
-| **Acceptance Criteria** | • Modified or created notes are automatically scanned and indexed.<br>• Embeddings are stored locally in .smart-env without relying on cloud vector stores. |
-| **Status** | READY |
-| **Working Notes** | [[story-3.1.md](./story/story-3.1.md)] (not yet created) |
+| **Acceptance Criteria** | • Modified or created notes are automatically scanned and indexed. **Met** — `vault/vault-change-watcher.py` detects new/modified `.md` files, records state in `.smart-env/pending-index.json`; Smart Connections plugin (Obsidian) handles re-indexing.<br>• Embeddings are stored locally in .smart-env without relying on cloud vector stores. **Met** — Smart Connections plugin uses local LLM (Ollama per Story 7.1); MCP server reads `.smart-env` locally. |
+| **Status** | COMPLETED |
+| **Implementation** | `vault/vault-change-watcher.py` (detects changes, records pending state), `vault/index-executor.js` (job executor coordinating watcher + status checks), `batch/job-executors.js` (index job type registered), `vault/test/index-executor.test.js` (3 acceptance tests). `documets/design/adr21-headless-smart-connections-indexing.md` clarifies design (hybrid approach: batch-side detection, Obsidian-side indexing). |
+| **Working Notes** | [[story-3.1.md](./story/story-3.1.md)] |
 
 ---
 

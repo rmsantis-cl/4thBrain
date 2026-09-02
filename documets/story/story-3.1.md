@@ -100,11 +100,17 @@ Story 3.1 cannot proceed to COMPLETED without Story 7.2 because:
 4. **Implement Gap 3 (Job Executor Registration)** — Wire the indexing logic into the batch worker
 5. **Implement Gap 4 (Acceptance Criteria Testing)** — E2E test to verify indexing actually happens
 
-## Open Questions
+## Design Clarification (ADR21)
 
-- **Spike 3.2 Note:** The spike flagged as uncertain whether the Smart Connections MCP server (registered in `vault/Instructions.md`) exposes indexing as a callable tool, or only the in-app Obsidian panel does. This needs verification before implementation can proceed.
-- **Real-time vs. Batch:** Should indexing be triggered immediately when a note lands (real-time) or during the overnight batch sweep (Story 4.1)? Current design suggests batch, but needs confirmation.
-- **Index Job Queueing:** Should Story 1.1's ingestion executor (ingest-executor.js) automatically create an `index` job when it files a note, or should Story 4.1's batch worker be responsible for queueing index jobs?
+**Resolved:** `documets/design/adr21-headless-smart-connections-indexing.md` (2026-09-02) clarifies that:
+- MCP server is read-only (semantic-search/similar-notes only); does not expose re-indexing trigger
+- Headless indexing in batch context: Use Python file watcher to detect vault changes, recorded in `.smart-env/pending-index.json` for tracking
+- Actual indexing happens when Obsidian runs (user opens vault, or scheduled Obsidian instance)
+- Story 4.1's batch worker queries Smart Connections status post-indexing via Spike 3.2's `check_smart_connections_status.py`
+- Real-time vs. batch: Batch model adopted; Obsidian is responsible for embedding execution
+
+**Outstanding design questions:**
+- **Index Job Queueing:** Should Story 1.1's ingestion executor automatically create an `index` job when it files a note, or should Story 4.1's batch worker be responsible? (Lower priority — defer to implementation pass)
 
 ## Related Files
 
