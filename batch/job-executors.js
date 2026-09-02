@@ -3,6 +3,7 @@ const transcodeExecutor = require("../server/lib/ingestion/transcode-executor");
 const htmlSanitizeExecutor = require("../server/lib/ingestion/html-sanitize-executor");
 const classificationExecutor = require("../server/lib/ingestion/classification-executor");
 const indexExecutor = require("../vault/index-executor");
+const briefingExecutor = require("./briefing-executor");
 
 /**
  * job_type -> executor dispatch table. Each executor exposes:
@@ -34,6 +35,7 @@ const executors = {
   },
   classify: classificationExecutor,
   index: indexExecutor,
+  briefing: briefingExecutor,
 };
 
 module.exports = { executors };

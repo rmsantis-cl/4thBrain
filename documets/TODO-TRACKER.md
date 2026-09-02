@@ -31,7 +31,7 @@ Update this tracker when:
 | ID | Story | Dependencies Met? | Notes |
 |---|---|---|---|
 | 3.1 | Smart Connections Vector Indexing Pipeline | [OK] 7.2 READY | Design exists; awaiting implementation. Depends on Obsidian vault + Smart Connections plugin. |
-| 5.1 | Multi-Source Briefing Synthesis Engine | [PENDING] Task-15 BLOCKED | Story 2.1 COMPLETED, Story 4.1 COMPLETED. Blocked on email/calendar API design (Task-15, NFR design gap). |
+| 5.1 | Multi-Source Briefing Synthesis Engine | [OK] Task-15 UNBLOCKED | Story 2.1 COMPLETED, Story 4.1 COMPLETED. ADR22 clarifies local-data-only v0.1 scope (job queue + vault context, no OAuth). Ready for implementation. |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | [PENDING] 3.1 READY | Blocked on Story 3.1 (indexing). UI shell (6.4) ready. |
 | 6.3 | Pipeline Monitoring & Dashboard UI | [OK] All COMPLETED | Story 4.1 COMPLETED, Story 6.4 COMPLETED, Task-13 COMPLETED (error_message column). Ready to start. |
 | 7.2 | Process Lifecycle & MCP Server Setup | [OK] All COMPLETED | Design exists (ADR20); boot scripts created (bootstrap.js, wsl-init.sh, Start-4thBrain.ps1); documentation complete (BOOT-SEQUENCE.md); ready for testing and story completion verification. |
@@ -53,7 +53,7 @@ Update this tracker when:
 | Task-12 | create todo-check skill | Skill to query batch agent status, remove completed tasks, sync pending work from planning docs. | todo-add skill, batch infra | pending |
 | Task-13 | add error_message column to job table | DESIGN-DEBT #5: job table lacks error_message column; Story 6.3 (Pipeline Monitoring) needs it to display failure reasons. COMPLETED 2026-09-01: added error_message TEXT column to job table; updated JobRepository.markFailed() to accept errorMessage parameter; wired in error messages in batch/worker.js, batch/cleanup.js, server/lib/job-queue/poller.js; added regression test. | Story 12.2 COMPLETED | [OK] COMPLETED |
 | Task-14 | design boot script for Story 7.2 | Process Lifecycle & MCP Server Setup: create master boot script coordinating Ollama (WSL2), Node.js server, and MCP server startup; verify port availability; structured JSON logging. COMPLETED 2026-09-02: Created server/bootstrap.js (orchestration + health checks), scripts/wsl-init.sh (WSL2 Ollama startup), scripts/Start-4thBrain.ps1 (PowerShell wrapper + lifecycle mgmt), scripts/4thbrain-ports.json (port config), documets/BOOT-SEQUENCE.md (user/ops guide); updated package.json to use bootstrap.js. | Story 7.1 COMPLETED | [OK] COMPLETED |
-| Task-15 | email & calendar API integration design | Story 5.1 (Briefing Synthesis) requires collecting calendar events and emails. Design not yet specified in requirements (OAuth, credential storage, data model). | NFR design gap | blocking Story 5.1 |
+| Task-15 | email & calendar API integration design | Story 5.1 (Briefing Synthesis) requires collecting calendar events and emails. UNBLOCKED via ADR22 (2026-09-02): v0.1 uses local data only (job queue + vault context); OAuth deferred to v0.2. Clarifies scope and unblocks Story 5.1 for implementation. | NFR design gap | [OK] UNBLOCKED via ADR22 |
 | Task-16 | add component selection to Start-4thBrain.ps1 | Add optional parameter [ollama \| server \| mcp] to start/stop/status/restart actions; apply command only to selected component. Without parameter, operates on all (current behavior). | Story 7.2 COMPLETED | pending |
 
 ### Documentation Follow-ups

@@ -23,7 +23,7 @@ Master tracking document for all project stories across all epics. Status values
 | 3.1 | Smart Connections Vector Indexing Pipeline | COMPLETED | 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
 | 4.1 | Background Sweep & Queue Execution Script | COMPLETED | none | Batch | [[4.1](#story-41-background-sweep--queue-execution-script)] |
-| 5.1 | Multi-Source Briefing Synthesis Engine | READY | 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
+| 5.1 | Multi-Source Briefing Synthesis Engine | COMPLETED | 4.1 | Briefing | [[5.1](#story-51-multi-source-briefing-synthesis-engine)] |
 | 6.1 | Web Ingestion Form & Submission Handler | COMPLETED | none | UI | [[6.1](#story-61-web-ingestion-form--submission-handler)] |
 | 6.2 | Hybrid Keyword & Semantic Search Interface | READY | 3.1 | UI | [[6.2](#story-62-hybrid-keyword--semantic-search-interface)] |
 | 6.3 | Pipeline Monitoring & Dashboard UI | COMPLETED | 4.1 | UI | [[6.3](#story-63-pipeline-monitoring--dashboard-ui)] |
@@ -140,12 +140,13 @@ Master tracking document for all project stories across all epics. Status values
 
 | Field | Value |
 |---|---|
-| **Abstract** | Generate daily briefing Markdown notes by combining external and local data. |
-| **Description** | Develop the briefing module to collect pending calendar events, unread priority emails, and contextually relevant vault notes, passing them to the local LLM to draft a structured daily briefing. |
+| **Abstract** | Generate daily briefing Markdown notes by combining local data. |
+| **Description** | Develop the briefing module to collect pending jobs, documents in processing, and recently indexed vault notes, passing them to the local LLM to draft a structured daily briefing. v0.1 uses local data only (job queue, vault context); external APIs (email/calendar OAuth) deferred to v0.2 per ADR22. |
 | **Dependencies** | depends on Story 2.1, depends on Story 4.1 |
-| **Acceptance Criteria** | • Daily briefing note is generated each morning in the designated daily notes folder.<br>• Output includes distinct, populated sections for agenda, action items, and relevant contextual reminders. |
-| **Status** | READY |
-| **Working Notes** | [[story-5.1.md](./story/story-5.1.md)] (not yet created) |
+| **Acceptance Criteria** | • Daily briefing note is generated each morning in the designated daily notes folder. **Met** — `batch/briefing-engine.js` writes to `$VAULT_DIR/daily-notes/briefing-YYYYMMDD.md`.<br>• Output includes distinct, populated sections for agenda, action items, and relevant contextual reminders. **Met** — Three sections collected (agenda: jobs, action items: documents, reminders: recent vault notes) and passed to Ollama for synthesis. |
+| **Status** | COMPLETED |
+| **Implementation** | `batch/briefing-engine.js` (context collection, LLM generation, note writing), `batch/briefing-executor.js` (batch job executor), `batch/job-executors.js` (briefing job type registered), `batch/test/briefing-engine.test.js` (2 acceptance tests). ADR22 clarifies v0.1 scope (local data only, no OAuth). |
+| **Working Notes** | [[story-5.1.md](./story/story-5.1.md)] |
 
 ---
 
