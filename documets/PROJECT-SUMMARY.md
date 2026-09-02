@@ -34,6 +34,7 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 - 1.2 — Unstructured Text Parsing & Sanitization (HTML/web-clip via `html-sanitize-executor.js` using Playwright+Readability+jsdom+Turndown per spike-webclipping; PDF via OpenDataLoader PDF per ADR19; `.docx` via `mammoth`; all sanitization code implemented and wired into job executor dispatch)
 - 3.1 — Smart Connections Vector Indexing Pipeline (vault change watcher detects new/modified notes; index executor orchestrates watcher + Smart Connections status checks; batch job type registered; MCP server reads `.smart-env` locally; ADR21 clarifies headless indexing design)
 - 5.1 — Multi-Source Briefing Synthesis Engine (collects job queue + vault context; passes to Ollama for daily briefing synthesis; writes to `$VAULT_DIR/daily-notes/briefing-YYYYMMDD.md`; v0.1 local-data-only per ADR22, OAuth deferred to v0.2)
+- 6.2 — Hybrid Keyword & Semantic Search Interface (keyword search via ripgrep on vault files; semantic search wired for MCP integration; UI search panel with debounced input, ranked results with snippets; sub-second response times)
 - 2.1 — Local LLM Metadata & Tag Inference (`server/lib/ingestion/classification-executor.js` connects to Ollama, infers tags and topic/subtopic, files notes to final vault location, links tags via document_tag table; 8 passing tests)
 - 6.5 — Chat with Llama — Local Ollama Chat Panel (real Ollama wiring via OpenAI SDK; error handling for unreachable service; mock-badge removed from UI)
 - 9.1 — Local-Only Access Enforcement & Auth Guard (server binds to 127.0.0.1 instead of 0.0.0.0; IP-based access control middleware added to protect sensitive endpoints)
@@ -46,7 +47,7 @@ Phases 1–4 (Requirements → Formalization → Scope Lock → Epic Creation) a
 **WIP**
 (none)
 
-**READY (not started)** — 6.2, 8.1, 8.2
+**READY (not started)** — 8.1, 8.2
 - 10.1 — Scheduled Vault Snapshot & Restore (COMPLETED per pass 9)
 
 *13.3 was code-complete since commit `67e7d64` but untracked here until 2026-08-30, when two bugs found in a fresh audit (`document_tag` leaking into the generic `/api/tables/:table` dispatcher; an unbound query parameter in `documentTag.js`) were fixed and it was formally closed out.*

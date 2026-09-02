@@ -279,6 +279,45 @@ const CSS = `
   }
   .placeholder-panel .icon { font-size: 32px; margin-bottom: 12px; }
 
+  /* ---------- Search Panel ---------- */
+  .search-results {
+    margin-top: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .search-card {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--surface-hover);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .search-card:hover {
+    background: var(--surface);
+  }
+
+  .search-card strong {
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  .search-card .snippet {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin: 6px 0;
+    word-break: break-word;
+  }
+
+  .search-card .type {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
   /* ---------- Mobile ---------- */
   @media (max-width: 760px) {
     .mobile-topbar { display: flex; }

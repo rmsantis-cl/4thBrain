@@ -225,6 +225,40 @@ const CLIENT_JS = `
       });
   });
 
+  // ---- Search ----
+  var searchInput = document.getElementById('search-input');
+  var searchResults = document.getElementById('search-results');
+  var searchResult = document.getElementById('search-result');
+  var searchTimeout;
+
+  searchInput.addEventListener('input', function () {
+    clearTimeout(searchTimeout);
+    var query = searchInput.value.trim();
+    if (query.length < 2) {
+      searchResults.innerHTML = '';
+      searchResult.textContent = '';
+      return;
+    }
+    searchTimeout = setTimeout(function () {
+      fetch('/api/search?q=' + encodeURIComponent(query))
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data.results || data.results.length === 0) {
+            searchResult.textContent = 'No results found (' + data.duration_ms + 'ms)';
+            searchResults.innerHTML = '';
+            return;
+          }
+          searchResult.textContent = data.count + ' results (' + data.duration_ms + 'ms)';
+          searchResults.innerHTML = data.results.map(function (r) {
+            return '<div class="search-card"><strong>' + r.file + '</strong><br><span class="snippet">' + r.snippet + '</span><br><small class="type">' + r.type + ' · score: ' + r.score.toFixed(2) + '</small></div>';
+          }).join('');
+        })
+        .catch(function (err) {
+          searchResult.textContent = 'Search error: ' + err.message;
+        });
+    }, 300);
+  });
+
 })();
 `;
 

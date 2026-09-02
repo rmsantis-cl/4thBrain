@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { id: "add-file", icon: "📎", label: "Add file" },
   { id: "add-text", icon: "Aa", label: "Add text" },
   { id: "add-url", icon: "🔗", label: "Add url" },
+  { id: "search", icon: "🔍", label: "Search" },
   { id: "ingest-status", icon: "▤", label: "Ingest status" },
   { id: "chat-llama", icon: "◎", label: "Chat with Llama" },
   { id: "chat-claude", icon: "✳", label: "Chat with Claude" },
@@ -118,6 +119,21 @@ function renderClaudePanel() {
     </section>`;
 }
 
+function renderSearchPanel() {
+  return `
+    <section class="panel" id="panel-search">
+      <h1>Search</h1>
+      <p class="subtitle">Hybrid keyword & semantic search.</p>
+      <div class="card">
+        <form id="search-form">
+          <input type="text" id="search-input" placeholder="Search vault notes…" autocomplete="off">
+          <div class="result-msg" id="search-result"></div>
+          <div id="search-results" class="search-results"></div>
+        </form>
+      </div>
+    </section>`;
+}
+
 function renderAdminMenuPage() {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -174,6 +190,7 @@ function renderChatPage() {
     ${renderAddFilePanel()}
     ${renderAddTextPanel()}
     ${renderAddUrlPanel()}
+    ${renderSearchPanel()}
     ${renderStatusPanel()}
     ${renderLlamaPanel()}
     ${renderClaudePanel()}
