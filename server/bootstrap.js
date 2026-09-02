@@ -2,16 +2,22 @@
 /**
  * server/bootstrap.js
  *
- * Master boot script coordinating Ollama (WSL2), Node.js server, and MCP server startup.
+ * Master boot script for Windows-native Node.js, verifying Ollama (WSL2) and starting services.
  * Implements Story 7.2 (Process Lifecycle & MCP Server Setup) per ADR20.
+ *
+ * Architecture:
+ * - This script runs on Windows (native Node.js, not WSL2)
+ * - Ollama runs in WSL2 via systemd; accessible via Windows→WSL2 port forwarding (localhost:11434)
+ * - MCP server spawned as a Windows-native child process (direct vault filesystem access)
+ * - Express server binds to Windows 127.0.0.1:3000
  *
  * Orchestration sequence:
  * 1. Parse config from params.json
- * 2. Verify Ollama reachability (http://localhost:11434/api/tags)
- * 3. Verify Node.js port availability (127.0.0.1:3000)
+ * 2. Verify Ollama reachability over port-forwarding (http://localhost:11434/api/tags)
+ * 3. Verify Node.js port availability (Windows 127.0.0.1:3000)
  * 4. Initialize Express app (server/index.js)
- * 5. Spawn MCP server subprocess (non-blocking; continues if fails)
- * 6. Start listening on 127.0.0.1:3000
+ * 5. Spawn MCP server subprocess (Windows process, non-blocking; continues if fails)
+ * 6. Start listening on 127.0.0.1:3000 (Windows)
  * 7. Await shutdown signals (SIGTERM/SIGINT) for graceful cleanup
  *
  * All output is structured JSON to stdout, matching batch/worker.js logging pattern.
@@ -48,6 +54,14 @@ function log(fields = {}) {
 async function checkOllama(config) {
   const startTime = Date.now();
   const ollamaUrl = config.ollamaBaseUrl || "http://localhost:11434";
+
+  // params.json sets ollama_base_url to the OpenAI-compatible base
+  // (http://localhost:11434/v1) because the chat client uses the openai
+  // package. Ollama's native /api/tags does NOT live under /v1 -- requesting
+  // it there returns the plain-text body "404 page not found", which then
+  // fails JSON.parse. Pick the endpoint that matches the configured base.
+  const base = ollamaUrl.replace(/\/+$/, "");
+  const probeUrl = /\/v1$/.test(base) ? `${base}/models` : `${base}/api/tags`;
   const timeoutMs = 3000;
 
   log({
@@ -59,7 +73,7 @@ async function checkOllama(config) {
   });
 
   return new Promise((resolve) => {
-    const req = http.get(`${ollamaUrl}/api/tags`, { timeout: timeoutMs }, (res) => {
+    const req = http.get(probeUrl, { timeout: timeoutMs }, (res) => {
       let data = "";
       res.on("data", (chunk) => {
         data += chunk;
@@ -67,7 +81,10 @@ async function checkOllama(config) {
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          const models = (parsed.models || []).map((m) => m.name || m);
+          // /v1/models returns { data: [{ id }] }; /api/tags returns { models: [{ name }] }
+          const models = (parsed.data || parsed.models || []).map(
+            (m) => m.id || m.name || m
+          );
           const duration = Date.now() - startTime;
           log({
             component: "bootstrap.ollama",

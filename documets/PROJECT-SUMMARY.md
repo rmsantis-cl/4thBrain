@@ -13,7 +13,7 @@ Read this file first. It points to the live sources of truth instead of duplicat
 
 ## What 4thBrain is
 
-A privacy-first, locally hosted "second brain": captures notes/transcripts/links/documents/email/calendar, sanitizes and classifies everything overnight via a local LLM (Ollama/WSL2, zero cloud calls), indexes into an Obsidian-compatible Markdown vault + local vector DB (Smart Connections), and proactively surfaces daily briefings and relevant notes.
+A privacy-first, locally hosted "second brain": captures notes/transcripts/links/documents/email/calendar, sanitizes and classifies everything overnight via a local LLM (Ollama in WSL2, zero cloud calls), indexes into an Obsidian-compatible Markdown vault + local vector DB (Smart Connections), and proactively surfaces daily briefings and relevant notes. Web UI and orchestration run natively on Windows; only Ollama runs in WSL2.
 
 ## Lifecycle phase (per `documets/method/Software Documentation Summary and Framework.md`)
 

@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.24
+  version: 1.25
   created-by: Claude Code
   date: 2026-09-02
 ---
@@ -236,7 +236,7 @@ Master tracking document for all project stories across all epics. Status values
 | **Description** | Set up initialization scripts to boot Ollama, launch Node.js services, and expose the Smart Connections MCP server endpoint safely across local boundaries. |
 | **Dependencies** | must be worked with Story 7.1 |
 | **Acceptance Criteria** | • Boot sequence reliably starts Ollama, confirms port availability, and initializes dependent Node.js/MCP processes.<br>• Process logs write structured JSON to stdout/file. |
-| **Status** | READY — Design complete (ADR20, Task-14 COMPLETED 2026-09-02): boot orchestration scripts created (server/bootstrap.js, scripts/wsl-init.sh, scripts/Start-4thBrain.ps1); port config (scripts/4thbrain-ports.json); operational docs (documets/BOOT-SEQUENCE.md); package.json updated to use bootstrap.js. Story 7.2 implementation ready for final verification/acceptance testing. |
+| **Status** | READY — Design complete (ADR20, Task-14 COMPLETED 2026-09-02): boot orchestration scripts created (server/bootstrap.js, scripts/wsl-init.sh, scripts/Start-4thBrain.ps1); port config (scripts/4thbrain-ports.json); operational docs (documets/BOOT-SEQUENCE.md); package.json updated to use bootstrap.js. Story 7.2 implementation ready for final verification/acceptance testing. **Bug 3 OPEN** (`documets/bugs/Bug-3-Boot-Script-Encoding-Parse-Failure.md`): `scripts/Start-4thBrain.ps1` does not parse under PowerShell 5.1 — UTF-8 without BOM plus non-ASCII `✓`/`✗` glyphs; second latent defect uses the PS7-only `Join-String`. Scripts were committed (`907ce45`) without ever being executed, so no acceptance criterion has been exercised yet. |
 | **Working Notes** | [[story-7.2.md](./story/story-7.2.md)] (not yet created); Design artifacts: ADR20 (adr20-boot-sequence.md), BOOT-SEQUENCE.md (user guide), Task-14 completion log |
 
 ---

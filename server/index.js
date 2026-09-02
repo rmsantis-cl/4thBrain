@@ -59,16 +59,24 @@ app.use("/admin/db", localOnlyMiddleware, adminDbRoute);
 app.use("/api/tables", localOnlyMiddleware, apiTablesRouter);
 app.use("/api/docs", localOnlyMiddleware, apiDocsRouter);
 
-app.listen(config.port, config.bindHost, async () => {
-  console.log(`4thBrain — http://${config.bindHost}:${config.port}/chat`);
-  console.log(`   Admin menu: http://${config.bindHost}:${config.port}/admin (dev-only)`);
-  console.log(`   Admin tables: http://${config.bindHost}:${config.port}/admin/db (dev-only)`);
-  console.log(`   REST API: http://${config.bindHost}:${config.port}/api/tables (dev-only)`);
-  console.log(`   API docs: http://${config.bindHost}:${config.port}/api/docs (dev-only)`);
-  const reachable = await checkOllamaReachable(config);
-  if (!reachable) {
-    console.warn(
-      `Ollama not reachable at ${config.ollamaBaseUrl} — harmless for this pass, everything is mocked.`
-    );
-  }
-});
+// Self-start only when run directly (node index.js) — scripts/ui-server.ps1 and
+// tests/ui/dev-gating.spec.js both rely on that. When required as a module,
+// export the app instead so server/bootstrap.js can own listen() and keep the
+// server handle it needs for graceful shutdown.
+if (require.main === module) {
+  app.listen(config.port, config.bindHost, async () => {
+    console.log(`4thBrain — http://${config.bindHost}:${config.port}/chat`);
+    console.log(`   Admin menu: http://${config.bindHost}:${config.port}/admin (dev-only)`);
+    console.log(`   Admin tables: http://${config.bindHost}:${config.port}/admin/db (dev-only)`);
+    console.log(`   REST API: http://${config.bindHost}:${config.port}/api/tables (dev-only)`);
+    console.log(`   API docs: http://${config.bindHost}:${config.port}/api/docs (dev-only)`);
+    const reachable = await checkOllamaReachable(config);
+    if (!reachable) {
+      console.warn(
+        `Ollama not reachable at ${config.ollamaBaseUrl} — harmless for this pass, everything is mocked.`
+      );
+    }
+  });
+}
+
+module.exports = app;

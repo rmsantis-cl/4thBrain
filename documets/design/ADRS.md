@@ -11,10 +11,10 @@ metadata:
 
 Per the ADR document type (Document Type 4) defined in `documets/method/Software Documentation Summary and Framework.md`. Each record has a Description, Why, Date Created, and Date Cancelled (blank if still active). Decisions below were extracted from the existing NFR baseline (`documets/design/SYSTEM-REQUIREMENTS-SPECIFICATION.md`) and from choices made during this session — none had been formally logged as ADRs before now.
 
-## ADR1: Windows 11 host with WSL2 as the runtime environment
+## ADR1: Windows 11 host with WSL2 for Ollama only
 
-**Description:** Core compute (Node.js, Ollama) runs inside WSL2 on a single Windows 11 PC, not on bare Windows or a separate server.
-**Why:** Keeps the system single-host and local — no cloud infrastructure, while still getting a Linux-compatible runtime for Ollama/Node tooling. Source: NFR1.
+**Description:** Ollama (local LLM inference engine) runs inside WSL2 on a single Windows 11 PC. Node.js orchestration server, MCP server, and all other components run natively on Windows. No separate server infrastructure.
+**Why:** Ollama requires Linux for GPU acceleration and the Fedora systemd integration. Node.js runs natively on Windows for simplicity (no dual-environment coordination needed for the app layer). Keeps the system single-host and local — no cloud infrastructure. Source: NFR1.
 **Date Created:** 2026-08-23
 **Date Cancelled:** —
 
@@ -39,10 +39,10 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-23
 **Date Cancelled:** —
 
-## ADR5: Node.js as the orchestration server
+## ADR5: Node.js as the orchestration server (Windows-native)
 
-**Description:** A Node.js process runs the background pipeline tasks, processing logic, and Web UI endpoints — the single orchestration layer tying modules together.
-**Why:** One runtime for both backend job orchestration and serving the Web UI, avoiding a split stack. Source: NFR5.
+**Description:** A Node.js process runs natively on Windows, serving the Web UI endpoints, ingestion API, and job orchestration. It calls Ollama (running in WSL2) over HTTP. All client-side logic (browser, MCP) communicates with the Windows Node.js process directly.
+**Why:** One runtime for both the Web UI and orchestration, avoiding a split stack. Running Node.js natively on Windows (not inside WSL2) simplifies the architecture — no cross-environment IPC beyond the single Ollama HTTP boundary at port 11434. Source: NFR5.
 **Date Created:** 2026-08-23
 **Date Cancelled:** —
 
@@ -67,10 +67,10 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-08-23
 **Date Cancelled:** —
 
-## ADR9: Ordered process supervision (Ollama → Node.js/MCP) via systemd/PM2
+## ADR9: Ordered startup with health checks (Ollama in WSL2 systemd, Node.js on Windows)
 
-**Description:** Service startup is managed by systemd or PM2, enforcing a strict boot order: Ollama starts first, its port is confirmed available, then Node.js/MCP services initialize.
-**Why:** Node/MCP services depend on Ollama being reachable; starting them out of order causes early failures. A supervised, ordered boot sequence avoids manual startup steps. Source: NFR9.
+**Description:** Ollama is managed by systemd inside WSL2 and auto-starts on WSL2 boot. Node.js (Windows-native, running via `server/bootstrap.js`) verifies Ollama reachability before binding its own port. The bootstrap sequence waits for Ollama HTTP endpoint to respond before proceeding.
+**Why:** Node.js and MCP depend on Ollama being reachable; bootstrap.js performs explicit health checks rather than blind startup to avoid early failures. Ollama's systemd management (WSL2 side) ensures it persists across restarts; Node.js bootstrap (Windows side) adds the wait-for-dependency logic. Source: NFR9.
 **Date Created:** 2026-08-23
 **Date Cancelled:** —
 
@@ -222,6 +222,7 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 
 ## Changelog
 
+- 2026-09-02 (architecture correction): Corrected ADR1, ADR5, ADR9 — Node.js runs natively on Windows, not in WSL2. Only Ollama runs in WSL2. ADR1 now says "Ollama-only" instead of "core compute"; ADR5 clarifies Windows-native Node.js; ADR9 describes Ollama systemd (WSL2) + Node.js bootstrap (Windows) coordination. Updated ADR16 and ADR20 to reflect this architecture (no complex cross-environment IPC; one clean boundary at Ollama HTTP:11434).
 - 2026-09-02: Logged ADR21 (closed) — block-level embedding skips are expected coverage under Smart Connections' `min_chars` policy, not Story 3.1 indexing failures; indexing is measured at source level. Logged ADR22 (closed) — SQLite FTS5 over a derived, incrementally-synced index as Story 6.2's keyword backend, with a documented LIKE fallback.
 - 2026-08-30: Logged ADR19 (closed) — OpenDataLoader PDF (`@opendataloader/pdf`) replaces `pdf-parse` for all PDF extraction (Story 1.2's transcode executor and the webclipping spike's PDF handling), per explicit user direction. Notes the new JVM host dependency and per-call JVM-spawn latency as accepted trade-offs.
 - 2026-08-26: Closed ADR17 — SQLite chosen for simplicity and low-volume sequential processing. Critical constraint: keep transactions brief; if long concurrent transactions are needed during implementation, decision must be revisited (migrate to PostgreSQL).

@@ -11,7 +11,12 @@ metadata:
 
 ## Abstract
 
-Master boot script coordinating Ollama (already systemd-managed in WSL2), Node.js server initialization, and MCP vector server startup. Verifies port availability, enforces local-only access boundaries, and logs all boot events as structured JSON matching the pattern established by Story 4.1's batch worker.
+Master boot script (`server/bootstrap.js`, Windows-native Node.js) orchestrating system startup:
+1. Verifies Ollama (WSL2, already running via systemd) is reachable at localhost:11434
+2. Verifies local port 3000 is available for Node.js binding
+3. Initializes Express app and spawns MCP server subprocess
+4. Enforces local-only access boundaries
+5. Logs all boot events as structured JSON (matching Story 4.1's batch/worker.js pattern)
 
 ## Current State
 
@@ -19,16 +24,19 @@ Master boot script coordinating Ollama (already systemd-managed in WSL2), Node.j
 - Runs inside WSL2 via Fedora systemd service (`ollama.service`)
 - Auto-starts on WSL2 boot; reachable from Windows at `localhost:11434`
 - Port forwarding verified working (Windows PowerShell can reach it)
+- **Note:** Windows→WSL2 port forwarding is already configured; no additional WSL plumbing needed
 
 **Node.js Server (Story 6.1+, COMPLETED):**
 - Express app serving Web UI and ingestion API
+- Runs natively on Windows (not in WSL2)
 - Binds to `127.0.0.1:3000` (per Story 9.1, local-only enforcement)
-- Started manually via `scripts/ui-server.ps1` or `npm start`
-- Currently checks Ollama reachability inline but doesn't wait for it
+- Started via `server/bootstrap.js` (Windows Node.js process)
+- Calls Ollama over HTTP at `http://localhost:11434` (port forwarding from Windows→WSL2)
 
 **MCP Server (Pending):**
 - Smart Connections MCP server exposes the vault vector index (ADR4)
-- Not yet integrated into boot orchestration
+- Spawned as a Windows-native Node.js subprocess by bootstrap.js
+- Runs on Windows filesystem with direct access to vault directory
 - Needs local-only access enforcement (reference Story 9.1's `localOnlyMiddleware`)
 
 **Port Availability (Current Gap):**
@@ -40,17 +48,19 @@ Master boot script coordinating Ollama (already systemd-managed in WSL2), Node.j
 
 ### Boot Orchestration Pattern
 
-**Choice: Node.js Bootstrap Wrapper (Primary) + Optional systemd Timer Integration (Secondary)**
+**Choice: Windows-native Node.js Bootstrap Wrapper (`server/bootstrap.js`)**
 
 **Why this pattern:**
-- Node.js is the orchestration runtime already running on Windows (ADR5) — using it for coordination avoids adding a new language/runtime
-- Can coordinate across the WSL2 boundary (Windows Node.js → localhost:11434 for Ollama checks, localhost:3000 for its own binding)
+- Node.js runs natively on Windows (ADR5) — using it for bootstrap orchestration avoids adding a new language/runtime
+- Can verify Ollama reachability via port-forwarding (Windows localhost:11434 → WSL2:11434)
 - Matches the async/await, structured logging, and concurrency patterns already established in `batch/worker.js` (Story 4.1)
 - Logging and error handling are consistent with existing infrastructure
+- Simplicity: one clean HTTP boundary (Windows→WSL2 at port 11434), no complex IPC
 
 **Alternative patterns rejected:**
-- **Pure shell script (PowerShell):** WSL2 subprocess management is complex from PowerShell; logging coordination across WSL2 boundary adds plumbing
-- **systemd socket activation:** Requires multiple systemd units with activation order; doesn't scale cleanly to Windows-native Node.js + WSL2 Ollama
+- **PowerShell orchestration:** Could work, but Node.js async/logging patterns are more consistent with existing codebase
+- **WSL2-based coordinator:** Would require WSL cross-environment coordination in both directions; unnecessary when Windows side already has Node.js
+- **systemd in WSL + Windows separate:** Would split orchestration logic; Windows needs to know Ollama is up anyway
 - **Docker Compose:** Out of scope — project runs natively on Windows/WSL2, not containerized
 
 ### Boot Script Location and Entry Point
@@ -141,25 +151,27 @@ node server/bootstrap.js
 
 ### MCP Server Endpoint Specification
 
-**Design Decision: Node.js Subprocess within the Bootstrap Process**
+**Design Decision: Windows-native Node.js Subprocess within the Bootstrap Process**
 
 **Endpoint Location:**
-- Runs as a stdio-based MCP server (not HTTP)
-- Accessible via Node.js child process spawned by `bootstrap.js`
+- Runs as a stdio-based MCP server (not HTTP) on Windows
+- Spawned by `bootstrap.js` as a Windows-native Node.js child process
+- Direct filesystem access to vault at `$VAULT_DIR` (Windows path, per `params.json`)
 - Coordinated lifecycle: starts after Node.js server is listening, stops cleanly on shutdown
 
 **Endpoint Details:**
 - **Protocol:** Model Context Protocol (MCP) over stdio
 - **Port:** MCP uses stdin/stdout; no network port required
-- **Binding:** Process runs locally with access to the vault at `$VAULT_DIR` (per `params.json`)
+- **Binding:** Process runs on Windows with direct vault filesystem access (no WSL mounting)
 - **Local-Only Enforcement:** Inherits Story 9.1's IP-based access control for any HTTP auxiliary endpoints
 - **URL (for consumers like Story 3.1):**
   - If MCP runs as HTTP bridge: `http://127.0.0.1:11435` (example, TBD per actual implementation)
   - If MCP runs as stdio daemon: reference via process handle, not URL
+  - Consumers (Obsidian plugins, Python scripts) call MCP over stdio or HTTP, both run on Windows
 
 **MCP Server Lifecycle Management:**
-1. Bootstrap checks that `$VAULT_DIR/.smart-env` exists (vector index directory)
-2. Spawns MCP server as a child process
+1. Bootstrap checks that `$VAULT_DIR/.smart-env` exists on Windows filesystem (vector index directory)
+2. Spawns MCP server as a Windows-native child process (not WSL)
 3. Captures server's stdout for log forwarding
 4. On Node.js server shutdown signal (SIGTERM/SIGINT), terminates MCP server cleanly
 5. Logs all startup/shutdown events as structured JSON
@@ -171,10 +183,14 @@ node server/bootstrap.js
 
 ### Local-Only Boundary Enforcement
 
-**Bootstrap-Level Enforcement (Startup Check):**
+**Windows Node.js Binding (Startup Check):**
 - Verify Node.js binds to `127.0.0.1`, not `0.0.0.0` (per Story 9.1, `params.json` `server_bind_host`)
 - Log and fail if config allows non-local binding
 - Enforce via bootstrap check before Express app initializes
+
+**Ollama Access (Implicit Local):**
+- Ollama is in WSL2; Windows can reach it via localhost:11434 (port forwarding, already configured)
+- No external network access to Ollama; Windows→WSL2 forwarding is local-only by default
 
 **MCP Endpoint Enforcement:**
 - If MCP endpoint is exposed via HTTP (auxiliary bridge), apply `localOnlyMiddleware` from Story 9.1
@@ -182,7 +198,7 @@ node server/bootstrap.js
 - Log all access attempts (local passes, non-local rejected with 403)
 
 **Acceptance Criterion Mapping (Story 7.2 AC):**
-- "Boot sequence reliably starts Ollama, confirms port availability, and initializes dependent Node.js/MCP processes" — met by the orchestration logic above
+- "Boot sequence reliably verifies Ollama availability and initializes dependent Node.js/MCP processes on Windows" — met by the orchestration logic above
 - "Process logs write structured JSON to stdout/file" — met by the logging schema above
 
 ---
@@ -191,34 +207,39 @@ node server/bootstrap.js
 
 ### High-Level Timeline
 
+**Assumptions:**
+- Ollama is already running in WSL2 (started by systemd on WSL2 boot)
+- bootstrap.js is invoked on Windows via PowerShell/Windows Task Scheduler/manual `node server/bootstrap.js`
+- Port 11434 is forwarded from Windows→WSL2 (already configured by ADR1)
+
 ```
-Time 0ms:     bootstrap.js starts (Node.js invocation)
+Time 0ms:     bootstrap.js starts (Windows Node.js invocation)
               │
               ├─ Parse config from params.json
               │  Log: boot_started
               │
-Time 50ms:    ├─ Check Ollama reachability (http://localhost:11434/api/tags)
+Time 50ms:    ├─ Check Ollama reachability (http://localhost:11434/api/tags from Windows)
               │  │  Timeout: 3s
               │  │  On success: Log ollama_reachable, continue
               │  │  On failure: Log ollama_unreachable (warn/error), exit(1)
               │
-Time 400ms:   ├─ Check Node.js port 3000 availability
+Time 400ms:   ├─ Check Node.js port 3000 availability (Windows)
               │  │  Attempt bind to 127.0.0.1:3000
               │  │  On success: Log port_check_passed, continue
               │  │  On failure: Log port_check_failed (error), exit(1)
               │
-Time 450ms:   ├─ Initialize Express app (server/index.js)
-              │  │  Load database (Story 7.3)
+Time 450ms:   ├─ Initialize Express app (server/index.js, Windows)
+              │  │  Load SQLite database (Story 7.3)
               │  │  Load repositories (Story 13.3)
               │  │  Set up route handlers
               │
-Time 500ms:   ├─ Spawn MCP server process
-              │  │  Verify vault directory exists
-              │  │  Spawn stdio MCP server
+Time 500ms:   ├─ Spawn MCP server process (Windows subprocess)
+              │  │  Verify vault directory exists (Windows filesystem)
+              │  │  Spawn Node.js child process for MCP (stdio-based)
               │  │  Log: mcp_server_started
               │
 Time 600ms:   ├─ Call app.listen(3000, '127.0.0.1')
-              │  │  Express server binds and accepts connections
+              │  │  Express server binds and accepts connections (Windows)
               │  │  Log: server_listening
               │
 Time 700ms:   └─ All services running
@@ -226,40 +247,48 @@ Time 700ms:   └─ All services running
                  Await SIGTERM/SIGINT (graceful shutdown)
 ```
 
+**Key points:**
+- All Node.js execution happens on Windows (bootstrap.js, Express, MCP subprocess)
+- Ollama is in WSL2 but accessed via Windows→WSL2 port forwarding (localhost:11434)
+- No WSL cross-environment calls during bootstrap
+
 ### Pseudocode
 
 ```javascript
 // server/bootstrap.js
+// Runs on Windows (native Node.js); checks Ollama in WSL2 via port-forwarding, then starts Express
 async function bootstrap() {
-  const config = buildConfig();
+  const config = buildConfig(); // reads params.json
   
-  log({ event: 'boot_started', details: { node_version: process.version } });
+  log({ event: 'boot_started', details: { node_version: process.version, platform: process.platform } });
   
-  // Step 1: Check Ollama reachability
-  const ollamaOk = await checkOllama(config.ollamaBaseUrl);
+  // Step 1: Check Ollama reachability via Windows→WSL2 port forwarding
+  // Ollama is in WSL2 but accessible at localhost:11434 from Windows
+  const ollamaOk = await checkOllama(config.ollamaBaseUrl); // "http://localhost:11434"
   if (!ollamaOk) {
     log({ level: 'error', event: 'ollama_unreachable', service: 'ollama', port: 11434 });
     process.exit(1);
   }
   
-  // Step 2: Check Node.js port availability
-  const portOk = await checkPort(config.port, config.bindHost);
+  // Step 2: Check Node.js port availability (Windows)
+  const portOk = await checkPort(config.port, config.bindHost); // 127.0.0.1:3000
   if (!portOk) {
     log({ level: 'error', event: 'port_check_failed', port: config.port });
     process.exit(1);
   }
   
-  // Step 3: Initialize Express app
-  const app = require('./index.js'); // or require('./index.js')(config)
+  // Step 3: Initialize Express app (Windows)
+  const app = require('./index.js');
   
-  // Step 4: Spawn MCP server
+  // Step 4: Spawn MCP server as Windows subprocess
+  // MCP runs as a Windows-native Node.js child process with direct vault filesystem access
   const mcpProcess = await spawnMcpServer(config);
   if (!mcpProcess) {
     log({ level: 'warn', event: 'mcp_startup_failed' });
     // Continue anyway; MCP is not blocking
   }
   
-  // Step 5: Start listening
+  // Step 5: Start listening (Windows)
   const startTime = Date.now();
   const server = app.listen(config.port, config.bindHost, () => {
     log({ event: 'server_listening', port: config.port, bind_host: config.bindHost });
@@ -322,16 +351,19 @@ async function checkPort(port, host) {
 }
 
 async function spawnMcpServer(config) {
+  // MCP server runs on Windows as a subprocess with direct vault filesystem access
   if (!fs.existsSync(config.vaultDir)) {
-    log({ level: 'warn', event: 'mcp_startup_skipped', reason: 'vault_directory_missing' });
+    log({ level: 'warn', event: 'mcp_startup_skipped', reason: 'vault_directory_missing', vaultDir: config.vaultDir });
     return null;
   }
   try {
+    // Spawn Windows-native Node.js process for MCP (not WSL)
     const proc = spawn('node', ['vault/mcp-server.js'], {
-      cwd: __dirname + '/..',
-      stdio: ['inherit', 'pipe', 'pipe']
+      cwd: path.join(__dirname, '..'),
+      stdio: ['inherit', 'pipe', 'pipe'],
+      env: { ...process.env, VAULT_DIR: config.vaultDir }
     });
-    log({ component: 'bootstrap.mcp', event: 'mcp_server_started', pid: proc.pid });
+    log({ component: 'bootstrap.mcp', event: 'mcp_server_started', pid: proc.pid, vault_dir: config.vaultDir });
     return proc;
   } catch (err) {
     log({ level: 'warn', component: 'bootstrap.mcp', event: 'mcp_startup_failed', error: err.message });
@@ -417,10 +449,12 @@ bootstrap().catch(err => {
    - No new npm packages; use Node.js built-ins (`net`, `http`, `child_process`)
    - Async/await syntax (Node 18+, already required by `server/index.js`)
 
-6. **Deployment/Scheduling:**
-   - `scripts/ui-server.ps1` can be updated to call `npm start` (which now calls bootstrap.js)
-   - For unattended operation, schedule `npm start` via Windows Task Scheduler or systemd timer
-   - Supervisor tools (PM2, systemd) can manage the process and restart on crash
+6. **Deployment/Scheduling (Windows):**
+   - `scripts/ui-server.ps1` orchestrates the full boot (Ollama check, Node.js bootstrap)
+   - For development: `npm start` from PowerShell (which now calls bootstrap.js)
+   - For unattended operation: schedule `npm start` or `node server/bootstrap.js` via Windows Task Scheduler
+   - Supervisor tools (PM2 on Windows) can manage the process and restart on crash
+   - Note: Ollama (WSL2) is managed separately by systemd inside WSL2; no Windows scheduler needed for it
 
 ---
 
@@ -437,4 +471,5 @@ bootstrap().catch(err => {
 
 ## Changelog
 
+- 2026-09-02 (architecture correction): Updated entire ADR to reflect Windows-native Node.js + Windows-native MCP, not WSL2-based. Bootstrap.js is a Windows process; it verifies Ollama (WSL2) reachability over port-forwarding and spawns MCP as a Windows subprocess. Removed all WSL-specific IPC plumbing from the pseudocode and timeline. Clarified port 11434 is already forwarded Windows→WSL2, so no additional WSL coordination needed.
 - 2026-09-01: Created as Task-14 design artifact for Story 7.2. Specified boot orchestration pattern (Node.js bootstrap wrapper), port verification algorithm, structured logging schema (matching batch/worker.js), MCP server lifecycle, local-only boundary enforcement, and pseudocode outline. Acceptance criteria mapped to Story 7.2's AC.
