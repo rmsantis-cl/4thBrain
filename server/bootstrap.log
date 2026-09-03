@@ -1,0 +1,27 @@
+{"timestamp":"2026-09-02T22:13:04.525Z","component":"bootstrap","level":"info","event":"boot_started","details":{"node_version":"v22.22.3","config_source":"params.json"}}
+{"timestamp":"2026-09-02T22:13:04.530Z","component":"bootstrap.ollama","level":"info","event":"ollama_check_started","service":"ollama","port":11434}
+{"timestamp":"2026-09-02T22:13:04.556Z","component":"bootstrap.ollama","level":"info","event":"ollama_reachable","service":"ollama","port":11434,"models":["llama3.2:3b"],"duration_ms":26}
+{"timestamp":"2026-09-02T22:13:04.560Z","component":"bootstrap.server","level":"info","event":"port_check_passed","port":3000,"host":"127.0.0.1"}
+SQLite schema applied at: C:\Users\rsant\desar\github\4thBrain\server\4thbrain-metadata.db
+{"timestamp":"2026-09-02T22:13:04.928Z","component":"bootstrap","level":"info","event":"express_app_initialized"}
+{"timestamp":"2026-09-02T22:13:04.928Z","component":"bootstrap.mcp","level":"warn","event":"mcp_startup_skipped","reason":"vault_directory_missing_or_not_configured"}
+{"timestamp":"2026-09-02T22:13:04.929Z","component":"bootstrap.server","level":"info","event":"server_listening","port":3000,"bind_host":"127.0.0.1","url":"http://127.0.0.1:3000"}
+{"timestamp":"2026-09-02T22:13:04.930Z","component":"bootstrap","level":"info","event":"boot_completed","duration_ms":407}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":1,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\0bcf2bdd-4a61-4767-b0a7-d99cd2ed6070.md"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":2,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\29db1456-ddbe-4e7e-90de-72f88ee1693a.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":3,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\2f31cc87-6863-4c35-b0b5-bbf980e41286.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":4,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\2f02c862-f92c-4baa-ad34-048d7bcaefb3.md"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":5,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\3bb9a365-9a9f-400a-b355-b2f0173c8942.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":6,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\68752d97-8d79-49f1-9512-afa7c0f5d484.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":7,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\69a4436f-2262-4189-8efe-e67575d591f6.pdf"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":8,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\69e5b692-ef1d-4f42-bc88-329354cfa60e.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":9,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\8ab427f3-895c-462b-887f-ecc1ceb34824.md"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":10,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\91fb4ba4-6cb9-4cc9-be02-ef865bec1b9e.md"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":11,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\bd40e1c8-af44-4e88-a5c3-fd2337da52e4.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":12,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\b4db828b-b1ac-4df4-86ae-1d54c1861d39.txt"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":13,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\c6018559-5d84-4f72-baa4-42fbf06e631a.log"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":14,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\story-1.1-verify.html"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":15,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\story-1.1-verify.md"}
+{"level":"info","component":"ingestion.watcher","event":"job_created","jobId":16,"filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\story-1.1-verify.txt"}
+{"level":"info","component":"ingestion.watcher","event":"add_skipped","filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\a4be6027-a573-49fd-8f70-657db935901e.txt","reason":"already tracked by job_file 17"}
+{"level":"info","component":"ingestion.watcher","event":"add_skipped","filePath":"C:\\Users\\rsant\\desar\\Local Vault\\RAW_DIR\\inbox\\c49e0f27-ae5d-4f5f-adb2-1c3ab3902334.md","reason":"already tracked by job_file 18"}
