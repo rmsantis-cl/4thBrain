@@ -202,7 +202,11 @@ const CLIENT_JS = `
     llamaHistory.push({ role: 'user', content: msg });
     llamaInput.value = '';
     llamaInput.disabled = true;
-    var thinking = addBubble(llamaWindow, 'Thinkingâ€¦', 'thinking');
+    var thinking = addBubble(llamaWindow, '', 'thinking');
+    var thinkingSpinner = document.createElement('span');
+    thinkingSpinner.className = 'spinner';
+    thinking.appendChild(thinkingSpinner);
+    thinking.appendChild(document.createTextNode('Thinkingâ€¦'));
 
     fetch('/api/chat/llama', {
       method: 'POST',
@@ -258,6 +262,108 @@ const CLIENT_JS = `
         });
     }, 300);
   });
+
+  // ---- Actuators ----
+  var actuatorsRefreshBtn = document.getElementById('actuators-refresh-btn');
+  var actuatorsGrid = document.getElementById('actuators-grid');
+  var actuatorsSearchInput = document.getElementById('actuators-search-input');
+  var actuatorsResultMsg = document.getElementById('actuators-result-msg');
+  var actuatorsTrack = document.getElementById('actuators-track');
+  var actuatorsTrackDetails = document.getElementById('actuators-track-details');
+
+  function loadActuators() {
+    actuatorsGrid.innerHTML = '<div class="stat-card"><div class="label">Loadingâ€¦</div></div>';
+    actuatorsTrack.style.display = 'none';
+    actuatorsResultMsg.textContent = '';
+    fetch('/api/actuators/status')
+      .then(function (res) { return res.json(); })
+      .then(renderActuators)
+      .catch(function (err) {
+        actuatorsGrid.innerHTML = '<div class="stat-card"><div class="label">Failed to load</div></div>';
+        actuatorsResultMsg.textContent = 'Error: ' + err.message;
+      });
+  }
+
+  function renderActuators(data) {
+    var executors = data.executors || {};
+    var executorTypes = ['ingest', 'convert', 'classify', 'index', 'briefing'];
+    var html = '';
+
+    executorTypes.forEach(function (type) {
+      var ex = executors[type] || { pending: 0, running: 0, completed: 0, failed: 0 };
+      html +=
+        '<div class="stat-card">' +
+          '<div class="label">' + type + '</div>' +
+          '<div style="font-size:11px; color:var(--text-muted); margin-top:4px;">' +
+            '<span style="color:var(--text-secondary);">Pending:</span> ' + ex.pending + ' | ' +
+            '<span style="color:var(--status-active);">Running:</span> ' + ex.running + ' | ' +
+            '<span style="color:var(--status-done);">Done:</span> ' + ex.completed + ' | ' +
+            '<span style="color:var(--status-failed);">Failed:</span> ' + ex.failed +
+          '</div>' +
+        '</div>';
+    });
+
+    actuatorsGrid.innerHTML = html;
+  }
+
+  function trackDocument() {
+    var jobId = actuatorsSearchInput.value.trim();
+    if (!jobId) return;
+
+    actuatorsTrack.style.display = 'none';
+    actuatorsResultMsg.textContent = 'Searching...';
+
+    fetch('/api/actuators/track/' + encodeURIComponent(jobId))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.error) {
+          actuatorsResultMsg.textContent = 'Error: ' + data.error;
+          return;
+        }
+        renderDocumentTrack(data);
+      })
+      .catch(function (err) {
+        actuatorsResultMsg.textContent = 'Error: ' + err.message;
+      });
+  }
+
+  function renderDocumentTrack(data) {
+    var doc = data.document || {};
+    var jobs = data.jobs || [];
+
+    var html = '<div class="skip-item" style="margin-bottom:12px;">' +
+      '<div class="path">Document: ' + doc.name + '</div>' +
+      '<div class="reason">Status: <strong>' + doc.status + '</strong> | URI: ' + doc.uri + '</div>';
+
+    if (doc.topic) {
+      html += '<div class="reason">Vault Location: <code style="color:var(--accent);">' + doc.topic + '</code></div>';
+    }
+    html += '</div>';
+
+    if (jobs.length > 0) {
+      html += '<div class="skip-item"><div class="path">Job Progression</div><div class="reason">';
+      jobs.forEach(function (job) {
+        html += '<div style="margin:8px 0; padding:8px; background:var(--surface); border-radius:4px;">' +
+          '<strong>' + job.type + '</strong>: ' + job.status;
+        if (job.startDate) html += ' (started: ' + job.startDate.substring(0, 19) + ')';
+        if (job.endDate) html += ' (ended: ' + job.endDate.substring(0, 19) + ')';
+        if (job.errorMessage) html += '<br><span style="color:var(--status-failed);">Error: ' + job.errorMessage + '</span>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    actuatorsTrackDetails.innerHTML = html;
+    actuatorsTrack.style.display = 'block';
+    actuatorsResultMsg.textContent = '';
+  }
+
+  actuatorsRefreshBtn.addEventListener('click', loadActuators);
+  actuatorsSearchInput.addEventListener('keyup', function (e) {
+    if (e.key === 'Enter') trackDocument();
+  });
+
+  loadActuators();
 
 })();
 `;

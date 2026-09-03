@@ -266,7 +266,9 @@ const CSS = `
   .bubble { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.4; }
   .bubble.user { align-self: flex-end; background: var(--accent); color: #191817; }
   .bubble.assistant { align-self: flex-start; background: var(--surface-hover); color: var(--text-primary); }
-  .bubble.thinking { align-self: flex-start; background: var(--surface-hover); color: var(--text-muted); font-style: italic; }
+  .bubble.thinking { align-self: flex-start; background: var(--surface-hover); color: var(--text-muted); font-style: italic; display: flex; align-items: center; gap: 8px; }
+  .spinner { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--text-muted); border-top-color: transparent; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .chat-input-row { display: flex; gap: 8px; }
   .chat-input-row input { flex: 1; }
