@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Comprehensive view of all project stories with status, dependencies, and acceptance criteria
 metadata:
-  version: 1.25
+  version: 1.26
   created-by: Claude Code
-  date: 2026-09-02
+  date: 2026-09-03
 ---
 
 # BACKLOG TRACKER — 4thBrain Stories
@@ -19,6 +19,7 @@ Master tracking document for all project stories across all epics. Status values
 |---|---|---|---|---|---|
 | 1.1 | Direct Structured Vault Ingestion | COMPLETED | 7.2 | Ingestion | [[1.1](#story-11-direct-structured-vault-ingestion)] |
 | 1.2 | Unstructured Text Parsing & Sanitization | COMPLETED | none | Ingestion | [[1.2](#story-12-unstructured-text-parsing--sanitization)] |
+| 1.3 | \[REGRESSION\] Actuator Message-Driven Handoff (Coordinator) | READY | 1.1, 4.1, ADR24 | Ingestion | [[1.3](#story-13-regression-actuator-message-driven-handoff-coordinator)] |
 | 2.1 | Local LLM Metadata & Tag Inference | COMPLETED | none | Classification | [[2.1](#story-21-local-llm-metadata--tag-inference)] |
 | 3.1 | Smart Connections Vector Indexing Pipeline | COMPLETED | 7.2 | Indexing | [[3.1](#story-31-smart-connections-vector-indexing-pipeline)] |
 | 3.2 | Smart Connections Indexing Status Retrieval (Spike) | COMPLETED | 3.1 | Research | [[3.2](#spike-32-smart-connections-indexing-status-retrieval)] |
@@ -77,6 +78,19 @@ Master tracking document for all project stories across all epics. Status values
 | **Status** | COMPLETED |
 | **Implementation** | `server/lib/ingestion/transcode-executor.js` (PDF via OpenDataLoader PDF — `@opendataloader/pdf`, ADR19, swapped 2026-08-31 from `pdf-parse`; `.docx` via `mammoth`; other binaries archive-only), `server/lib/ingestion/url-relocator.js`, `vault-writer.js`'s `archiveToVaultRaw()`. 12 tests in `ingestion.transcode-executor.test.js` (includes a live, non-mocked PDF extraction test against the real Java CLI — Java 11 available in this session) + 5 in `ingestion.url-relocator.test.js`. **Gap:** `text/html` is classified `"indexable"` by `file-validator.js` and bypasses this executor entirely via Story 1.1's direct-copy path, so HTML/web-clip content is never sanitized — blocked on `documets/story/spike-webclipping.md` (now COMPLETED, see spike doc) recommending an extraction library. Not COMPLETED until that gap closes. |
 | **Working Notes** | [[story-1.2.md](./story/story-1.2.md)] |
+
+---
+
+### Story 1.3 \[REGRESSION\]: Actuator Message-Driven Handoff (Coordinator)
+
+| Field | Value |
+|---|---|
+| **Abstract** | Actuators are triggered by messages from a Coordinator and produce a message to the next actuator on completion, instead of relying on a periodic sweep to notice a queued job. |
+| **Description** | Per `documets/OriginalProcess.uml` (a pre-existing sequence diagram: `Coordinator` delivers a document to the Ingestor, and actuators then message each other directly), actuator handoff is meant to be message-driven, not poll-driven. Story 4.1's sweep-only implementation regressed from this — Bug 101 showed the consequence: a document can sit fully processed with a valid next-stage `job` row and no scheduler ever configured to notice it. This story adds a Coordinator that actuators call directly (in-process) on success; the sweep (`batch/worker.js`) stays as an auxiliary backstop for jobs whose triggering actuator never reached the Coordinator. See ADR24 for the full design and open questions. |
+| **Dependencies** | depends on Story 1.1, depends on Story 4.1, depends on ADR24 |
+| **Acceptance Criteria** | • A document advances to its next stage's executor within the same process tick as the triggering actuator's completion, not on the next sweep invocation.<br>• The next-stage `job` row is still created (Bug 101's fix) so the sweep and Story 13.4's dashboard keep working as an audit trail regardless of Coordinator outcome.<br>• If an actuator crashes before reaching the Coordinator, the sweep still eventually picks up the orphaned job — no document is permanently stuck either way.<br>• ADR10's concurrency=1 guarantee for Ollama-bound work holds under direct dispatch (a Coordinator-triggered claim and a sweep-triggered claim can't both run Ollama concurrently).<br>• `server/lib/ingest-service.js` and `server/lib/ingestion/watcher.js` call the Coordinator directly after creating the first job in a chain (no "previous actuator" to do it for them).<br>• ADR24's open questions (lock granularity, sync-vs-fire-and-forget dispatch) are resolved as part of implementation, not deferred again. |
+| **Status** | READY — raised as DESIGN-DEBT item 7 (2026-09-03) after Bug 101; ADR24 logged Proposed same day. Not started. |
+| **Working Notes** | ADR: [[adr24-actuator-coordinator.md](./design/adr24-actuator-coordinator.md)]. Design debt: [[DESIGN-DEBT.md](./DESIGN-DEBT.md)] item 7. Bug that surfaced the gap: [[Bug-101.md](./bugs/Bug-101.md)]. |
 
 ---
 
@@ -468,6 +482,7 @@ Master tracking document for all project stories across all epics. Status values
 
 ## Changelog
 
+- **2026-09-03** — Added Story 1.3 \[REGRESSION\]: Actuator Message-Driven Handoff (Coordinator), READY. Per user direction after Bug 101's fix: actuators should be triggered by messages from a Coordinator and produce a message to the next actuator, matching `documets/OriginalProcess.uml`; the sweep (Story 4.1) becomes an auxiliary backstop, not the primary delivery path. Backed by ADR24 (Proposed) and DESIGN-DEBT item 7. Not implemented — depends on Story 1.1, Story 4.1, and ADR24's open questions being resolved. Bumped version to 1.26.
 - **2026-09-01 (backlog loop pass 9 continued)** — Completed Story 6.3 (Pipeline Monitoring & Dashboard UI). Status API endpoints already existed in `server/routes/status.js` but lacked error_message support. Updated to include error_message (from Task-13) in failed job reason field. Integrated with UI: `server/ui/page.js` renderStatusPanel() displays "Ingest status" panel, `server/ui/client.js` loadStatus() fetches and renders counts/failed jobs, retryJob() handles retry clicks and calls `/api/status/retry/:id` endpoint. Wrote `server/test/routes.status.test.js` with 5 tests covering status counts, retry logic (success/404/400 cases), and error_message display — all passing. Acceptance criteria verified: accurate job counts displayed, retry functionality working. Bumped version to 1.23.
 - **2026-09-01 (backlog loop pass 9)** — Completed Story 10.1 (Scheduled Vault Snapshot & Restore). Snapshot function (`batch/snapshot.js`) creates timestamped snapshots in `$VAULT_DIR/.snapshots/` with recursive copy of vault and .smart-env, excluding .snapshots/.obsidian. Restore function (`batch/restore.js`) provides CLI-based restore with automatic pre-restore backup, snapshot validation, and `listSnapshots()` utility. Integrated snapshot into `batch/worker.js:runCycle()` pre-run phase (non-blocking, logs result in summary). Created comprehensive documentation (`RESTORE.md`) with procedures, safety notes, manual restore steps, and troubleshooting. All 8 tests pass: snapshot creation/exclusions/error cases, restore with/without backup, listing. Bumped version to 1.22.
 - **2026-09-01 (backlog loop pass 8)** — Completed Task-13 (add error_message column to job table, unblocks Story 6.3). 

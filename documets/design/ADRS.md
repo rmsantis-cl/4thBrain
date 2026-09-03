@@ -220,8 +220,18 @@ Per the ADR document type (Document Type 4) defined in `documets/method/Software
 **Date Created:** 2026-09-02
 **Date Cancelled:** —
 
+## ADR24: Actuator Coordinator — direct handoff, sweep as auxiliary backstop
+
+**Status:** Proposed — not yet implemented, open questions unresolved.
+**Decision:** Actuators hand off to the next stage by calling a Coordinator directly (in-process), in addition to writing the next-stage `job` row Bug 101's fix already produces. `batch/worker.js`'s periodic sweep (`runCycle()`) stops being the primary delivery mechanism and becomes an auxiliary backstop — it catches jobs whose creating actuator crashed before reaching the Coordinator, plus its existing orphan/stale-lock cleanup role.
+**Abstract:** Matches `documets/OriginalProcess.uml` (a pre-existing sequence diagram showing a `Coordinator` actor dispatching to actuators, which then call each other directly), which Story 4.1's sweep-only implementation diverged from without a recorded reason. Raised as DESIGN-DEBT item 7 after Bug 101 exposed the consequence: a fully-processed document sat untouched because no scheduler was ever configured to run the sweep at all.
+**Full record, rationale, and open questions (Story ownership, Ollama-concurrency-lock granularity, sync-vs-fire-and-forget dispatch):** see `documets/design/adr24-actuator-coordinator.md`.
+**Date Created:** 2026-09-03
+**Date Cancelled:** —
+
 ## Changelog
 
+- 2026-09-03: Logged ADR24 (Proposed) — Coordinator component for direct actuator-to-actuator handoff, demoting the sweep to an auxiliary stalled-job backstop, per user correction against `documets/OriginalProcess.uml` and DESIGN-DEBT item 7. Not implemented — open questions on Story ownership, lock granularity, and dispatch semantics need resolution first.
 - 2026-09-02 (architecture correction): Corrected ADR1, ADR5, ADR9 — Node.js runs natively on Windows, not in WSL2. Only Ollama runs in WSL2. ADR1 now says "Ollama-only" instead of "core compute"; ADR5 clarifies Windows-native Node.js; ADR9 describes Ollama systemd (WSL2) + Node.js bootstrap (Windows) coordination. Updated ADR16 and ADR20 to reflect this architecture (no complex cross-environment IPC; one clean boundary at Ollama HTTP:11434).
 - 2026-09-02: Logged ADR21 (closed) — block-level embedding skips are expected coverage under Smart Connections' `min_chars` policy, not Story 3.1 indexing failures; indexing is measured at source level. Logged ADR22 (closed) — SQLite FTS5 over a derived, incrementally-synced index as Story 6.2's keyword backend, with a documented LIKE fallback.
 - 2026-08-30: Logged ADR19 (closed) — OpenDataLoader PDF (`@opendataloader/pdf`) replaces `pdf-parse` for all PDF extraction (Story 1.2's transcode executor and the webclipping spike's PDF handling), per explicit user direction. Notes the new JVM host dependency and per-call JVM-spawn latency as accepted trade-offs.

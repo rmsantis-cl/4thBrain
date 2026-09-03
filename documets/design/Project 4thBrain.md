@@ -38,6 +38,20 @@
 > * **Dependencies:** must be worked with Story 1.1  
 > * **Status:** To Do
 
+### **Story 1.3 \[REGRESSION\]: Actuator Message-Driven Handoff (Coordinator)**
+
+> * **Abstract:** Actuators are triggered by messages from a Coordinator and produce a message to the next actuator on completion, instead of relying on a periodic sweep to notice a queued job.  
+> * **Description:** Per `documets/OriginalProcess.uml` — a sequence diagram already in this repo showing a `Coordinator` actor delivering documents to actuators, which then message each other directly (Ingestor → TextExtractor → Ingestor → Indexer → Classifier) — actuator-to-actuator handoff is meant to be message-driven, not poll-driven. Story 4.1's sweep-only implementation (`batch/worker.js`) regressed from this: it works, but only as long as something periodically invokes it, and it was raised (Bug 101) that no such schedule was ever configured, so a fully-processed document could sit indefinitely with a valid next-stage `job` row and zero further activity. This story builds the Coordinator per ADR24: each actuator, on success, calls the Coordinator directly (in-process) with the job it just created, and the Coordinator claims and invokes the corresponding executor immediately — recursing down the chain. The `job` row and the periodic sweep both stay (Bug 101's fix is the audit trail and dashboard data source, per Story 13.4), but the sweep's role narrows to an auxiliary backstop that discovers jobs whose triggering actuator never reached the Coordinator (crashed, or the very first job in a chain from `ingest-service.js`/`watcher.js`, which call the Coordinator directly themselves — see ADR24).  
+> * **Acceptance Criteria:**  
+  * A document processed by any actuator (ingest, convert/transcode/html-sanitize, index, classify) advances to its next stage's executor within the same process tick as the triggering actuator's completion — not on the next sweep invocation.  
+  * The `job` row for the next stage is still created (per Bug 101's fix) so `batch/worker.js`'s sweep and Story 13.4's dashboard keep working unchanged as an audit trail, independent of whether the Coordinator call succeeded.  
+  * If an actuator crashes or throws before reaching the Coordinator, the job it should have triggered is still eventually picked up by the sweep (the auxiliary backstop) — no document is permanently stuck either way.  
+  * ADR10's concurrency=1 guarantee for Ollama-bound work (classify) holds under direct dispatch — a Coordinator-triggered claim and a sweep-triggered claim cannot both run an Ollama call concurrently.  
+  * `server/lib/ingest-service.js` and `server/lib/ingestion/watcher.js` (the two entry points with no "previous actuator" to call the Coordinator on their behalf) call the Coordinator directly after creating the first job in a chain.  
+  * ADR24's open questions (Ollama-lock granularity, synchronous-vs-fire-and-forget dispatch so the web ingestion form's HTTP response isn't held open through a whole chain) are resolved as part of this story's implementation, not deferred again.  
+> * **Dependencies:** depends on Story 1.1, depends on Story 4.1, depends on ADR24  
+> * **Status:** To Do
+
 ## **EP2: Automated Tagging & Classification Engine**
 
 **Associated Requirements:** FR3 (Tagging & Classification)  
