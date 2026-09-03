@@ -178,3 +178,27 @@ test("execute throws when job has no files", () => {
 
   cleanupTestCfg(cfg);
 });
+
+test("execute() hands off to an 'index' job immediately (Bug 101 — BinaryExtract --> RAGIndexing)", () => {
+  const db = createTestDb();
+  const cfg = createTestCfg();
+  try {
+    const repos = createRepositories(db);
+    const sourceFile = path.join(cfg.rawDirInbox, "test.html");
+    fs.writeFileSync(sourceFile, "<html><body><article><h1>T</h1><p>Body text.</p></article></body></html>", "utf-8");
+
+    const doc = repos.document.create("test.html", sourceFile, "text/html", "utf-8", "New", null);
+    const job = repos.job.create("convert", "New", doc.id, null);
+    repos.job_file.create("test.html", sourceFile, "text/html", sourceFile, job.id);
+
+    const result = execute(db, job, cfg);
+
+    assert.strictEqual(result.next, "index");
+    const nextJob = repos.job.get(result.nextJobId);
+    assert.strictEqual(nextJob.job_type, "index");
+    assert.strictEqual(nextJob.document_id, doc.id);
+    assert.strictEqual(nextJob.parent_job_id, job.id);
+  } finally {
+    cleanupTestCfg(cfg);
+  }
+});

@@ -74,6 +74,28 @@ test("execute() copies the file to vault/incoming, updates document, and updates
   }
 });
 
+test("execute() hands off to an 'index' job immediately (Bug 101 — TextPath --> RAGIndexing)", () => {
+  const db = createTestDb();
+  const cfg = createTestCfg();
+  try {
+    const { job } = stageAndCreateJob(db, cfg, { fileName: "note.md", content: "hello", mimeType: "text/markdown" });
+
+    const result = ingestExecutor.execute(db, job, cfg);
+
+    assert.equal(result.next, "index");
+    assert.ok(result.nextJobId);
+
+    const repos = createRepositories(db);
+    const nextJob = repos.job.get(result.nextJobId);
+    assert.equal(nextJob.job_type, "index");
+    assert.equal(nextJob.status, "New");
+    assert.equal(nextJob.document_id, job.document_id);
+    assert.equal(nextJob.parent_job_id, job.id);
+  } finally {
+    cleanupTestCfg(cfg);
+  }
+});
+
 test("execute() throws (does not silently no-op) for a non-indexable file", () => {
   const db = createTestDb();
   const cfg = createTestCfg();

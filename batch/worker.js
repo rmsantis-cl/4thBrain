@@ -47,7 +47,11 @@ async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLo
 
     if (!executor.canHandle(db, job)) {
       summary.skipped += 1;
-      log({ level: "info", event: "job_skipped", jobId: job.id, jobType: job.job_type, reason: "canHandle() returned false" });
+      // documentId included so a document stuck at this stage is traceable
+      // directly from the log (Bug 101's instrumentation requirement) —
+      // "last thing that happened to document N was a skip at 'convert',
+      // nothing since" — without needing separate tracing logic.
+      log({ level: "info", event: "job_skipped", jobId: job.id, jobType: job.job_type, documentId: job.document_id, reason: "canHandle() returned false" });
       continue;
     }
 
@@ -57,12 +61,12 @@ async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLo
       // single-instance lock, but markRunning is written to be safe if it
       // ever does — see JobRepository.markRunning).
       summary.skipped += 1;
-      log({ level: "warn", event: "job_claim_race", jobId: job.id });
+      log({ level: "warn", event: "job_claim_race", jobId: job.id, documentId: job.document_id });
       continue;
     }
 
     summary.attempted += 1;
-    log({ level: "info", event: "job_started", jobId: job.id, jobType: job.job_type });
+    log({ level: "info", event: "job_started", jobId: job.id, jobType: job.job_type, documentId: job.document_id });
 
     try {
       // await, not a bare call: transcode-executor.js (Story 1.2) needs
@@ -73,11 +77,14 @@ async function runCycle(db, cfg, { jobLimit = DEFAULT_JOB_LIMIT, log = defaultLo
       const result = await executor.execute(db, claimed, cfg);
       repos.job.markCompleted(job.id);
       summary.completed += 1;
-      log({ level: "info", event: "job_completed", jobId: job.id, jobType: job.job_type, result });
+      // result carries the actuator's IN document, OUT document, and
+      // handoff target (see ingest-executor.js et al.) — this line is the
+      // full instrumentation record Bug 101 asked for, per job/document.
+      log({ level: "info", event: "job_completed", jobId: job.id, jobType: job.job_type, documentId: job.document_id, result });
     } catch (err) {
       repos.job.markFailed(job.id, err.message);
       summary.failed += 1;
-      log({ level: "error", event: "job_failed", jobId: job.id, jobType: job.job_type, error: err.message });
+      log({ level: "error", event: "job_failed", jobId: job.id, jobType: job.job_type, documentId: job.document_id, error: err.message });
     }
   }
 

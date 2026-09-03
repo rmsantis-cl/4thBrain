@@ -147,7 +147,11 @@ function execute(db, job, cfg) {
       jobFile.lock_by_PID
     );
 
-    return { documentId: job.document_id, sourcePath: jobFile.path, destPath, archivedPath, strategy: "html", degraded };
+    // Per Ingestion-State-Diagram.md: BinaryPath --> BinaryExtract --> RAGIndexing.
+    // Hand off immediately to the index executor (Bug 101).
+    const nextJob = repos.job.create("index", "New", job.document_id, job.id);
+
+    return { documentId: job.document_id, sourcePath: jobFile.path, destPath, archivedPath, strategy: "html", degraded, next: "index", nextJobId: nextJob.id };
   });
 }
 

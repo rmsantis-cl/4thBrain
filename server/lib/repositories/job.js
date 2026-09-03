@@ -35,6 +35,14 @@ class JobRepository {
     return this.db.prepare("SELECT status, COUNT(*) as count FROM job GROUP BY status").all();
   }
 
+  /** List all jobs for a specific document (shows progression through executors) —
+   *  used by Bug 101's own tests/instrumentation to verify handoff chains. */
+  listByDocumentId(documentId) {
+    return this.db
+      .prepare(`SELECT ${COLUMNS} FROM job WHERE document_id = ? ORDER BY id ASC`)
+      .all(documentId);
+  }
+
   create(jobType, status, documentId, parentJobId) {
     if (!jobType) throw new ValidationError("job_type is required");
     if (!status) throw new ValidationError("status is required");

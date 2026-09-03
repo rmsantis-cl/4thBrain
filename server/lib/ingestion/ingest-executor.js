@@ -74,7 +74,13 @@ function execute(db, job, cfg) {
       jobFile.lock_by_PID
     );
 
-    return { documentId: job.document_id, sourcePath: jobFile.path, destPath };
+    // Per Ingestion-State-Diagram.md: TextPath --> RAGIndexing. Hand off
+    // immediately to Story 3.1's index executor rather than leaving the
+    // document parked in 'Processing' with nothing queued to advance it
+    // (Bug 101 — the original defect: no actuator ever enqueued a next job).
+    const nextJob = repos.job.create("index", "New", job.document_id, job.id);
+
+    return { documentId: job.document_id, sourcePath: jobFile.path, destPath, next: "index", nextJobId: nextJob.id };
   });
 }
 

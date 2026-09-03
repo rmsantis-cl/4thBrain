@@ -72,6 +72,8 @@ async function execute(db, job, cfg) {
     // (create it if necessary, with the parent if the topic is hierarchical)
     ensureClassification(repos, classification.topic, classification.subtopic);
 
+    const sourcePath = doc.uri_location;
+
     // Update the document with the inferred topic
     const topicName = buildTopicName(classification.topic, classification.subtopic);
     repos.document.update(
@@ -80,7 +82,7 @@ async function execute(db, job, cfg) {
       doc.uri_location, // will be updated below once file is moved
       doc.mime_type,
       doc.charset,
-      "Processing", // stays Processing until Story 3.1's index executor finishes
+      "Processing", // final status set below once the file is filed at topicName
       topicName
     );
 
@@ -106,22 +108,30 @@ async function execute(db, job, cfg) {
     fs.mkdirSync(finalDir, { recursive: true });
     fs.renameSync(doc.uri_location, finalPath);
 
-    // Update the document's uri_location to the final path
+    // Update the document's uri_location to the final path. Per
+    // Ingestion-State-Diagram.md, Classify --> VAULT_TREE --> [*] is the
+    // pipeline's terminal state — 'Indexed' ("filed into the vault and
+    // indexed for search", per schema.sql) is correct here, not 'Processing'
+    // (Bug 101: the document previously stayed 'Processing' forever, since
+    // nothing downstream ever ran after classify).
     repos.document.update(
       doc.id,
       doc.name,
       finalPath,
       doc.mime_type,
       doc.charset,
-      "Processing",
+      "Indexed",
       topicName
     );
 
     return {
       documentId: doc.id,
+      sourcePath,
+      destPath: finalPath,
       topic: topicName,
       tags: classification.tags,
       finalPath,
+      next: "VAULT_TREE (terminal)",
     };
   });
 }

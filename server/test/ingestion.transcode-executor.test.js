@@ -197,3 +197,22 @@ test("execute() throws if the source file no longer exists", async () => {
     cleanupTestCfg(cfg);
   }
 });
+
+test("execute() hands off to an 'index' job immediately (Bug 101 — BinaryExtract --> RAGIndexing)", async () => {
+  const db = createTestDb();
+  const cfg = createTestCfg();
+  try {
+    const { job } = stageAndCreateJob(db, cfg, { fileName: "photo.png", content: "fake image bytes", mimeType: "image/png" });
+
+    const result = await transcodeExecutor.execute(db, job, cfg);
+
+    assert.equal(result.next, "index");
+    const repos = createRepositories(db);
+    const nextJob = repos.job.get(result.nextJobId);
+    assert.equal(nextJob.job_type, "index");
+    assert.equal(nextJob.document_id, job.document_id);
+    assert.equal(nextJob.parent_job_id, job.id);
+  } finally {
+    cleanupTestCfg(cfg);
+  }
+});
