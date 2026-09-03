@@ -2,7 +2,7 @@
 name: INDEX
 description: Master index of all artifacts, specs, and foundational documents in 4thBrain
 metadata:
-  version: 1.5
+  version: 1.6
   created-by: Claude Code
   date: 2026-09-03
 ---
@@ -26,3 +26,4 @@ Master catalog of all artifacts, specification documents, interview logs, and fo
 | bugs/Bug-3-Boot-Script-Encoding-Parse-Failure.md | [2026-09-02] Created — Start-4thBrain.ps1 does not parse under PowerShell 5.1 (UTF-8 without BOM + non-ASCII glyphs); second latent defect uses PS7-only Join-String. Open, against Story 7.2 |
 | bugs/Bug-101.md | [2026-09-02] Created — actuators never enqueued the next stage's job, so documents stuck silently; no in/out/handoff instrumentation. Fixed — ingest/convert/index/classify executors now hand off per Ingestion-State-Diagram.md, worker.js logs documentId + IN/OUT/handoff per job |
 | design/adr24-actuator-coordinator.md | [2026-09-03] Created — Proposed ADR: actuators hand off via a Coordinator (direct in-process call), sweep demoted to auxiliary backstop for stalled jobs; per user correction against OriginalProcess.uml and DESIGN-DEBT item 7 |
+| story/story-1.3.md | [2026-09-03] Created — working notes for Story 1.3 (Coordinator handoff): live evidence (job 30 stuck with no scheduler ever configured) and source map (OriginalProcess.uml, Ingestion-State-Diagram.md, ADR24, Bug-101, story-4.1.md, the four Bug-101-fixed executors) |
