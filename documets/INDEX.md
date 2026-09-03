@@ -2,7 +2,7 @@
 name: INDEX
 description: Master index of all artifacts, specs, and foundational documents in 4thBrain
 metadata:
-  version: 1.6
+  version: 1.7
   created-by: Claude Code
   date: 2026-09-03
 ---
@@ -27,3 +27,4 @@ Master catalog of all artifacts, specification documents, interview logs, and fo
 | bugs/Bug-101.md | [2026-09-02] Created — actuators never enqueued the next stage's job, so documents stuck silently; no in/out/handoff instrumentation. Fixed — ingest/convert/index/classify executors now hand off per Ingestion-State-Diagram.md, worker.js logs documentId + IN/OUT/handoff per job |
 | design/adr24-actuator-coordinator.md | [2026-09-03] Created — Proposed ADR: actuators hand off via a Coordinator (direct in-process call), sweep demoted to auxiliary backstop for stalled jobs; per user correction against OriginalProcess.uml and DESIGN-DEBT item 7 |
 | story/story-1.3.md | [2026-09-03] Created — working notes for Story 1.3 (Coordinator handoff): live evidence (job 30 stuck with no scheduler ever configured) and source map (OriginalProcess.uml, Ingestion-State-Diagram.md, ADR24, Bug-101, story-4.1.md, the four Bug-101-fixed executors) |
+| DESIGN-DEBT.md | [2026-09-03] Branch cleanup — merged a stray batch-report-save commit into v03; recorded a never-merged "extractor before indexer" debt item (item 8, superseded) from a deleted branch before deleting it, since it's already resolved by current code |
