@@ -45,6 +45,7 @@ Master tracking document for all project stories across all epics. Status values
 | 13.1 | Database Inspector — Table Browser & Admin Panel | COMPLETED | none | UI | [[13.1](#story-131-database-inspector--table-browser--admin-panel)] |
 | 13.2 | Remove Embedded Admin Panel, Add Root Redirect and Standalone Admin Menu | COMPLETED | none | UI | [[13.2](#story-132-review-mobile-ui)] |
 | 13.3 | Unified Data-Access API | COMPLETED | none | UI | [[13.3](#story-133-unified-data-access-api)] |
+| 13.4 | Actuator Queue Monitoring Dashboard | READY | 13.3, 6.4 | Admin | [[13.4](#story-134-actuator-queue-monitoring-dashboard)] |
 | 14.1 | Intel iGPU Acceleration via IPEX-LLM | COMPLETED | none | Performance | [[14.1](#story-141-intel-igpu-acceleration-via-ipex-llm)] |
 
 ---
@@ -426,6 +427,19 @@ Master tracking document for all project stories across all epics. Status values
 | **Acceptance Criteria** | • `server/lib/repositories/` exposes validated `list/get/create/update/remove` per table; "removing" a tag sets `end_date` rather than deleting the row.<br>• `/api/tables/*` REST routes contain no SQL or validation logic — they only call the repository layer.<br>• `ingest-service.js` contains no direct `db.prepare()` calls; it calls the repository layer instead, and no longer self-generates surrogate keys (uses SQLite's `lastInsertRowid`).<br>• `/api/docs` serves an interactive Scalar UI listing every `/api/tables/*` endpoint.<br>• Both `/api/tables/*` and `/api/docs` stay behind the existing `NODE_ENV=development` gate (extracted into reusable `server/middleware/dev-only.js`).<br>• `tagRepository`, `statusRepository`, and `jobTypeRepository`'s `update()` reject changes to the `name` column (the primary key) — renaming means end-dating the old row and inserting a new one, not an in-place `UPDATE`. |
 | **Status** | COMPLETED |
 | **Working Notes** | [[story-13.3.md](./story/story-13.3.md)] |
+
+---
+
+### Story 13.4: Actuator Queue Monitoring Dashboard
+
+| Field | Value |
+|---|---|
+| **Abstract** | Real-time visibility into document ingestion progress through the job queue and actuator (executor) pipeline. |
+| **Description** | Add a new admin interface panel ("Actuators") to view the state of each job executor (ingest, convert, classify, index, briefing) and track submitted documents end-to-end. When a user submits text/file/URL via the ingestion form, they receive a jobId. This story provides tools to: (1) Query the `document` and `job` tables by that jobId to see document status and job state, (2) View the queue for each actuator (pending, running, completed, failed jobs), (3) See which documents reached the VAULT and their final paths, (4) Filter/search by document or job state. Requires `/api/actuators/status` backend endpoint listing job queues per executor type, and a new UI panel ("Actuators" nav item) alongside existing admin tools. |
+| **Dependencies** | depends on Story 13.3 (repository layer, `/api/tables/*` API), depends on Story 6.4 (UI shell) |
+| **Acceptance Criteria** | • New "Actuators" button in sidebar nav (or `/admin/actuators` page) accessible from `/admin` menu.<br>• UI displays queue status for each job executor: pending count, running count, completed count, failed count.<br>• User can submit document via form (text/file/URL), receive jobId in response.<br>• User can enter jobId or search document URI to view its progress: status transitions (New → Processing → Indexed/Failed/Archived), associated job records, final vault location if completed.<br>• Failed jobs show error message (from `job.error_message` column, Story 6.3).<br>• Real-time or refresh-on-demand view of actuator queues (no polling required for initial version, manual refresh OK).<br>• Dev-mode protected (same as `/admin/db` and `/api/docs`). |
+| **Status** | READY |
+| **Working Notes** | [[story-13.4.md](./story/story-13.4.md)] (not yet created) |
 
 ---
 
