@@ -1,18 +1,22 @@
 package com.fourthbrain.persistence.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime
+import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
 @Table(name = "document")
 @Data
 @NoArgsConstructor
+@Builder
 public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column
+    private Long parentId;
 
     @Column(nullable = false)
     private String path;

@@ -3,6 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS document (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    parent_id INTEGER,
     path VARCHAR(512),
     name VARCHAR(256),
     extension VARCHAR(32),

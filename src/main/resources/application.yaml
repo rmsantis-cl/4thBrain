@@ -37,7 +37,11 @@ ollama:
 
 vault:
   path: ./vault
-  incomingPath: ./vault/incoming
+  incoming : ${vault.path}/incoming
+  indexing : ${vault.path}/indexing
+  raw : ${vault.path}/raw
+  tmp:  ./tmp
+  
 
 logging:
   level:

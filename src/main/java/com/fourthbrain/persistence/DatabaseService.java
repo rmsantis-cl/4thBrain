@@ -5,6 +5,14 @@ import com.fourthbrain.persistence.entity.Tag;
 import com.fourthbrain.persistence.entity.DocumentTag;
 import com.fourthbrain.persistence.repository.*;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +24,8 @@ import java.util.Optional;
  */
 @Service
 public class DatabaseService {
+
+    private static final Logger log = LoggerFactory.getLogger(DatabaseService.class);
 
     private final DocumentRepository documentRepository;
     private final TagRepository tagRepository;
@@ -33,6 +43,10 @@ public class DatabaseService {
 
     public synchronized Document createDocument(String path, String content) {
         Document doc = new Document(path, content);
+        return documentRepository.save(doc);
+    }
+
+    public synchronized Document create(Document doc) {
         return documentRepository.save(doc);
     }
 
@@ -66,6 +80,46 @@ public class DatabaseService {
 
     public long countDocumentsByStatus(String status) {
         return documentRepository.countByStatus(status);
+    }
+
+    public synchronized Document move(Document doc, String newPath) throws IOException {
+        if (doc == null) {
+            throw new IllegalArgumentException("Document cannot be null");
+        }
+        if (newPath == null || newPath.isBlank()) {
+            throw new IllegalArgumentException("New path cannot be null or blank");
+        }
+
+        String currentPath = doc.getPath();
+        if (currentPath == null || currentPath.isBlank()) {
+            throw new IllegalArgumentException("Document has no current path");
+        }
+
+        try {
+            // Move the file from current path to new path
+            Path source = Paths.get(currentPath);
+            Path destination = Paths.get(newPath);
+
+            if (Files.exists(source)) {
+                Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+                log.info("File moved from {} to {}", currentPath, newPath);
+            } else {
+                log.warn("Source file does not exist: {}", currentPath);
+            }
+
+            // Update document with new path and timestamp
+            doc.setPath(newPath);
+            doc.setUpdatedAt(LocalDateTime.now());
+
+            // Save to database
+            Document updated = documentRepository.save(doc);
+            log.info("Document updated with new path: id={}, newPath={}", doc.getId(), newPath);
+
+            return updated;
+        } catch (IOException e) {
+            log.error("Error moving file from {} to {}: {}", currentPath, newPath, e.getMessage());
+            throw e;
+        }
     }
 
     // ---- Tag operations ----

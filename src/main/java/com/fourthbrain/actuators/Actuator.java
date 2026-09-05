@@ -1,46 +1,31 @@
-xpackage com.fourthbrain.actuators;
+package com.fourthbrain.actuators;
 
 import com.fourthbrain.persistence.DatabaseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.*;
+import lombok.AccessLevel;
 
-/**
- * Abstract base class for all actuators.
- * Extends Thread. Each concrete subclass defines a static Queue<Integer>.
- * Multiple instances of the same actuator class share the same queue (horizontal scaling).
- *
- * Loop: x = getQueue().poll() → update(gerund) → process(x) → update(participle) → next(x).message(x)
- */
- @Component
+
+@Data
  public abstract class Actuator extends Thread {
 
-    @Autowired
-    protected DocumentService docService;
-    private static final Map<Class<? extends Actiua>, Queue<Message>> qMap = new ConcurrentHashMap<>();
 
+    DocumentService service;
     private static final ThreadGroup threadGroup = new ThreadGroup("Actuator");
-    Logger log;
-    protected volatile boolean running = false;
-    @Data
     private String ing;
-    @Data
     private String ed;
-    @Getter
     private String name;
-    @Data
-    boolean running;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private Logger log;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private boolean running;
+  private final  Queue<Message> queue = new ConcurrentHashMap<>();
 
     public Actuator() {
         super(getClass().getSimpleName());
-
-        if ( !queueMap.containsKey(getClass()) ) {
-            synchronized(queueMap) {
-                if ( !queueMap.containsKey(getClass()) ) {
-                queueMap.put(getClass(), new ConcurrentLinkedQueue<>());
-                }
-            }
-        }
         log = LoggerFactory.getLogger(getClass());
         name = getClass().getSimpleName();
         setDaemon(true);
@@ -67,10 +52,6 @@ import lombok.*;
         return queueMap.get(getClass());
     }
 
-    void park(Message m){
-        databaseService.updateDocumentStatus(m.getDocument().id().longValue(), "Parked");
-
-    }
     @Override
     public void run() {
 
@@ -171,7 +152,7 @@ import lombok.*;
      * Process a docId and return the next actuator in the chain.
      * Return null if this is the final stage.
      */
-    public abstract Actuator doTheThing(Message);
+    public abstract String doTheThing(Message);
 
     /**
      * Get queue size (for monitoring).
