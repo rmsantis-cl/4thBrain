@@ -1,0 +1,57 @@
+{
+  "services": {
+    "ollama": {
+      "name": "Ollama LLM Service",
+      "host": "localhost",
+      "port": 11434,
+      "protocol": "http",
+      "location": "WSL2 (Fedora)",
+      "endpoint": "http://localhost:11434",
+      "description": "Local LLM inference engine (story-7.1) — accessible from Windows via WSL2 port forwarding"
+    },
+    "node_server": {
+      "name": "4thBrain Node.js Server",
+      "host": "127.0.0.1",
+      "port": 3000,
+      "protocol": "http",
+      "location": "Windows (localhost)",
+      "endpoint": "http://127.0.0.1:3000",
+      "description": "Express app serving web UI, ingestion API, admin panel (story-6.1, story-13.1) — local-only access enforced (story-9.1)"
+    },
+    "mcp_server": {
+      "name": "Smart Connections MCP Server",
+      "host": "127.0.0.1",
+      "port": null,
+      "protocol": "stdio",
+      "location": "Windows (subprocess)",
+      "endpoint": "stdio",
+      "description": "Model Context Protocol server for vault vector indexing (story-7.2, story-3.1) — runs as stdio child process of bootstrap.js, not HTTP"
+    }
+  },
+  "boot_sequence": {
+    "description": "Order of service startup (enforced by server/bootstrap.js per ADR20)",
+    "steps": [
+      "1. Verify Ollama reachable (http://localhost:11434/api/tags)",
+      "2. Verify Node.js port 3000 available",
+      "3. Initialize Express app",
+      "4. Spawn MCP server subprocess",
+      "5. Start listening on 127.0.0.1:3000",
+      "6. Await shutdown signals (SIGTERM/SIGINT)"
+    ]
+  },
+  "conflict_detection": {
+    "ollama_port": {
+      "check": "Test http://localhost:11434/api/tags",
+      "fallback": "Restart Ollama service in WSL2 (systemctl restart ollama)"
+    },
+    "node_server_port": {
+      "check": "Test if 127.0.0.1:3000 is free (netstat -ano | findstr :3000)",
+      "fallback": "Use scripts/ui-server.ps1 stop to kill existing server"
+    }
+  },
+  "windows_wsl2_forwarding": {
+    "description": "Port 11434 is forwarded from Windows (localhost:11434) to WSL2 (localhost:11434) automatically",
+    "configuration_file": ".wslconfig (in user's home directory on Windows)",
+    "status": "Verified working (story-7.1)"
+  }
+}

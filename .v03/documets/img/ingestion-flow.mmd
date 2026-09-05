@@ -1,0 +1,16 @@
+flowchart TD
+    A["New file or URL drops into RAW_DIR<br/>(outside the vault)"] --> B{What kind is it?}
+
+    B -->|"Text / MD / HTML<br/>(already readable)"| C["Copy directly to<br/>VAULT_DIR/incoming"]
+
+    B -->|"URL"| D["Move to<br/>RAW_DIR/clipping"]
+    D --> E["Extract page content<br/>(strip nav/ads/headers)"]
+    E --> F
+
+    B -->|"Binary<br/>(PDF, image, Word doc)"| G["Transcode to text/MD<br/>(OCR / doc parsing)"]
+    G --> F["Write converted text to<br/>VAULT_DIR/incoming"]
+    G --> H["Archive original binary to<br/>VAULT_DIR/raw"]
+    F -.->|"reference link back to"| H
+
+    C --> I["File ready in incoming,<br/>waiting for classification"]
+    F --> I

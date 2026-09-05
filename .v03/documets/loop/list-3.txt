@@ -1,0 +1,2 @@
+Task-4 | backpropagate Story 12.2 schema redesign | TODO-TRACKER
+8.3 | Manual Smoke Test — Browser Navigation & Screenshot Verification | BACKLOG-TRACKER

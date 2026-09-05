@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>4thBrain — Common UI Shell (Story 6.4 mockup)</title>
+<style>
+  :root {
+    --bg: #191817;
+    --surface: #211f1d;
+    --surface-hover: #2a2825;
+    --border: #34322e;
+    --text-primary: #f2efe9;
+    --text-secondary: #a3a099;
+    --text-muted: #6f6c66;
+    --accent: #d97757;
+    --accent-hover: #c96a4c;
+    --status-active: #5b9dd9;
+    --status-done: #6fae7c;
+    --status-failed: #c9645a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, "Segoe UI", Inter, sans-serif;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 272px;
+    flex-shrink: 0;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px 20px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .brand .mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #191817;
+    font-weight: 700;
+  }
+
+  .new-capture {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--surface-hover);
+    color: var(--text-primary);
+    font-size: 14px;
+    margin-bottom: 18px;
+    cursor: pointer;
+  }
+  .new-capture:hover { background: #33312d; }
+
+  nav.primary { display: flex; flex-direction: column; gap: 2px; margin-bottom: 22px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--surface-hover); color: var(--text-primary); }
+  .nav-item.active .icon { color: var(--accent); }
+  .icon { width: 18px; text-align: center; font-size: 15px; color: var(--text-secondary); }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 8px 12px 6px;
+  }
+
+  .recent-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .recent-item:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot.done { background: var(--status-done); }
+  .dot.active { background: var(--status-active); }
+  .dot.failed { background: var(--status-failed); }
+
+  .account-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #191817;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .account-meta { display: flex; flex-direction: column; line-height: 1.3; }
+  .account-name { font-size: 13px; color: var(--text-primary); }
+  .account-status { font-size: 11px; color: var(--status-done); display: flex; align-items: center; gap: 4px; }
+  .account-status .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--status-done); }
+
+  /* ---------- Main ---------- */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+  }
+
+  .greeting {
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-size: 34px;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .greeting .mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #191817;
+    font-weight: 700;
+  }
+
+  .capture-bar {
+    width: 640px;
+    max-width: 90vw;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+  }
+  .capture-bar .placeholder {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .capture-bar .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .input-types {
+    display: flex;
+    gap: 6px;
+  }
+  .input-type-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .input-type-btn:hover { color: var(--text-primary); }
+  .runtime-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--surface-hover);
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+  .runtime-status .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--status-done); }
+
+  .hint {
+    position: absolute;
+    bottom: 18px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">4B</span> 4thBrain</div>
+
+    <div class="new-capture">＋ New Capture</div>
+
+    <nav class="primary">
+      <div class="nav-item active"><span class="icon">◎</span> Capture</div>
+      <div class="nav-item"><span class="icon">⌕</span> Search</div>
+      <div class="nav-item"><span class="icon">▤</span> Dashboard</div>
+    </nav>
+
+    <div class="section-label">Recent</div>
+    <div class="recent-list">
+      <div class="recent-item"><span class="dot done"></span> Q3 planning notes.md</div>
+      <div class="recent-item"><span class="dot done"></span> Clipped: obsidian.md local-rest-api</div>
+      <div class="recent-item"><span class="dot active"></span> Meeting-transcript-08-25.pdf</div>
+      <div class="recent-item"><span class="dot failed"></span> vendor-contract-scan.pdf</div>
+      <div class="recent-item"><span class="dot done"></span> Voice memo — morning walk</div>
+      <div class="recent-item"><span class="dot done"></span> Clipped: smart-connections docs</div>
+    </div>
+
+    <div class="account-row">
+      <div class="avatar">RS</div>
+      <div class="account-meta">
+        <div class="account-name">Ren</div>
+        <div class="account-status"><span class="pulse"></span> Local · Ollama</div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="greeting"><span class="mark">✳</span> Good evening, Ren</div>
+
+    <div class="capture-bar">
+      <div class="placeholder">Paste a link, drop a file, or type a note…</div>
+      <div class="row">
+        <div class="input-types">
+          <div class="input-type-btn" title="Text">Aa</div>
+          <div class="input-type-btn" title="Link">🔗</div>
+          <div class="input-type-btn" title="File">📎</div>
+        </div>
+        <div class="runtime-status"><span class="pulse"></span> Ollama · llama3.2</div>
+      </div>
+    </div>
+
+    <div class="hint">Story 6.4 mockup — shell &amp; design tokens only, not the full ingestion form (Story 6.1)</div>
+  </main>
+
+</body>
+</html>

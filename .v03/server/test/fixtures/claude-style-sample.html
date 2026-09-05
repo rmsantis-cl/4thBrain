@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Claude.ai-inspired — Chat Sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf9f5;
+    --paper-2: #f0eee6;
+    --ink: #262624;
+    --ink-soft: #5e5c57;
+    --coral: #c96442;
+    --coral-soft: #e8dccb;
+    --line: #e4e1d8;
+    --white: #ffffff;
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: "Inter", -apple-system, sans-serif;
+    --shadow: 0 1px 2px rgba(38,38,36,0.06), 0 4px 12px rgba(38,38,36,0.04);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+  }
+
+  section { padding: 40px 48px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--coral); margin-bottom: 14px; }
+
+  /* ============ TYPE SCALE ============ */
+  .type-scale h1 { font-family: var(--serif); font-weight: 600; font-size: 44px; letter-spacing: -0.01em; margin: 0 0 12px; color: var(--ink); }
+  .type-scale h2 { font-family: var(--serif); font-weight: 600; font-size: 26px; margin: 0 0 10px; }
+  .type-scale h3 { font-family: var(--sans); font-weight: 600; font-size: 16px; margin: 0 0 8px; }
+  .type-scale p { font-size: 15px; line-height: 1.65; color: var(--ink-soft); max-width: 620px; margin: 0; }
+
+  /* ============ PALETTE ============ */
+  .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .swatch { height: 96px; border-radius: var(--radius-md); display: flex; align-items: flex-end; padding: 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--line); }
+  .swatch.paper { background: var(--paper); color: var(--ink); }
+  .swatch.paper2 { background: var(--paper-2); color: var(--ink); }
+  .swatch.coral { background: var(--coral); color: var(--white); border: none; }
+  .swatch.coralsoft { background: var(--coral-soft); color: var(--ink); }
+  .swatch.ink { background: var(--ink); color: var(--paper); border: none; }
+
+  /* ============ CONTROLS ============ */
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .btn { font-family: var(--sans); font-size: 14px; font-weight: 500; padding: 10px 20px; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
+  .btn-primary { background: var(--coral); color: var(--white); }
+  .btn-primary:hover { background: #b1573a; }
+  .btn-secondary { background: var(--white); color: var(--ink); border-color: var(--line); }
+  .btn-secondary:hover { border-color: var(--coral); color: var(--coral); }
+  .btn-disabled { background: var(--paper-2); color: #b5b2a8; cursor: not-allowed; }
+
+  .field-group { max-width: 360px; display: flex; flex-direction: column; gap: 6px; }
+  .field-group label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+  .field-group input {
+    font-family: var(--sans);
+    font-size: 15px;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--ink);
+  }
+  .field-group input:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 3px rgba(201,100,66,0.15); }
+
+  /* ============ NAV ============ */
+  nav.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 48px; border-bottom: 1px solid var(--line); background: var(--white);
+  }
+  nav.topbar .mark { font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--ink); }
+  nav.topbar .mark span { color: var(--coral); }
+  nav.topbar ul { list-style: none; display: flex; gap: 28px; margin: 0; padding: 0; }
+  nav.topbar a { color: var(--ink-soft); text-decoration: none; font-size: 14px; font-weight: 500; }
+  nav.topbar a:hover { color: var(--coral); }
+  nav.topbar .status { font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; }
+  nav.topbar .status .dot { width: 7px; height: 7px; border-radius: 50%; background: #4a9b6e; display: inline-block; }
+
+  /* ============ CARD ============ */
+  .card {
+    max-width: 480px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card .card-head { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); }
+  .card .card-head .tag { background: var(--coral-soft); color: #8a4a2f; padding: 3px 10px; border-radius: 20px; font-weight: 600; font-size: 11px; }
+  .card .card-body { padding: 18px; }
+  .card .card-body h3 { font-family: var(--serif); font-size: 19px; margin: 0 0 6px; }
+  .card .card-body p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.55; }
+  .card .card-foot { padding: 12px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-soft); display: flex; justify-content: space-between; }
+
+  /* ============ CHAT LAYOUT ============ */
+  .chat-app { display: grid; grid-template-columns: 280px 1fr; min-height: 660px; background: var(--white); }
+  .chat-sidebar { background: var(--paper-2); padding: 20px 0; border-right: 1px solid var(--line); }
+  .chat-sidebar .new-chat {
+    margin: 0 20px 18px; padding: 11px 14px; border-radius: var(--radius-md);
+    background: var(--coral); color: var(--white); font-size: 14px; font-weight: 500;
+    text-align: center; cursor: pointer;
+  }
+  .chat-sidebar .new-chat:hover { background: #b1573a; }
+  .chat-sidebar .sb-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); padding: 0 20px 10px; margin-top: 8px; }
+  .chat-sidebar .thread { padding: 10px 20px; border-radius: var(--radius-md); margin: 2px 12px; font-size: 13.5px; color: var(--ink); cursor: pointer; }
+  .chat-sidebar .thread:hover { background: var(--line); }
+  .chat-sidebar .thread.active { background: var(--white); box-shadow: var(--shadow); font-weight: 500; }
+
+  .chat-main { display: flex; flex-direction: column; }
+  .chat-header { padding: 18px 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .chat-header h2 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 0; }
+  .chat-header .chat-id { font-size: 12px; color: var(--ink-soft); }
+
+  .chat-thread { flex: 1; padding: 32px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
+  .msg { display: flex; gap: 14px; max-width: 680px; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+  .msg.user .avatar { background: var(--ink); color: var(--paper); }
+  .msg.ai .avatar { background: var(--coral); color: var(--white); }
+  .bubble { padding: 12px 16px; font-size: 15px; line-height: 1.6; }
+  .msg.ai .bubble { background: var(--paper-2); border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px; }
+  .msg.user .bubble { background: var(--coral-soft); border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg); }
+  .bubble .stamp { display: block; margin-top: 8px; font-size: 10.5px; color: var(--ink-soft); opacity: 0.7; }
+
+  .chat-input-row { border-top: 1px solid var(--line); padding: 20px 32px; }
+  .chat-input-box {
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 8px 8px 8px 18px; background: var(--white); box-shadow: var(--shadow);
+  }
+  .chat-input-box input { flex: 1; border: none; outline: none; font-family: var(--sans); font-size: 15px; background: transparent; color: var(--ink); }
+  .chat-send { background: var(--coral); color: var(--white); border: none; border-radius: var(--radius-md); padding: 10px 18px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .chat-send:hover { background: #b1573a; }
+
+  footer.meta { padding: 18px 48px; font-size: 12px; color: var(--ink-soft); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+  <nav class="topbar">
+    <div class="mark">4th<span>Brain</span></div>
+    <ul>
+      <li><a href="#">Ingest</a></li>
+      <li><a href="#">Search</a></li>
+      <li><a href="#">Chat</a></li>
+      <li><a href="#">Dashboard</a></li>
+    </ul>
+    <div class="status"><span class="dot"></span> Local — Connected</div>
+  </nav>
+
+  <section class="type-scale">
+    <div class="eyebrow">01 — Type Scale</div>
+    <h1>Warm, editorial, calm</h1>
+    <h2>Serif for voice, sans for structure</h2>
+    <h3>Section label</h3>
+    <p>A soft paper background replaces stark white. A display serif carries headings and conversational weight, while a clean grotesque handles UI chrome — labels, buttons, metadata. Coral is the single warm accent, used sparingly.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">02 — Palette</div>
+    <div class="palette">
+      <div class="swatch paper">Paper<br>#FAF9F5</div>
+      <div class="swatch paper2">Paper 2<br>#F0EEE6</div>
+      <div class="swatch coral">Coral<br>#C96442</div>
+      <div class="swatch coralsoft">Coral Soft<br>#E8DCCB</div>
+      <div class="swatch ink">Ink<br>#262624</div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div>
+      <div class="eyebrow">03 — Buttons</div>
+      <button class="btn btn-primary">Send Query</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-disabled" disabled>Disabled</button>
+    </div>
+    <div>
+      <div class="eyebrow">04 — Form Input</div>
+      <div class="field-group">
+        <label for="q">Ask 4thBrain</label>
+        <input id="q" type="text" placeholder="What did I note about ADR14?">
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">05 — Card</div>
+    <div class="card">
+      <div class="card-head"><span>Job #0417</span><span class="tag">Classifying</span></div>
+      <div class="card-body">
+        <h3>Voice memo — 2026-08-25</h3>
+        <p>Transcribed, sanitized, awaiting tag assignment before vault commit.</p>
+      </div>
+      <div class="card-foot"><span>Priority: Normal</span><span>ETA 00:04:12</span></div>
+    </div>
+  </section>
+
+  <div class="eyebrow" style="padding:28px 48px 0;">06 — Chat Interface (composite)</div>
+  <div class="chat-app">
+    <aside class="chat-sidebar">
+      <div class="new-chat">+ New chat</div>
+      <div class="sb-label">Recents</div>
+      <div class="thread active">ADR14 — Ingestion Retry Policy</div>
+      <div class="thread">Weekly Briefing Draft</div>
+      <div class="thread">Vault Backup Strategy</div>
+      <div class="thread">Classification Flow Diagram</div>
+    </aside>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <h2>ADR14 — Ingestion Retry Policy</h2>
+        <span class="chat-id">Local model · llama3</span>
+      </div>
+
+      <div class="chat-thread">
+        <div class="msg user">
+          <div class="avatar">RS</div>
+          <div class="bubble">Summarize the retry policy decided in ADR14 and flag anything that conflicts with EP4's batch scheduling.
+            <span class="stamp">09:14</span>
+          </div>
+        </div>
+        <div class="msg ai">
+          <div class="avatar">4B</div>
+          <div class="bubble">ADR14 sets a 3-attempt exponential backoff (1m / 5m / 15m) for failed ingestion jobs, escalating to the dashboard after the third failure. No direct conflict with EP4 — batch runs are scheduled overnight, well outside the retry window.
+            <span class="stamp">09:14 · local-llm</span>
+          </div>
+        </div>
+        <div class="msg user">
+          <div class="avatar">RS</div>
+          <div class="bubble">Good. Add that summary as a note linked to ADR14.
+            <span class="stamp">09:15</span>
+          </div>
+        </div>
+        <div class="msg ai">
+          <div class="avatar">4B</div>
+          <div class="bubble">Done — filed under <em>Vault/Decisions/ADR14-retry-summary.md</em>, backlinked from ADR14.
+            <span class="stamp">09:15 · local-llm</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <div class="chat-input-box">
+          <input type="text" placeholder="Message 4thBrain — runs entirely on-device">
+          <button class="chat-send">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="meta">
+    <span>Claude.ai-inspired — sample v1</span>
+    <span>4thBrain · styles/claude-style</span>
+  </footer>
+
+</body>
+</html>

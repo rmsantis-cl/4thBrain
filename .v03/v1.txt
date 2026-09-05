@@ -1,0 +1,28 @@
+Execute the following iterative task-completion loop:
+
+Initialize i = 0
+Loop:
+  1. Increment i
+  2. Load the task list from documets/list-${i}.txt (containing tasks, stories, or epics marked READY)
+  3. Exit loop if:
+     - The list is empty, OR
+     - i > 10
+  4. For each task T in the list:
+     a. Attempt to complete T
+     b. If completion blocked:
+        - Let R = the reason blocking completion
+        - Check if R is already logged in documets/TODO-TRACKER.md
+        - If R is NOT in TODO-TRACKER:
+          * Create a new task entry for R
+          * Mark R as READY (actionable)
+        - Mark T as NOT READY (blocked by R)
+     c. If completion succeeds:
+        - Mark T as COMPLETED
+     d. Update all affected documentation (BACKLOG-TRACKER.md, PROJECT-SUMMARY.md, story files)
+  5. Return to top of loop
+
+After loop exits, summarize:
+- How many iterations ran
+- How many tasks completed
+- How many new blockers were discovered and logged
+- What documentation was updated

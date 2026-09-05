@@ -1,0 +1,88 @@
+Work the 4thBrain backlog in repeated passes until it stops yielding work.
+
+Read `documets/PROJECT-SUMMARY.md` first, then `documets/BACKLOG-TRACKER.md` and
+`documets/TODO-TRACKER.md`. Those three define current state; trust them over any
+status you remember.
+
+## The loop
+
+
+1. find the last list-{number}.txt, i=number+. Print the number on screen.
+
+2. Derive the ready set: every Story, Task, or Epic that is actionable *right now* —
+   status READY or WIP in BACKLOG-TRACKER, or status pending/in-progress in
+   TODO-TRACKER's Manual Tasks, AND whose dependencies are all COMPLETED. An item
+   whose "Dependencies Met?" column still shows an unmet dependency is not ready.
+   Write the derived set to `documets/loop/list-${i}.txt` (create the directory on
+   first use), one item per line as `<ID> | <title> | <source tracker>`.
+
+   Derive this fresh each pass from the trackers. Do not carry the previous pass's
+   list forward — the point of iterating is that work finished in pass i unblocks
+   items in pass i+1.
+
+3. Stop if `list-${i}.txt` is empty, or if i > 10.
+
+4. For each item T in `list-${i}.txt`, in listed order:
+
+   a. Try to complete T.
+
+      Before writing any code for T, confirm it traces to an existing Epic + Story
+      *and* a design artifact under `documets/design/` sufficient to implement from
+      (`.claude/rules/design-before-implementation.md`). A missing Epic, Story, or
+      design is itself a blocking reason — handle it under (b), and log it to
+      `documets/DESIGN-DEBT.md` as that rule requires. Do not improvise the shape of
+      a solution to get past it.
+
+      "Complete" means the Story's acceptance criteria in BACKLOG-TRACKER are met and
+      demonstrated — tests run, output inspected, or the behavior exercised. Do not
+      mark COMPLETED on the strength of code existing.
+
+   b. If T cannot be completed, identify R — the specific reason it is blocked. Then:
+
+      - Search TODO-TRACKER (both Open Stories and Manual Tasks) for R. Match on
+        substance, not wording; a task already describing the same blocker counts as
+        present, and gets a note rather than a duplicate.
+      - If R is not already tracked, add it as a new task following the `todo-add`
+        skill's conventions (`.claude/skills/todo-add/SKILL.md`): pick the right
+        table by category, give it the next free Task-N id, and set status `pending`
+        — the tracker's equivalent of "ready".
+      - Record T as blocked on R: leave T's status as-is (READY/WIP — do not invent a
+        BLOCKED status, the trackers do not have one) and update its Dependencies /
+        "Dependencies Met?" / Notes cells to name R as the unmet dependency, using the
+        ✓/⏳ convention already in those tables.
+
+   c. If T completed, set it COMPLETED in BACKLOG-TRACKER, move it to the completed
+      section of TODO-TRACKER (Manual Tasks that are done get their row deleted, per
+      the todo-add removal rule), and note what closed it.
+
+   d. Update the documentation affected by T before moving to the next item:
+      BACKLOG-TRACKER, TODO-TRACKER, the story file under `documets/story/`,
+      PROJECT-SUMMARY if the phase/epic picture changed, and DESIGN-DEBT if (a)
+      surfaced a gap. Files carrying a YAML header need their `metadata.version`
+      bumped and `date` set to today (`.claude/rules/file-versioning.md`); files with
+      `backup-cycle: session` need a `.backup/` copy before the first edit and files
+      with `read-only: true` must be refused, not edited
+      (`.claude/rules/clear-edits.md`).
+
+5. Go to 1.
+
+## Guards
+
+- The pseudo code can spin: if a pass completes nothing and blocks everything, the
+  next pass derives an identical list. So also stop when a pass closes zero items and
+  discovers zero new blockers — the loop has converged, and report that.
+- Commit nothing. Code changes need the user's explicit per-commit authorization
+  (`design-before-implementation.md`); leave the work in the tree and say so.
+- Use PowerShell for shell work (`.claude/rules/shell.md`).
+- If an item would take more than a focused effort to finish, stop on it, treat
+  "needs its own planning pass" as R, and move on. The loop is for clearing work that
+  is genuinely ready, not for absorbing a whole epic in one pass.
+
+## Report at the end
+
+- Passes run, and why the loop stopped (empty list / i > 10 / converged).
+- Items completed, by id.
+- Items left blocked, each with the R blocking it.
+- New tasks created in TODO-TRACKER.
+- Design Debt entries opened.
+- Files modified, and the uncommitted diff.

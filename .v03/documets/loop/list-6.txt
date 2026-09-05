@@ -1,0 +1,5 @@
+4.1 | Background Sweep & Queue Execution Script | BACKLOG-TRACKER
+7.2 | Process Lifecycle & MCP Server Setup | BACKLOG-TRACKER
+8.3 | Automated Smoke Test Suite | BACKLOG-TRACKER
+Task-4 | backpropagate Story 12.2 schema redesign | TODO-TRACKER
+

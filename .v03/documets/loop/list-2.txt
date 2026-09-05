@@ -1,0 +1,2 @@
+7.1 | WSL2 Runtime & Resource Bound Configuration | BACKLOG-TRACKER
+8.3 | Manual Smoke Test — Browser Navigation & Screenshot Verification | BACKLOG-TRACKER

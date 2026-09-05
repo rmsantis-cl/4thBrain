@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Swiss / International Typographic — Chat Sample</title>
+<style>
+  :root {
+    --red: #e2001a;
+    --black: #111111;
+    --white: #ffffff;
+    --grey-1: #f2f2f0;
+    --grey-2: #cfcfcb;
+    --grey-3: #757570;
+    --rule: 1px solid var(--black);
+    --grid-gap: 0;
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font);
+  }
+
+  /* ============ TYPE SCALE ============ */
+  .type-scale { padding: 48px; border-bottom: var(--rule); }
+  .type-scale h1, .type-scale h2, .type-scale h3, .type-scale p, .type-scale .label {
+    margin: 0 0 8px 0;
+  }
+  .type-scale h1 { font-size: 72px; font-weight: 700; letter-spacing: -2px; line-height: 0.95; text-transform: uppercase; }
+  .type-scale h2 { font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+  .type-scale h3 { font-size: 20px; font-weight: 700; }
+  .type-scale p { font-size: 16px; font-weight: 400; line-height: 1.5; max-width: 640px; }
+  .label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--red); }
+
+  /* ============ PALETTE ============ */
+  .palette { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: var(--rule); }
+  .swatch { height: 120px; display: flex; align-items: flex-end; padding: 12px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-right: var(--rule); }
+  .swatch:last-child { border-right: none; }
+  .swatch.red { background: var(--red); color: var(--white); }
+  .swatch.black { background: var(--black); color: var(--white); }
+  .swatch.grey1 { background: var(--grey-1); color: var(--black); }
+  .swatch.white { background: var(--white); color: var(--black); border: var(--rule); }
+
+  /* ============ CONTROLS SECTION ============ */
+  .controls { padding: 48px; border-bottom: var(--rule); display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    border: 2px solid var(--black);
+    background: var(--white);
+    color: var(--black);
+    cursor: pointer;
+    border-radius: 0;
+    margin-right: 12px;
+    margin-bottom: 12px;
+  }
+  .btn-primary { background: var(--black); color: var(--white); }
+  .btn-primary:hover { background: var(--red); border-color: var(--red); }
+  .btn-secondary:hover { border-color: var(--red); color: var(--red); }
+  .btn-disabled { color: var(--grey-2); border-color: var(--grey-2); cursor: not-allowed; }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
+  .field-group input {
+    font-family: var(--font);
+    font-size: 15px;
+    padding: 12px 14px;
+    border: 2px solid var(--black);
+    border-radius: 0;
+    background: var(--white);
+    color: var(--black);
+  }
+  .field-group input:focus { outline: none; border-color: var(--red); }
+
+  /* ============ NAV ============ */
+  nav.topbar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 20px 48px;
+    border-bottom: 3px solid var(--black);
+  }
+  nav.topbar .mark { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  nav.topbar .mark span { color: var(--red); }
+  nav.topbar ul { list-style: none; display: flex; gap: 32px; margin: 0; padding: 0; justify-content: center; }
+  nav.topbar a { color: var(--black); text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  nav.topbar a:hover { color: var(--red); }
+  nav.topbar .status { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--grey-3); text-align: right; }
+  nav.topbar .status::before { content: "● "; color: var(--red); }
+
+  /* ============ CARD ============ */
+  .card-wrap { padding: 48px; border-bottom: var(--rule); }
+  .card {
+    border: 2px solid var(--black);
+    max-width: 520px;
+  }
+  .card .card-head {
+    background: var(--black);
+    color: var(--white);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+  .card .card-head .n { color: var(--red); }
+  .card .card-body { padding: 20px 16px; }
+  .card .card-body h3 { margin: 0 0 8px; font-size: 20px; }
+  .card .card-body p { margin: 0; font-size: 14px; color: var(--grey-3); line-height: 1.5; }
+  .card .card-foot { border-top: var(--rule); padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; display: flex; justify-content: space-between; }
+
+  /* ============ CHAT LAYOUT ============ */
+  .chat-app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 640px;
+  }
+  .chat-sidebar {
+    border-right: var(--rule);
+    padding: 24px 0;
+  }
+  .chat-sidebar .sb-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--grey-3); padding: 0 24px 12px;
+  }
+  .chat-sidebar .thread {
+    padding: 14px 24px;
+    border-top: 1px solid var(--grey-2);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .chat-sidebar .thread:last-child { border-bottom: 1px solid var(--grey-2); }
+  .chat-sidebar .thread .t-title { font-weight: 700; margin-bottom: 4px; }
+  .chat-sidebar .thread .t-meta { font-size: 11px; color: var(--grey-3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .chat-sidebar .thread.active { background: var(--black); color: var(--white); }
+  .chat-sidebar .thread.active .t-meta { color: var(--grey-2); }
+  .chat-sidebar .new-thread {
+    margin: 12px 24px 20px;
+    padding: 12px;
+    border: 2px solid var(--red);
+    color: var(--red);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+  }
+  .chat-sidebar .new-thread:hover { background: var(--red); color: var(--white); }
+
+  .chat-main { display: flex; flex-direction: column; }
+  .chat-header {
+    padding: 18px 32px;
+    border-bottom: 3px solid var(--black);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .chat-header h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .chat-header .chat-id { font-family: var(--mono); font-size: 12px; color: var(--grey-3); }
+
+  .chat-thread {
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 39px,
+        var(--grey-1) 39px,
+        var(--grey-1) 40px
+      );
+  }
+
+  .msg { display: grid; grid-template-columns: 90px 1fr; gap: 16px; max-width: 720px; }
+  .msg .who {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding-top: 4px;
+  }
+  .msg.user .who { color: var(--red); }
+  .msg.ai .who { color: var(--black); }
+  .msg .bubble {
+    background: var(--white);
+    border-left: 3px solid var(--black);
+    padding: 10px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .msg.user .bubble { border-left-color: var(--red); }
+  .msg .bubble .stamp { display: block; margin-top: 8px; font-size: 10px; letter-spacing: 1px; color: var(--grey-3); font-family: var(--mono); }
+
+  .chat-input-row {
+    border-top: 3px solid var(--black);
+    padding: 20px 32px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+  }
+  .chat-input-row input {
+    font-family: var(--font);
+    font-size: 15px;
+    padding: 14px 16px;
+    border: 2px solid var(--black);
+    border-radius: 0;
+  }
+  .chat-input-row input:focus { outline: none; border-color: var(--red); }
+  .chat-send {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    background: var(--red);
+    color: var(--white);
+    border: 2px solid var(--red);
+    cursor: pointer;
+  }
+  .chat-send:hover { background: var(--black); border-color: var(--black); }
+
+  footer.meta {
+    padding: 20px 48px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--grey-3);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <nav class="topbar">
+    <div class="mark">4TH<span>BRAIN</span></div>
+    <ul>
+      <li><a href="#">Ingest</a></li>
+      <li><a href="#">Search</a></li>
+      <li><a href="#">Chat</a></li>
+      <li><a href="#">Dashboard</a></li>
+    </ul>
+    <div class="status">Local — Connected</div>
+  </nav>
+
+  <section class="type-scale">
+    <div class="label">01 — Type Scale</div>
+    <h1>Fig. 01</h1>
+    <h2>Grotesk Bold, tight tracking</h2>
+    <h3>Section label, all caps</h3>
+    <p>Body copy sits on a strict baseline grid. No ornament, no soft shadow — hierarchy is carried entirely by weight, size, and the single red accent reserved for interactive and system-critical elements.</p>
+  </section>
+
+  <div class="palette">
+    <div class="swatch red">Signal Red<br>#E2001A</div>
+    <div class="swatch black">Ink<br>#111111</div>
+    <div class="swatch grey1">Grid Grey<br>#F2F2F0</div>
+    <div class="swatch white">Paper<br>#FFFFFF</div>
+  </div>
+
+  <section class="controls">
+    <div>
+      <div class="label">02 — Buttons</div>
+      <button class="btn btn-primary">Send Query</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-disabled" disabled>Disabled</button>
+    </div>
+    <div>
+      <div class="label">03 — Form Input</div>
+      <div class="field-group">
+        <label for="q" style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Ask 4thBrain</label>
+        <input id="q" type="text" placeholder="What did I note about ADR14?">
+      </div>
+    </div>
+  </section>
+
+  <div class="card-wrap">
+    <div class="label">04 — Card</div>
+    <div class="card">
+      <div class="card-head"><span>Job <span class="n">#0417</span></span><span>Classifying</span></div>
+      <div class="card-body">
+        <h3>Voice memo — 2026-08-25</h3>
+        <p>Transcribed, sanitized, awaiting tag assignment before vault commit.</p>
+      </div>
+      <div class="card-foot"><span>Priority: Normal</span><span>ETA 00:04:12</span></div>
+    </div>
+  </div>
+
+  <div class="label" style="padding:24px 48px 0;">05 — Chat Interface (composite)</div>
+  <div class="chat-app">
+    <aside class="chat-sidebar">
+      <div class="sb-label">Threads</div>
+      <div class="thread active">
+        <div class="t-title">ADR14 — Ingestion Retry Policy</div>
+        <div class="t-meta">Today · 12 msgs</div>
+      </div>
+      <div class="thread">
+        <div class="t-title">Weekly Briefing Draft</div>
+        <div class="t-meta">Yesterday · 4 msgs</div>
+      </div>
+      <div class="thread">
+        <div class="t-title">Vault Backup Strategy</div>
+        <div class="t-meta">Aug 21 · 9 msgs</div>
+      </div>
+      <div class="new-thread">+ New Thread</div>
+    </aside>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <h2>ADR14 — Ingestion Retry Policy</h2>
+        <span class="chat-id">THREAD/0091-A</span>
+      </div>
+
+      <div class="chat-thread">
+        <div class="msg user">
+          <div class="who">You</div>
+          <div class="bubble">Summarize the retry policy decided in ADR14 and flag anything that conflicts with EP4's batch scheduling.
+            <span class="stamp">09:14:02</span>
+          </div>
+        </div>
+        <div class="msg ai">
+          <div class="who">4thBrain</div>
+          <div class="bubble">ADR14 sets a 3-attempt exponential backoff (1m / 5m / 15m) for failed ingestion jobs, escalating to the dashboard after the third failure. No direct conflict with EP4 — batch runs are scheduled overnight, well outside the retry window.
+            <span class="stamp">09:14:09 · local-llm</span>
+          </div>
+        </div>
+        <div class="msg user">
+          <div class="who">You</div>
+          <div class="bubble">Good. Add that summary as a note linked to ADR14.
+            <span class="stamp">09:15:33</span>
+          </div>
+        </div>
+        <div class="msg ai">
+          <div class="who">4thBrain</div>
+          <div class="bubble">Done — filed under <em>Vault/Decisions/ADR14-retry-summary.md</em>, backlinked from ADR14.
+            <span class="stamp">09:15:41 · local-llm</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <input type="text" placeholder="Message 4thBrain — runs entirely on-device">
+        <button class="chat-send">Send →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="meta">
+    <span>Swiss / International Typographic — sample v1</span>
+    <span>4thBrain · styles/swiss-chat</span>
+  </footer>
+
+</body>
+</html>

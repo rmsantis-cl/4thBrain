@@ -1,77 +1,126 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# CLAUDE.md — 4thBrain v04 (Java Spring Boot)
 
 ## Project Overview
 
-**4thBrain** (a.k.a. the Personal Knowledge & Executive Assistant System) has moved past the pure design/requirements phase — Phase 5 (Story Creation / Dev / Release) is underway, and the repository now holds real application code (`server/`, an Express + `node:sqlite` app implementing the Web UI and ingestion API), alongside the requirements/design artifacts that govern it and the Claude Code automation framework (skills, rules) used to drive the process.
+**4thBrain v04** is a complete reimplementation of the v03 Node.js application in Java Spring Boot. Same system requirements (FR1–FR9, NFR1–NFR12), same database schema (SQLite), same high-level flow: Ingest → Sanitize → Classify → Index, plus Briefing synthesis. Different architecture: actuators are Spring Beans running in dedicated threads, communicating via a Coordinator instead of relying on periodic polling.
 
-**Read `documets/PROJECT-SUMMARY.md` first, every session.** It's the single current-state source of truth (phase status, story completion, epics, key docs, open gaps) — this file intentionally does not duplicate that status, since duplicated status is exactly what goes stale. `documets/design/CLAUDE.md` already enforces this for the design directory; treat it as true for the whole repo.
-
-The target system being designed: a privacy-first, locally hosted "second brain" that captures unstructured ideas, voice-to-text transcripts, links, documents, and email/calendar feeds; sanitizes, classifies, and indexes everything overnight via a local LLM into a human-readable Obsidian-compatible Markdown vault plus a local RAG vector database; and proactively surfaces relevant notes, daily briefings, and prioritized email summaries — with all inference running locally (Ollama/WSL2) and zero cloud API cost or outbound calls.
+**Build approach:** Three phases — Skeleton (all architecture in place, actuators stubbed), Implementation (real actuator logic + OpenAI SDK integration), Testing (unit + integration).
 
 ## Repository Structure
 
-- **`server/`** — the Express + `node:sqlite` application: Web UI (`/chat`), ingestion API, admin/table-browser (`/admin/db`), chat-with-Llama endpoint. See `documets/PROJECT-SUMMARY.md` for which Stories shipped what.
-- **`documets/design/`** — baseline specs: `SYSTEM-REQUIREMENTS-SPECIFICATION.md` (FR1–FR9, NFR1–NFR12), `Project 4thBrain.md` (Epics EP1–EP13 and Stories — canonical story text), `Gantt Chart.md` (story schedule/dependencies), `ADRS.md` (ADR1–ADR18 plus split-out `adr16-component-placement.md`, `adr18-persistence-tech.md`), `schema.sql`/`classes.md`/`classes.mmd` (SQLite data model).
-- **`documets/PROJECT-SUMMARY.md`** — current-state summary; read this first (see above).
-- **`documets/BACKLOG-TRACKER.md`** — per-story status (READY/WIP/COMPLETED) with dependencies and acceptance criteria; more current than `documets/PLAN.md`.
-- **`documets/PLAN.md`** — original master plan (lifecycle phase status, EP1–EP11 summary). Superseded for status purposes by `PROJECT-SUMMARY.md`/`BACKLOG-TRACKER.md`; kept for historical scope-lock context.
-- **`documets/PLAN-*.md`** (e.g. `PLAN-28-08-2026.md`) — dated planning-session outputs for specific multi-story efforts; each tracks its own implementation-status checklist.
-- **`documets/DESIGN-DEBT.md`** — gaps found mid-plan (missing Epic/Story or design decision), per `.claude/rules/design-before-implementation.md`.
-- **`documets/bugs/`** — one file per Bug (`Bug-N-<slug>.md`), per the `Bug n` document type below.
-- **`vault/`, `local-llm/`, `ui/`, `ingestor-classification/`, `batch/`, `server/`** — the six functional modules, each with its own `CLAUDE.md` (purpose/scope/dependencies) and `backlog.md` (story status). See the Module Map below. Full story text stays canonical in `documets/design/Project 4thBrain.md`; the per-module files are thin views onto it. `server/` is the first module with real shipped code rather than design-only artifacts, and owns EP12 (Structured Data & Job Queue Persistence) and EP13 (Admin & Monitoring Tools), resolving what was previously an open "no module owner" item.
-- **`documets/Interviews/`** — phase interview transcripts capturing requirements discovery.
-- **`documets/method/`** — the process framework itself: `BOOT.md` (file-header/versioning protocol, now split into `.claude/rules/file-format.md`/`file-protection.md`/`file-versioning.md`/`file-indexing.md`), `MD-MEMORY-INSTRUCTIONS.md` (`/MEMORY.md` maintenance rules), `Software Documentation Summary and Framework.md` (the document-type taxonomy and phase-by-phase software lifecycle this project follows — Requirement Collection → Formalization → Scope Lock → Epics → Stories/Dev/Release → Post-Release Gap Analysis → Buy-off → Maintenance), `Driving Dictation Prompt and Guidelines.md` (source for the `dictation` skill).
-- **`scripts/`** — dev-environment helpers (`ui-server.ps1` start/stop/status for the `server/` app, `reset-dev-db.ps1` for the SQLite dev database).
-- **`.claude/skills/`** — `b4-research` (cited web research into the Obsidian vault), `dictation` (hands-free dictation interaction protocol), `install-smart-connection`, `roast`, `surprise-me`.
-- **`.claude/rules/`** — `design-before-implementation.md` (no code without a traced Epic+Story and a design artifact — see below), `file-format.md`, `file-protection.md`, `file-versioning.md`, `file-indexing.md` (split out of the former `boot.md`), `md-memory.md`, `scrapper.md`, `shell.md`, `write-properly.md`.
-- **`.backup/v2/`** — prior repository contents (an earlier, code-oriented iteration of this project: `Generated/`, `styles/`, prior `CLAUDE.md`/`README.md`/`TODO.md`/`HANDOUT.md`, batch-queue plans, `.mcp.json`) preserved during a cleanup; not part of the active tree.
+```
+v04/
+├── build.gradle                          (Gradle build, Spring Boot + sqlite-jdbc)
+├── src/main/java/com/fourthbrain/
+│   ├── FourthBrainApplication.java       (Spring Boot @SpringBootApplication, @EnableScheduling)
+│   ├── config/
+│   │   └── ActuatorThreadConfig.java     (creates actuator bean instances from thread config)
+│   ├── actuators/
+│   │   ├── Actuator.java                 (interface: getGerund/Participle, process, message)
+│   │   ├── AbstractActuator.java         (extends Thread, run loop, queue polling)
+│   │   ├── IngestorActuator.java         (static queue, routes to TextExtractor)
+│   │   ├── TextExtractorActuator.java    (static queue, routes to Classifier)
+│   │   ├── ClassifierActuator.java       (static queue, routes to Indexer)
+│   │   ├── IndexerActuator.java          (static queue, final stage)
+│   │   └── BriefingActuator.java         (@Scheduled daily 6AM, static queue)
+│   ├── messaging/
+│   │   ├── ActuatorMessage.java          (Integer docId only, rest in database)
+│   │   └── Coordinator.java              (@Component, startChain, getStatusCounts)
+│   ├── persistence/
+│   │   ├── entity/
+│   │   │   ├── Document.java             (@Entity, status tracks pipeline)
+│   │   │   ├── Tag.java                  (@Entity, soft-delete via endDate)
+│   │   │   └── DocumentTag.java          (@Entity, links documents to tags)
+│   │   ├── repository/
+│   │   │   ├── DocumentRepository.java   (findByStatus, countByStatus)
+│   │   │   ├── TagRepository.java        (findActive)
+│   │   │   └── DocumentTagRepository.java (findActiveTagsByDocumentId, etc.)
+│   │   └── DatabaseService.java          (synchronized writes, ADR17)
+│   ├── web/
+│   │   └── controller/
+│   │       ├── IngestionController.java  (POST /api/ingest/file, /text, /url)
+│   │       ├── SearchController.java     (GET /api/search)
+│   │       ├── StatusController.java     (GET /api/status)
+│   │       ├── ChatController.java       (POST /api/chat/llama)
+│   │       ├── AdminController.java      (GET /admin/db, etc.)
+│   │       └── UIController.java         (GET /, /chat)
+│   └── (util, logging, etc.)
+├── src/main/resources/
+│   ├── application.yaml                  (Spring config: port, DB path, thread counts, Ollama URL)
+│   ├── schema.sql                        (SQLite DDL: document, tag, document_tag tables only)
+│   └── static/
+│       ├── index.html / chat.html        (UI with 7 panels)
+│       ├── styles.css                    (design from v03)
+│       └── client.js                     (REST API client)
+├── src/test/java/com/fourthbrain/
+│   └── (unit + integration tests, Phase 3)
+└── documets/
+    └── (design docs, inherited from v03)
+```
 
-## Document Framework Conventions
+## Phase 1: Skeleton & Full Architecture (Wiring Only)
 
-Per `documets/method/Software Documentation Summary and Framework.md`, project artifacts follow a fixed taxonomy and coding scheme — use these codes/prefixes when creating or referencing requirements docs:
+**Goal:** All components created, all REST endpoints stubbed, all actuators thread-ready. Document status drives the pipeline.
 
-- **FRn** — Functional Requirements (Code, Name, Abstract, Description, Priority [MVP/Good-to-Have/Desired], Acceptance Criteria)
-- **NFRn** — Non-Functional Requirements (runtime/environment constraints)
-- **ADRn** — Architectural Decisions (Description, Why, Date Created, Date Cancelled)
-- **EPn** — Epics (group FRs/NFRs, inherit their acceptance criteria)
-- **Story n** — Stories under an Epic (Abstract, Description, Acceptance Criteria, Status)
-- **Bug n / Issue n** — Testing & bug tracking. Live in `documets/bugs/`, one file per Bug, per `.claude/rules/file-format.md`.
+**Deliverables:**
+- Spring Boot app boots on `gradle bootRun`, listens on localhost:8080.
+- SQLite database created at startup (schema.sql), three tables: document, tag, document_tag.
+- Each actuator type (Ingestor, TextExtractor, Classifier, Indexer, Briefing) instantiated per thread config in application.yaml (default 1 each).
+- All instances of the same actuator class share one static queue (horizontal scaling).
+- Coordinator.startChain(docId) updates Document status to "ingesting" and enqueues to first Ingestor.
+- Each actuator loop: poll queue → update status to gerund → process() → update to participle → route to next actuator.
+- REST endpoints (/api/ingest/file, /text, /url) accept input, create Document records, call Coordinator.
+- StatusController returns Document counts per status stage.
+- Web UI loads at localhost:8080/chat, forms wired to REST endpoints (no processing yet).
 
-Any file carrying a YAML file header (`---`-delimited block at the top with `name`/`description` required fields) is governed by `.claude/rules/file-format.md`/`file-protection.md`/`file-versioning.md`/`file-indexing.md`: read-only files (`read-only: true`) must never be modified/deleted; new files without a header get one inserted; updates bump `metadata.version` and the `date` field; every tracked file gets an `INDEX.md` entry.
+**No real business logic:** Actuators just log and update Document status; no file I/O, no Ollama calls, no indexing.
 
-**Design-before-implementation (`.claude/rules/design-before-implementation.md`):** no code lands without tracing to an existing Epic+Story *and* a design artifact (ADR, schema, class definition) sufficient to implement from. Gaps found mid-plan are logged to `documets/DESIGN-DEBT.md` rather than implemented around.
+## Phase 2: Real Actuator Implementation
 
-## Current Baseline
+**Goal:** Replace stub logging with actual processing logic using OpenAI SDK for Ollama and libraries for file/text handling.
 
-Thirteen epics exist (EP1–EP11 baseline + gap analysis, EP12/EP13 added later during schema/admin-tooling work). Story status varies per-story (Completed/Ready/WIP) — **do not hardcode a status snapshot here; read `documets/PROJECT-SUMMARY.md` and `documets/BACKLOG-TRACKER.md` for current state.** Dependency shape (stable, unlike status):
+**Deliverables:**
+- **Ingestor:** Reads files from `$RAW_DIR`, copies structured files to `$VAULT_DIR/incoming`, creates Document records.
+- **TextExtractor:** Calls OpenAI SDK (configured for local Ollama) or uses libraries (Turndown for HTML, OpenDataLoader for PDF, etc.) to sanitize/transcode binary formats.
+- **Classifier:** Calls OllamaClient.chat() with a prompt, parses LLM response for tags/topic, stores Classification and DocumentTag records.
+- **Indexer:** Writes classified documents to vault, triggers Smart Connections MCP indexing.
+- **Briefing:** Scheduled to run at 6 AM, queries recent documents, builds an Ollama prompt, writes briefing Markdown to vault.
+- OllamaClient proven to reach Ollama and parse responses; concurrency gate blocks until prior Ollama call finishes.
 
-- **EP7** (System Infrastructure & Host Runtime) is the foundation — WSL2 + Ollama + MCP server setup — and gates nearly everything else.
-- **EP1** (Ingestion & Sanitization) depends on EP7.
-- **EP2** (Tagging/Classification) and **EP3** (Vector Indexing/MCP) depend on EP1.
-- **EP4** (Overnight Batch Processing) depends on EP1 + EP2.
-- **EP5** (Daily Briefing) depends on EP2 + EP4.
-- **EP6** (Web UI — ingestion form, search, dashboard) depends on EP1, EP3, EP4.
-- **EP8** (QA/Testing & Bug Tracking), **EP9** (Security & Access Control), **EP10** (Vault Backup & Recovery), **EP11** (Release Management) — cross-cutting additions; EP9 and EP10 reference proposed NFR13/NFR14, pending a Phase 3 scope-lock pass.
-- **EP12** (Structured Data & Job Queue Persistence) — the SQLite metadata schema (`documets/design/schema.sql`); depends on nothing, consumed by EP1/EP2/EP4/EP6.
-- **EP13** (Admin & Monitoring Tools) — cross-cutting dev/QA tooling (table browser, mobile UI review); depends on EP7 (database setup).
+## Phase 3: Testing
 
-See `documets/design/Gantt Chart.md` for exact story-level day scheduling and dependency types (Depends on / Must be worked with).
+**Goal:** Unit tests for each actuator (mocking dependencies), integration tests for message flows, REST API tests (MockMvc), smoke test.
 
-## Module Map
+**Deliverables:**
+- `gradle test` runs all unit tests, >80% coverage of actuator logic.
+- `gradle integrationTest` runs end-to-end message flows (Ingestor → TextExtractor → Classifier → Indexer).
+- MockMvc tests verify REST endpoints accept payloads and create Document records.
+- Manual smoke test: browser loads UI, form submission triggers actuator chain, status dashboard updates.
 
-| Module | Owns | Depends on |
-| --- | --- | --- |
-| `vault/` | EP3 (vector indexing/MCP), EP10 (backup/recovery) | `local-llm/` |
-| `local-llm/` | EP7 (WSL2/Ollama/MCP host), EP11 (release mgmt) | none — foundation |
-| `ui/` | EP6 (web ingestion/search/dashboard), EP9 (auth) | `ingestor-classification/`, `vault/`, `batch/`, `local-llm/` |
-| `ingestor-classification/` | EP1 (ingestion/sanitization), EP2 (tagging) | `local-llm/`, `vault/` |
-| `batch/` | EP4 (overnight processing), EP5 (daily briefing), EP8 (QA/testing — cross-cutting) | `ingestor-classification/`, `local-llm/`, `vault/` |
-| `server/` | EP6 (Web UI/ingestion API), EP9 (auth), EP12 (SQLite metadata DB runtime), EP13 (admin tools/data-access API) | `local-llm/` (Ollama HTTP endpoint) |
+## Design Principles
+
+- **Document-status-driven:** Entire pipeline tracked via Document.status (gerund/participle pairs per stage).
+- **Message-driven actuators:** No polling; each actuator polls its queue and routes directly to next via process() return value.
+- **Horizontal scaling via static queues:** Multiple instances of the same actuator class share one static queue; thread count configured in application.yaml.
+- **Synchronized writes:** DatabaseService uses method-level synchronization to enforce brief, serialized transactions (ADR17).
+- **Phase 1 stubs everything:** Actuators log and update status; no real business logic until Phase 2.
+- **Spring Boot idiomatic:** @Autowired dependencies, @Slf4j logging, @Component + @Scheduled, no constructors.
 
 ## Working in This Repository
 
-- Real application code exists under `server/` — start it via `scripts/ui-server.ps1 start` (sets `NODE_ENV=development` for the admin panel) or `cd server && npm start` directly. No automated test suite exists yet (Story 8.1, To Do).
-- Before writing or editing any code, it must trace to an existing Epic+Story and a design artifact — see `.claude/rules/design-before-implementation.md`. If either is missing, stop and log a Design Debt entry rather than implementing around the gap.
-- Use the `dictation` skill's persona/interview/pause protocol when the user is dictating requirements or specs hands-free.
+- Build: `gradle build` or `./gradlew build`.
+- Run: `gradle bootRun` (or PowerShell script if created).
+- Test: `gradle test`.
+- All code must trace to a Story in PROJECT_4thBrain.md (Phases 1–3 deliver specific stories).
+- Commits include Story reference and Haiku co-author footer.
+
+## Changelog
+
+- 2026-09-03: Phase 1 skeleton complete. Removed Job class entirely (document status sufficient). Thread configuration via application.yaml (default 1 per actuator). Coordinator updates Document status, no Job records. StatusController returns actual Document counts. All logging via @Slf4j without class names. Created FourthBrainApplication main class, ActuatorThreadConfig, schema.sql (no job table).
+
+## Key Decisions
+
+- **No Job table:** Document.status alone tracks pipeline (ingesting → extracting → classifying → indexing → indexed). Simpler, message-driven design.
+- **Thread config in YAML:** `actuators.threads.ingestor: 1` etc. Allow horizontal scaling without code changes.
+- **ObjectFactory for instances:** ActuatorThreadConfig uses ObjectFactory to create prototype actuators with Spring dependency injection.
+- **Synchronized DatabaseService:** Single synchronized service enforces ADR17 (brief transactions, no holding locks).

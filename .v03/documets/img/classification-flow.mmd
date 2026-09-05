@@ -1,0 +1,21 @@
+flowchart TD
+    A["File sitting in<br/>VAULT_DIR/incoming"] --> B["Local LLM (Ollama)<br/>reads the content"]
+
+    B --> C["Infer tags +<br/>YAML metadata"]
+    B --> D["Infer topic / subtopic"]
+
+    C --> E{"User already<br/>added tags?"}
+    E -->|Yes| F["Keep user tags,<br/>LLM adds taxonomy tags"]
+    E -->|No| G["LLM assigns tags<br/>from scratch"]
+
+    D --> H["Topic/subtopic maps to<br/>target vault subfolder"]
+    F --> I
+    G --> I
+    H --> I["Note filed into<br/>target vault path"]
+
+    I --> J{"Note references images,<br/>documents, or other files?"}
+    J -->|Yes| K["Referenced files placed in a<br/>sibling attachment directory<br/>next to the note"]
+    J -->|No| L
+    K --> L["Smart Connections indexes<br/>the note (.smart-env)"]
+
+    L --> M["Note is searchable +<br/>semantically retrievable"]
