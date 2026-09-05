@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4thBrain — Second Brain</title>
+  <style>
+    :root {
+      --bg: #191817;
+      --surface: #211f1d;
+      --surface-hover: #2a2825;
+      --border: #34322e;
+      --text-primary: #f2efe9;
+      --text-secondary: #a3a099;
+      --text-muted: #6f6c66;
+      --accent: #d97757;
+      --accent-hover: #c96a4c;
+      --status-active: #5b9dd9;
+      --status-done: #6fae7c;
+      --status-failed: #c9645a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, "Segoe UI", Inter, sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 200px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 12px 8px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 4px;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .nav-item .icon {
+      display: inline-flex;
+      width: 24px;
+      justify-content: center;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topbar-left h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .panels-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .panel h1 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .panel .subtitle {
+      color: var(--text-secondary);
+      margin: 0 0 16px 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-primary);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: var(--bg);
+      color: var(--accent);
+    }
+
+    .result-msg {
+      display: none;
+      padding: 10px;
+      background: var(--status-done);
+      color: var(--bg);
+      border-radius: 4px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .result-msg.visible {
+      display: block;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .chat-window {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-message {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .chat-message.user {
+      background: var(--accent);
+      color: var(--bg);
+      text-align: right;
+    }
+
+    .chat-message.assistant {
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input-row input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .chat-input-row .btn {
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 44px;
+        width: 100%;
+        height: calc(100vh - 44px);
+        z-index: 10;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sidebar.open {
+        display: flex;
+      }
+
+      .topbar {
+        display: flex;
+      }
+
+      .menu-btn {
+        display: block;
+      }
+
+      .topbar-left {
+        flex: 1;
+      }
+
+      .main-content {
+        padding-top: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <nav id="nav-container"></nav>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>4thBrain</h1>
+      </div>
+      <button class="menu-btn" style="display:none; width: 36px; height: 36px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); border-radius: 4px; cursor: pointer;">☰</button>
+    </div>
+
+    <div class="panels-container" id="panels-container"></div>
+  </div>
+
+  <script>
+    // Phase 1 Stub: Just render the UI structure, wire form submissions to stub API
+    const NAV_ITEMS = [
+      { id: "add-file", icon: "📎", label: "Add file" },
+      { id: "add-text", icon: "Aa", label: "Add text" },
+      { id: "add-url", icon: "🔗", label: "Add url" },
+      { id: "search", icon: "🔍", label: "Search" },
+      { id: "ingest-status", icon: "▤", label: "Ingest status" },
+      { id: "chat-llama", icon: "◎", label: "Chat with Llama" },
+      { id: "admin", icon: "⚙", label: "Admin", href: "/admin" },
+    ];
+
+    function renderNav() {
+      const nav = document.getElementById("nav-container");
+      nav.innerHTML = NAV_ITEMS.map((item, i) => {
+        if (item.href) {
+          return `<a class="nav-item" href="${item.href}"><span class="icon">${item.icon}</span> ${item.label}</a>`;
+        }
+        return `<button class="nav-item${i === 0 ? " active" : ""}" data-panel="${item.id}"><span class="icon">${item.icon}</span> ${item.label}</button>`;
+      }).join("");
+
+      document.querySelectorAll(".nav-item[data-panel]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+          document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById("panel-" + btn.getAttribute("data-panel")).classList.add("active");
+        });
+      });
+    }
+
+    function renderPanels() {
+      const container = document.getElementById("panels-container");
+      container.innerHTML = `
+        <section class="panel active" id="panel-add-file">
+          <h1>Add file</h1>
+          <p class="subtitle">Drop a file or browse.</p>
+          <div class="card">
+            <div class="dropzone" id="dropzone">Drag a file here, or click to browse</div>
+            <input type="file" id="file-input" style="display:none">
+            <input type="text" id="file-tags-input" class="form-group" placeholder="Tags (comma-separated)">
+            <div class="result-msg" id="file-result"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-add-text">
+          <h1>Add text</h1>
+          <p class="subtitle">Paste or type freeform text.</p>
+          <div class="card">
+            <form id="text-form">
+              <textarea id="text-input" placeholder="Paste or type a note…"></textarea>
+              <input type="text" id="text-tags-input" placeholder="Tags (comma-separated)">
+              <button type="submit" class="btn">Submit</button>
+            </form>
+            <div class="result-msg" id="text-result"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-add-url">
+          <h1>Add url</h1>
+          <p class="subtitle">Submit a link to be clipped.</p>
+          <div class="card">
+            <form id="url-form">
+              <input type="url" id="url-input" placeholder="https://…">
+              <input type="text" id="url-tags-input" placeholder="Tags (comma-separated)">
+              <button type="submit" class="btn">Submit</button>
+            </form>
+            <div class="result-msg" id="url-result"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-search">
+          <h1>Search</h1>
+          <p class="subtitle">Keyword and semantic search.</p>
+          <div class="card">
+            <form id="search-form">
+              <input type="text" id="search-input" placeholder="Search vault…">
+              <button type="submit" class="btn">Search</button>
+            </form>
+            <div id="search-results" style="margin-top: 12px;"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-ingest-status">
+          <h1>Ingest status</h1>
+          <p class="subtitle">Job queue and pipeline status.</p>
+          <button class="btn" id="status-refresh" type="button">Refresh</button>
+          <h2 style="margin-top: 16px; margin-bottom: 8px; color: var(--text-secondary);">Job queue</h2>
+          <div class="stat-grid" id="jobs-grid"></div>
+          <div id="jobs-failed"></div>
+        </section>
+
+        <section class="panel" id="panel-chat-llama">
+          <h1>Chat with Llama</h1>
+          <p class="subtitle">Local LLM conversation</p>
+          <div class="card">
+            <div class="chat-window" id="llama-window"></div>
+            <form id="llama-form" class="chat-input-row">
+              <input type="text" id="llama-input" placeholder="Ask something…" autocomplete="off">
+              <button type="submit" class="btn">Send</button>
+            </form>
+          </div>
+        </section>
+      `;
+
+      // Wire up file upload
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("file-input");
+      const fileResult = document.getElementById("file-result");
+      dropzone.addEventListener("click", () => fileInput.click());
+      dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length) uploadFile(fileInput.files[0]);
+      });
+
+      function uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("tags", document.getElementById("file-tags-input").value);
+        fileResult.textContent = "Uploading…";
+        fileResult.classList.add("visible");
+        fetch("/api/ingest/file", { method: "POST", body: formData })
+          .then(res => res.json())
+          .then(data => {
+            fileResult.textContent = (data.message || "File uploaded") + " (jobId: " + data.jobId + ")";
+            document.getElementById("file-tags-input").value = "";
+          })
+          .catch(() => { fileResult.textContent = "Upload failed."; });
+      }
+
+      // Wire up text submission
+      const textForm = document.getElementById("text-form");
+      const textResult = document.getElementById("text-result");
+      textForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = document.getElementById("text-input").value;
+        if (!text.trim()) return;
+        textResult.textContent = "Submitting…";
+        textResult.classList.add("visible");
+        fetch("/api/ingest/text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, tags: document.getElementById("text-tags-input").value })
+        })
+          .then(res => res.json())
+          .then(data => {
+            textResult.textContent = (data.message || "Text submitted") + " (jobId: " + data.jobId + ")";
+            document.getElementById("text-input").value = "";
+            document.getElementById("text-tags-input").value = "";
+          })
+          .catch(() => { textResult.textContent = "Submit failed."; });
+      });
+
+      // Wire up URL submission
+      const urlForm = document.getElementById("url-form");
+      const urlResult = document.getElementById("url-result");
+      urlForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const url = document.getElementById("url-input").value;
+        if (!url.trim()) return;
+        urlResult.textContent = "Submitting…";
+        urlResult.classList.add("visible");
+        fetch("/api/ingest/url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, tags: document.getElementById("url-tags-input").value })
+        })
+          .then(res => res.json())
+          .then(data => {
+            urlResult.textContent = (data.message || "URL submitted") + " (jobId: " + data.jobId + ")";
+            document.getElementById("url-input").value = "";
+            document.getElementById("url-tags-input").value = "";
+          })
+          .catch(() => { urlResult.textContent = "Submit failed."; });
+      });
+
+      // Wire up status refresh
+      document.getElementById("status-refresh").addEventListener("click", () => {
+        fetch("/api/status")
+          .then(res => res.json())
+          .then(data => {
+            const grid = document.getElementById("jobs-grid");
+            grid.innerHTML = `
+              <div class="stat-box"><div class="stat-value">${data.activeCount || 0}</div><div class="stat-label">Active</div></div>
+              <div class="stat-box"><div class="stat-value">${data.pendingCount || 0}</div><div class="stat-label">Pending</div></div>
+              <div class="stat-box"><div class="stat-value">${data.completedCount || 0}</div><div class="stat-label">Completed</div></div>
+              <div class="stat-box"><div class="stat-value">${data.failedCount || 0}</div><div class="stat-label">Failed</div></div>
+            `;
+          });
+      });
+
+      // Wire up search
+      const searchForm = document.getElementById("search-form");
+      searchForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const query = document.getElementById("search-input").value;
+        if (!query.trim()) return;
+        fetch(`/api/search?q=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(data => {
+            const results = document.getElementById("search-results");
+            results.innerHTML = (data.results || []).map(r => `<div style="padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px;"><strong>${r.title || r.path}</strong><br><em>${r.snippet || ""}</em></div>`).join("");
+          });
+      });
+
+      // Wire up chat
+      const llamaForm = document.getElementById("llama-form");
+      const llamaInput = document.getElementById("llama-input");
+      const llamaWindow = document.getElementById("llama-window");
+      let llamaHistory = [];
+
+      llamaForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const message = llamaInput.value;
+        if (!message.trim()) return;
+
+        llamaWindow.innerHTML += `<div class="chat-message user">${message}</div>`;
+        llamaInput.value = "";
+
+        fetch("/api/chat/llama", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history: llamaHistory })
+        })
+          .then(res => res.json())
+          .then(data => {
+            llamaWindow.innerHTML += `<div class="chat-message assistant">${data.reply || "(no response)"}</div>`;
+            llamaWindow.scrollTop = llamaWindow.scrollHeight;
+            llamaHistory.push({ role: "user", content: message });
+            llamaHistory.push({ role: "assistant", content: data.reply || "" });
+          })
+          .catch(() => {
+            llamaWindow.innerHTML += `<div class="chat-message assistant" style="background: var(--status-failed);">Error reaching chat endpoint.</div>`;
+            llamaWindow.scrollTop = llamaWindow.scrollHeight;
+          });
+      });
+    }
+
+    renderNav();
+    renderPanels();
+  </script>
+</body>
+</html>
