@@ -5,8 +5,8 @@
 | Property | Value |
 | :---- | :---- |
 | **Document Title** | Project 4thBrain v04 — Three-Phase Delivery Plan |
-| **Version** | 1.0 |
-| **Date** | 2026-09-03 |
+| **Version** | 1.1 |
+| **Date** | 2026-09-06 |
 | **Status** | Design Phase — Ready to Start Phase 1 |
 
 ---
@@ -49,6 +49,80 @@ Delivered in three phases:
 - **P1.5 — Monitor Component:** Scheduled @Component checks queue sizes every 30 seconds, logs anomalies (long queues, stalled jobs).
 - **P1.6 — REST API Skeleton:** IngestionController, SearchController, StatusController, ChatController, AdminController. All accept payloads, create database records, call Coordinator.startChain(), return Job IDs. No real processing.
 - **P1.7 — Web UI Wiring:** Static HTML at /chat (from v03 or new minimal shell). Form inputs POST to /api/ingest. Dashboard polls /api/status. No actual job progress visible yet (all jobs marked Completed immediately).
+- **P1.8 — Document Copies:** Remove `path` from the document table and the Document entity. Add a `document_copy` table recording each physical location a document occupies, keyed by vault area, with its own created and end dates. Add `source_url` to document for clipped pages. Detail below.
+
+### Story P1.8 — Document Copies
+
+**Problem.** `Document.path` holds one mutable location, overwritten in place by `DatabaseService.move()` (`DatabaseService.java:93,111`). A document that moves through the pipeline — tmp → vault incoming → vault target — leaves no record of where it has been, and the model cannot express a document existing in two places at once or having been removed from disk while its metadata survives.
+
+**Change.** Move location out of `document` into a child table, so each copy has an independent lifespan and is identified by the vault area it occupies.
+
+```sql
+CREATE TABLE IF NOT EXISTS document_copy (
+    copy_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id  INTEGER NOT NULL,
+    path         VARCHAR(512) NOT NULL,
+    area         VARCHAR(32)  NOT NULL,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_date     TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES document(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_copy_document_id ON document_copy(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_copy_area ON document_copy(document_id, area);
+```
+
+`path VARCHAR(512)` is dropped from `document`, and `source_url VARCHAR(2048)` added to it.
+
+`area` takes one of the four vault areas already configured in `application.yaml`: `tmp`, `incoming`, `indexing`, `raw`. Every path the code builds is rooted in one of them, so the column names something that already exists rather than introducing a parallel vocabulary.
+
+A live copy is one with `end_date IS NULL`; a copy is retired by stamping `end_date`, never by deleting the row, matching how `tag` and `document_tag` already soft-delete.
+
+**Invariant.** A document may hold several live copies at once — one per area — but at most one live copy in any single area. This is what makes a lookup by `(document_id, area)` single-valued, and it is the reason the actuators need no tie-breaking rule. A document mid-pipeline can legitimately be live in `raw` (archived original), `incoming` (sanitized) and `indexing` (published) simultaneously.
+
+**Which copy a process acts on.** The relevant copy depends on the stage, so each actuator names the area it works on rather than asking for "the document's path":
+
+| Actuator | Reads | Writes |
+| :---- | :---- | :---- |
+| Ingestor | `tmp` | — |
+| Extractor | `tmp` (the archive) | `tmp` (one copy per extracted file) |
+| Clipper | — (fetches `source_url`) | — |
+| Classifier | — (uses `content`) | — |
+| Indexer | see note | `indexing` |
+
+Note: Indexer reads `tmp` today, because `IngestionController` deposits uploads there and Ingestor routes straight on. It becomes `incoming` once Phase 2's Extractor writes sanitized output to that area (P2.3). The story should implement the area as a value it is given, not a hard-coded literal, so this shift is a configuration change rather than a code change.
+
+**Persistence API.** `DatabaseService.move(Document, String)` is not well-formed once a document has several copies — it cannot know which one is moving. It is replaced by:
+
+- `DocumentCopy findLive(long documentId, String area)`
+- `DocumentCopy addCopy(Document doc, String area, String path)`
+- `void retire(DocumentCopy copy)` — stamps `end_date`
+- `DocumentCopy move(DocumentCopy source, String toArea, String newPath)` — moves the file, retires `source`, adds the new copy
+
+**Scope.**
+
+- `schema.sql` — drop `document.path`, add `document.source_url`, add the table and indexes.
+- `Document.java` — remove the `path` field, its builder use and accessors; add `sourceUrl`.
+- `DocumentCopy.java`, `DocumentCopyRepository.java` — new entity and repository.
+- `DatabaseService.java:85-123` — `move()` rewritten per the API above.
+- `IngestionController.java:101` — build the Document without a path, then `addCopy(doc, "tmp", destPath)`.
+- `Extractor.java:97` — open the archive via `findLive(doc.getId(), "tmp")`; `:147` — each extracted child gets `addCopy(child, "tmp", path)`.
+- `Indexer.java:62` — resolve the source copy by area, then `move(copy, "indexing", destPath)`.
+- `Clipper.java:74` — set `sourceUrl` on the child document; create no copy row, since nothing is on disk yet.
+- `DocumentService.java:61` — `path` is currently patchable through the generic update; it stops being a document field, so this drops.
+- Logging that prints a path (`Classifier.java:43`, `Indexer.java:58,91`, `DocumentService.java:24`) logs the copy it is acting on, or drops the path.
+
+**Acceptance criteria.**
+
+- `document` has no `path` column; nothing in `src/main/java` calls `getPath()`/`setPath()` on `Document`.
+- Uploading a file creates exactly one live `document_copy` row in area `tmp`.
+- Indexing retires the source-area copy and leaves a live copy in `indexing`; the retired row is still readable with its `end_date` set.
+- A clipped URL produces a document with `source_url` set and no copy row until something writes it to disk.
+- No document ever holds two live copies in the same area.
+
+**Migration.** None. `data/fourthbrain.db` does not exist yet, so the schema is created fresh.
+
+Worth recording, though: `schema.sql` is entirely `CREATE TABLE IF NOT EXISTS` under `sql.init.mode: always`, while JPA runs `ddl-auto: validate`. An existing database file therefore will not be upgraded — it will fail startup when validate finds `path` still present and `document_copy` missing. Anyone holding one deletes it rather than expecting an automatic migration.
 
 ---
 
@@ -124,3 +198,4 @@ From v03 Analysis & .v03/documets/design/:
 ## Changelog
 
 - 2026-09-03: Created three-phase delivery plan (Skeleton → Real Logic → Testing). Removed detailed Epic/Story breakdown in favor of pragmatic phasing. Reframed to avoid overengineering.
+- 2026-09-06: Added Story P1.8 (Document Copies) — drop `path` from the document table and entity, add a `document_copy` child table keyed by vault area (`tmp`/`incoming`/`indexing`/`raw`), add `source_url` to document. Decided: several live copies allowed, at most one per area, so each actuator resolves the copy for the area it works on; `DatabaseService.move(Document, String)` replaced by a copy-scoped API. No open decisions remain; ready to implement.

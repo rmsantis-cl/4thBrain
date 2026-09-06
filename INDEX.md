@@ -2,9 +2,9 @@
 name: INDEX
 description: Master index of all artifacts, specs, and foundational documents in 4thBrain v04 Java/Spring Boot
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Code
-  date: 2026-09-03
+  date: 2026-09-06
 ---
 
 # INDEX — 4thBrain v04 Documentation & Artifacts
@@ -14,7 +14,7 @@ Master catalog of all project files, design documents, and source code organized
 | File Name | History |
 |-----------|---------|
 | CLAUDE.md | [2026-09-03] Project overview, three-phase delivery plan (Skeleton → Real Logic → Testing), repository structure, design decisions inherited from v03 |
-| PROJECT_4thBrain.md | [2026-09-03] Phase 1–3 deliverables and stories, key design decisions (Actuators, Coordinator, Monitor, database), mapping to v03 requirements (FR1–FR9, NFR1–NFR12) |
+| PROJECT_4thBrain.md | [2026-09-03] Phase 1–3 deliverables and stories, key design decisions (Actuators, Coordinator, Monitor, database), mapping to v03 requirements (FR1–FR9, NFR1–NFR12)<br>[2026-09-06] Added Story P1.8 (Document Copies): remove `path` from document table/entity, add `document_copy` table keyed by vault area with created_at/end_date, add `source_url` to document; design decided, ready to implement |
 | build.gradle | [2026-09-03] Gradle build config, Spring Boot 3.2.0, JPA, SQLite JDBC 3.44.0.0, Hibernate SQLite dialect |
 | src/main/resources/application.yaml | [2026-09-03] Spring Boot config: port 8080, Ollama URL, vault paths, database location, dev/prod profiles |
 | src/main/resources/schema.sql | [2026-09-03] SQLite DDL schema, 9 tables (inherited from v03) |
