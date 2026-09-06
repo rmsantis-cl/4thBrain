@@ -1,2 +1,9 @@
 .gradle/
 bin/
+build/
+data/
+@logs/
+@batch/
+*.class
+**/*.class
+.classpath

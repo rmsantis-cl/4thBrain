@@ -1,5 +1,8 @@
 {
   "permissions": {
+    "deny": [
+      "Bash"
+    ],
     "allow": [
       "mcp__smart-connections__lookup",
       "Bash(git mv *)",
@@ -75,7 +78,9 @@
       "Bash(npm test *)",
       "Bash(git pull *)",
       "Bash(openssl enc *)",
-      "Bash(head -c 50 ~/.anthropic/api-key && echo \"\")"
+      "Bash(head -c 50 ~/.anthropic/api-key && echo \"\")",
+      "Bash(./gradlew clean *)",
+      "Bash(./gradlew build *)"
     ]
   },
   "enabledMcpjsonServers": [

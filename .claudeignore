@@ -1,0 +1,8 @@
+# .claudeignore
+node_modules/
+target/
+build/
+.gradle/
+dist/
+*.min.js
+package-lock.json
