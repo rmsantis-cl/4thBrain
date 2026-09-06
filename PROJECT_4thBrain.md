@@ -51,6 +51,10 @@ Delivered in three phases:
 - **P1.7 — Web UI Wiring:** Static HTML at /chat (from v03 or new minimal shell). Form inputs POST to /api/ingest. Dashboard polls /api/status. No actual job progress visible yet (all jobs marked Completed immediately).
 - **P1.8 — Document Copies:** Remove `path` from the document table and the Document entity. Add a `document_copy` table recording each physical location a document occupies, keyed by vault area, with its own created and end dates. Add `source_url` to document for clipped pages. Detail below.
 - **P1.9 — Actuator Instantiation & Registration:** Give actuator creation a single owner. Actuators are currently built twice, by component scan and by ActuatorThreadConfig, which crashes registration and aborts startup. Detail below.
+- **P1.10 — Actuator Run Loop:** Make the polling loop block instead of busy-spinning on an NPE, and shut down cleanly. Detail below.
+- **P1.11 — Coordinator Entry Point & Message Addressing:** Settle on one way to start a pipeline. `startChain()` throws, `sendMessage()` builds messages that cannot be logged, and the class mixes static state with instance methods. Detail below.
+- **P1.12 — Status Endpoint Reports Document Counts:** `/api/status` reports actuator queue depths under document-status keys, so every count is permanently zero. Report counts from the database instead. Detail below.
+- **P1.13 — Text and URL Ingestion Endpoints:** Finish `POST /api/ingest/text` and `/url`, which return `{"not":"implemented"}`, and reconcile the 23 controller tests still asserting the removed Job design. Detail below.
 
 ### Story P1.8 — Document Copies
 
@@ -170,7 +174,97 @@ Several instances of one class stay correct under this design because they share
 - No `IllegalThreadStateException` anywhere in the startup log.
 - Every actuator holds a non-null `DocumentService` before its thread processes a message.
 
-**Out of scope, needs its own story.** `Actuator.run()` polls with `getQueue().poll()` and dereferences the result without a null check, so an empty queue throws an NPE, caught by the loop's own `catch (Throwable)`, with no sleep or back-off between iterations — a busy spin costing a core per actuator. `Thread exiting.` is logged inside the loop rather than after it. Fixing instantiation makes the application start; it does not make this loop behave.
+**Out of scope**, tracked as P1.10: the run loop's busy spin.
+
+### Story P1.10 — Actuator Run Loop
+
+**Problem.** `Actuator.run()` burns a core per actuator and cannot stop.
+
+`Actuator.java:68` polls with `getQueue().poll()`, which returns null on an empty queue, and `:69` dereferences it immediately. The NPE is swallowed by the loop's own `catch (Throwable)` at `:95`, and the loop restarts with no sleep or back-off. With five idle actuators that is five cores spinning on exceptions — visible in the boot log as an unbroken stream of `Main loop error`.
+
+Two smaller faults in the same method:
+
+- `Thread exiting.` is logged at `:99`, inside the `while` body rather than after it, so it prints every iteration and means nothing.
+- `running` is private with no way to clear it, so `while (running)` never ends. Threads are daemons, so the JVM exits, but nothing can stop an actuator deliberately, and nothing waits for in-flight work.
+
+**Change.**
+
+1. Replace the queue with a `BlockingQueue` and poll with `take()`, or `poll(timeout)` if the loop needs to observe a stop flag. This is what P1.3 specified — "a dedicated thread running a BlockingQueue.take() loop" — so this is restoring the intended design, not inventing one. An idle actuator then costs nothing.
+2. Guard the message anyway: a null or document-less message is logged and skipped, never dereferenced.
+3. Move `Thread exiting.` after the loop.
+4. Add a `shutdown()` that clears `running` and interrupts the thread, and have the loop treat `InterruptedException` as a stop signal rather than an error. Call it from a Spring lifecycle hook so shutdown is orderly.
+5. Narrow `catch (Throwable)` to `catch (Exception)`, and let the loop continue only for a failure processing one message. A `Throwable` catch also swallows `Error`, which is how a genuine fault currently turns into an infinite log.
+
+Note that `Actuator.map` and `Actuator.registry` (`:27-28`) are dead: every subclass overrides `getQueue()` with its own static queue, so the base map is never read. Remove them as part of this change rather than converting them.
+
+**Acceptance criteria.**
+
+- An idle application shows no `Main loop error` entries and no measurable CPU use from actuator threads.
+- A message with a null document is logged once and skipped; the loop continues.
+- `shutdown()` stops an actuator's thread within a bounded time.
+- `Thread exiting.` appears exactly once per actuator, at shutdown.
+
+### Story P1.11 — Coordinator Entry Point & Message Addressing
+
+**Problem.** There are two ways to start a pipeline. One throws, and the tests use it.
+
+`Coordinator.startChain(long)` (`Coordinator.java:48`) is an unimplemented stub that throws `UnsupportedOperationException`. Nothing in `src/main` calls it — `IngestionController.java:134` uses `sendMessage("Ingestor", doc)` instead — but eleven assertions across `IngestionControllerTest` verify `startChain` was called. So production and tests disagree about the entry point, and the one the tests chose does not work.
+
+`sendMessage` has its own defect. `Coordinator.java:40` builds `new Message(null, get(actuator), doc)`, leaving `from` null. `Message.id()` calls `from.getName()` unguarded, and `Message.toString()` calls `id()`, so logging any message created this way throws an NPE — inside logging, where it is most confusing.
+
+The class is also incoherent in shape: `registry` and `actuator` are static (`:20-21`) while `sendMessage`, `getStatusCounts` and `startChain` are instance methods on a `@Component`. State is shared process-wide but reached through an injected bean, so tests cannot isolate it and a second context would inherit the first one's actuators.
+
+**Change.**
+
+1. Pick one entry point. `startChain(long documentId)` is the name the plan (P1.6) and the tests both use, so implement it and express `sendMessage` in terms of it, or delete `sendMessage` and update the caller. Do not leave both.
+2. `startChain` loads the document, sets its status to the first stage, and enqueues to `Ingestor`. It must fail loudly on an unknown id rather than throwing `UnsupportedOperationException` for every input.
+3. Give `Message` a real sender, or make `from` legitimately optional and null-safe. If a message can originate outside an actuator, `id()` and `toString()` must handle it; `Message.toAddress()` already does exactly this for `document` and is the pattern to follow.
+4. Make the state non-static, or make the whole class static and stop injecting it. Either is defensible; mixing them is what breaks test isolation.
+
+Depends on P1.9, which changes how actuators land in the registry, and is a prerequisite for P1.13, which needs a working entry point before the ingestion tests can pass.
+
+### Story P1.12 — Status Endpoint Reports Document Counts
+
+**Problem.** `/api/status` always returns zeros.
+
+`StatusController.java:20` calls `coordinator.getStatusCounts()` and reads keys `ingesting`, `extracting`, `classifying`, `indexing`, `indexed`. But `getStatusCounts()` returns queue depths keyed by **actuator name** — `Ingestor`, `Extractor`, `Classifier`, `Indexer`. The two key spaces never intersect, so every `getOrDefault(..., 0L)` falls through to its default. The dashboard cannot show progress, and would show queue depth rather than progress even if the keys did line up.
+
+CLAUDE.md is explicit that this endpoint returns document counts per status, and the query already exists: `DocumentRepository.countByStatus`, wrapped by `DatabaseService.countDocumentsByStatus`.
+
+**Change.**
+
+1. Source the counts from the database, counting documents grouped by `status`, not from queue sizes.
+2. Derive the reported stages from the actuators' own `getGerund()`/`getParticiple()` values rather than a hard-coded literal list, so a new actuator appears in the dashboard without editing the controller. The five literals in `StatusController` are already a second, drifting copy of that vocabulary.
+3. Decide what happens to `Coordinator.getStatusCounts()`. Queue depth is genuinely useful, but it is a different measurement: either rename it to say so and expose it separately, or remove it. Leaving a method whose name promises status counts and whose body returns queue sizes is what caused this.
+
+**Acceptance criteria.**
+
+- With documents in known statuses, `/api/status` returns their actual counts.
+- Adding an actuator adds its stage to the response without a controller change.
+- A single `countByStatus` per stage, or one grouped query — not a full table scan per request.
+
+### Story P1.13 — Text and URL Ingestion Endpoints
+
+**Problem.** Two of the three ingestion endpoints do nothing, and their tests assert a design that was removed.
+
+`IngestionController.submitText` and `submitUrl` (`:169`, `:189`) log `Not implemented` and return `{"not":"implemented"}`. The real body of `submitText` is present but commented out, and it calls `databaseService.createDocument("text", text)` — passing a literal as what was then the path column, which P1.8 has since removed.
+
+Meanwhile all 23 tests in `IngestionControllerTest` fail. They assert `$.jobId`, mock `databaseService.createDocument(...)`, and verify `coordinator.startChain(1L)` — the Job-based design CLAUDE.md records as deliberately removed, against endpoints that are deliberately stubbed. The failures are not flaky or incidental; the tests describe a different application.
+
+**Change.**
+
+1. Implement `submitText`: create a Document from the posted text with `content` set and no copy row, since nothing is on disk, then start the chain. It is the one ingestion path with no file behind it, so P1.8's model already covers it.
+2. Implement `submitUrl`: create a Document with `source_url` set, then start the chain so `Clipper` fetches it. `Clipper` already does the fetching and already writes `source_url` on the child document, so this endpoint only needs to create the parent.
+3. Rewrite the tests against the current contract: `id` rather than `jobId`, `databaseService.create(...)` rather than `createDocument(...)`, and whichever entry point P1.11 settles on.
+4. Decide the response shape once and apply it to all three endpoints. `/file` returns `message`, `id`, `fileName`, `mimeType` today; the other two should not invent a different envelope.
+
+Depends on P1.11 for the entry point. Until that is settled, rewriting the tests would only move them onto another contract that is about to change.
+
+**Acceptance criteria.**
+
+- `POST /api/ingest/text` and `/url` create a Document, start the pipeline, and return the agreed shape.
+- A URL submission produces a document with `source_url` set and no `document_copy` row.
+- `gradle test` passes, with no test asserting `jobId` or any other part of the Job design.
 
 ---
 
@@ -249,3 +343,4 @@ From v03 Analysis & .v03/documets/design/:
 - 2026-09-06: Added Story P1.8 (Document Copies) — drop `path` from the document table and entity, add a `document_copy` child table keyed by vault area (`tmp`/`incoming`/`indexing`/`raw`), add `source_url` to document. Decided: several live copies allowed, at most one per area, so each actuator resolves the copy for the area it works on; `DatabaseService.move(Document, String)` replaced by a copy-scoped API. No open decisions remain; ready to implement.
 - 2026-09-06: P1.8 implemented. Schema validated against a real SQLite database. Two pre-existing defects fixed in passing because they blocked verification: a duplicate orphan `com.fourthbrain.repo.DocumentRepository` that broke bean registration, and `Long` id columns that failed Hibernate validation (SQLite needs `INTEGER` for a rowid alias, not `BIGINT`). `Coordinator` annotated `@Component` so it can be injected. Still open, outside this story: actuators are instantiated twice (component scan and `ActuatorThreadConfig`), so `Coordinator.register()` NPEs and startup does not complete. Now tracked as P1.9.
 - 2026-09-06: Added Story P1.9 (Actuator Instantiation & Registration) — `ActuatorThreadConfig` becomes the sole creator, `@Component` dropped from the five actuator classes, registration and thread start move out of the constructor to after injection, and the Coordinator routing map is keyed by class simple name rather than thread name. The run loop's busy-spin NPE is recorded as out of scope and still needs a story of its own.
+- 2026-09-06: Added Stories P1.10–P1.13 from a survey of what still blocks a working Phase 1. P1.10 run loop (busy-spin NPE, no shutdown). P1.11 Coordinator entry point (`startChain` throws and is what the tests call, while production uses `sendMessage`, which builds messages that NPE when logged). P1.12 status endpoint (reads document-status keys from a map of actuator queue depths, so it always returns zeros). P1.13 text and URL ingestion endpoints plus the 23 stale controller tests. Order: P1.9 → P1.10 → P1.11 → P1.12/P1.13. Deliberately not storied: the Search, Chat, Admin and UI controllers are intended Phase 1 stubs and are covered by Phase 2; `SmartConnectionsMonitor` is an empty class, which is the existing P1.5 left unimplemented, not a new gap.
