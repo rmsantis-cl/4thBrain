@@ -7,11 +7,13 @@ import java.time.LocalDateTime;
 @Table(name = "document_tag")
 public class DocumentTag {
 
+    // See Document: SQLite requires INTEGER for a rowid alias, not BIGINT.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "INTEGER")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "INTEGER")
     private Long documentId;
 
     @Column(nullable = false)

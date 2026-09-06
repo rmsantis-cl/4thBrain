@@ -2,6 +2,7 @@ package com.fourthbrain.web.controller;
 
 import com.fourthbrain.actuators.Coordinator;
 import com.fourthbrain.persistence.DatabaseService;
+import com.fourthbrain.persistence.VaultArea;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -55,7 +56,11 @@ public class IngestionController {
         }
     }
 
-    private static Document processUploadedFile(MultipartFile file, String vaultTmpPath) throws IOException {
+    /** An uploaded file: the document record, and where the bytes landed. */
+    private record Upload(Document document, Path destPath) {
+    }
+
+    private static Upload processUploadedFile(MultipartFile file, String vaultTmpPath) throws IOException {
         Path tmp = Paths.get(vaultTmpPath);
         if (!Files.exists(tmp)) {
             Files.createDirectories(tmp);
@@ -96,9 +101,9 @@ public class IngestionController {
         Path destPath = tmp.resolve(fileName);
         Files.copy(file.getInputStream(), destPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Create and return Document object with builder
-        return Document.builder()
-            .path(destPath.toString())
+        // Create and return Document object with builder. Its location is
+        // recorded as a document_copy once the record has an id (P1.8).
+        Document doc = Document.builder()
             .name(fileName)
             .extension(extension)
             .mimeType(mimeType)
@@ -107,6 +112,8 @@ public class IngestionController {
             .createdAt(java.time.LocalDateTime.now())
             .updatedAt(java.time.LocalDateTime.now())
             .build();
+
+        return new Upload(doc, destPath);
     }
     @PostMapping("/file")
     public Map<String, Object> uploadFile(@RequestParam("file") MultipartFile file,
@@ -114,12 +121,14 @@ public class IngestionController {
         log.info("[IngestionController] uploadFile: " + file.getOriginalFilename() + ", tags=" + tags);
 
         // Process the uploaded file and get Document object
-        Document doc = processUploadedFile(file, vaultTmpPath);
-        log.info("File transferred to: {}", doc.getPath());
+        Upload upload = processUploadedFile(file, vaultTmpPath);
+        Document doc = upload.document();
+        log.info("File transferred to: {}", upload.destPath());
 
-        // Save to database
+        // Save to database, then record where the file landed
         Document savedDoc = databaseService.create(doc);
-        log.info("Saved record on ",savedDoc.id());
+        databaseService.addCopy(savedDoc, VaultArea.TMP, upload.destPath().toString());
+        log.info("Saved record on {}", savedDoc.id());
 
         // Start pipeline
         coordinator.sendMessage("Ingestor",savedDoc);

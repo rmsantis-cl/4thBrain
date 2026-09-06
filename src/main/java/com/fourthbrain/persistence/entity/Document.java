@@ -11,15 +11,15 @@ import lombok.*;
 @AllArgsConstructor 
 public class Document {
 
+    // SQLite only treats a column as a rowid alias when it is declared
+    // exactly INTEGER PRIMARY KEY, so the id columns cannot be BIGINT.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "INTEGER")
     private Long id;
 
-    @Column
+    @Column(columnDefinition = "INTEGER")
     private Long parentId;
-
-    @Column(nullable = false)
-    private String path;
 
     @Column
     private String name;
@@ -32,6 +32,10 @@ public class Document {
 
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    /** Where clipped content was fetched from. Not a file location. */
+    @Column
+    private String sourceUrl;
 
     @Column
     private String topic;
@@ -51,9 +55,9 @@ public class Document {
         this.status = "New";
     }
 
-    public Document(String path, String content) {
+    public Document(String name, String content) {
         this();
-        this.path = path;
+        this.name = name;
         this.content = content;
     }
 

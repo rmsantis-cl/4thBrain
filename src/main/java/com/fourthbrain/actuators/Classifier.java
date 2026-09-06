@@ -40,7 +40,7 @@ public class Classifier extends Actuator {
             return null;
         }
 
-        log.info("Classifying document: id={}, path={}", doc.getId(), doc.getPath());
+        log.info("Classifying document: id={}, name={}", doc.getId(), doc.getName());
 
         try {
             // TODO: Implement actual classification logic

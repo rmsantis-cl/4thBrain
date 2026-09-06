@@ -42,7 +42,6 @@ public class IngestionControllerTest {
     void setUp() {
         testDocument = Document.builder()
                 .id(1L)
-                .path("/tmp/vault/test-doc")
                 .name("test-doc.txt")
                 .extension(".txt")
                 .mimeType("text/plain")

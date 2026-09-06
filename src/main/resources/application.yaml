@@ -41,6 +41,10 @@ vault:
   indexing : ${vault.path}/indexing
   raw : ${vault.path}/raw
   tmp:  ./tmp
+  indexer:
+    # Area the Indexer takes its source copy from. Becomes "incoming"
+    # once Extractor writes sanitized output there (P2.3).
+    source-area: tmp
   
 
 logging:

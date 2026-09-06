@@ -68,10 +68,12 @@ public class Clipper extends Actuator {
                 return null;
             }
 
-            // Create a new document with the fetched content
+            // Create a new document with the fetched content. No copy row:
+            // nothing is on disk yet, and the URL is provenance, not a
+            // location, so it goes in source_url (P1.8).
             Document childDoc = Document.builder()
                 .parentId(doc.getId())
-                .path(content) // Store the URL as path
+                .sourceUrl(content)
                 .name("clipped_" + doc.getName())
                 .extension(".html")
                 .mimeType("text/html")

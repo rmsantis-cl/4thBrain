@@ -17,7 +17,10 @@ Master catalog of all project files, design documents, and source code organized
 | PROJECT_4thBrain.md | [2026-09-03] Phase 1–3 deliverables and stories, key design decisions (Actuators, Coordinator, Monitor, database), mapping to v03 requirements (FR1–FR9, NFR1–NFR12)<br>[2026-09-06] Added Story P1.8 (Document Copies): remove `path` from document table/entity, add `document_copy` table keyed by vault area with created_at/end_date, add `source_url` to document; design decided, ready to implement |
 | build.gradle | [2026-09-03] Gradle build config, Spring Boot 3.2.0, JPA, SQLite JDBC 3.44.0.0, Hibernate SQLite dialect |
 | src/main/resources/application.yaml | [2026-09-03] Spring Boot config: port 8080, Ollama URL, vault paths, database location, dev/prod profiles |
-| src/main/resources/schema.sql | [2026-09-03] SQLite DDL schema, 9 tables (inherited from v03) |
+| src/main/resources/schema.sql | [2026-09-03] SQLite DDL schema, 9 tables (inherited from v03)<br>[2026-09-06] Story P1.8: dropped `document.path`, added `document.source_url`, added `document_copy` table and its two indexes |
+| src/main/java/com/fourthbrain/persistence/VaultArea.java | [2026-09-06] Story P1.8: vault area constants (tmp, incoming, indexing, raw) matching the paths configured under `vault:` in application.yaml |
+| src/main/java/com/fourthbrain/persistence/entity/DocumentCopy.java | [2026-09-06] Story P1.8: JPA entity for document_copy, one row per physical location a document occupies, soft-deleted via endDate |
+| src/main/java/com/fourthbrain/persistence/repository/DocumentCopyRepository.java | [2026-09-06] Story P1.8: JpaRepository<DocumentCopy, Long>, queries findLive(docId, area), findLive(docId), findHistory(docId) |
 | src/main/java/com/fourthbrain/actuators/Actuator.java | [2026-09-03] Base Actuator interface, phase 1 skeleton |
 | src/main/java/com/fourthbrain/actuators/ActuatorRegistry.java | [2026-09-03] ActuatorRegistry bean, map actuator names to bean instances for Coordinator |
 | src/main/java/com/fourthbrain/actuators/IngestorActuator.java | [2026-09-03] Ingestor actuator bean, phase 1 stub |

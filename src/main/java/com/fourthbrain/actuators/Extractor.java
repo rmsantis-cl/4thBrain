@@ -2,7 +2,9 @@ package com.fourthbrain.actuators;
 
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.DatabaseService;
+import com.fourthbrain.persistence.VaultArea;
 import com.fourthbrain.persistence.entity.Document;
+import com.fourthbrain.persistence.entity.DocumentCopy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,8 +61,7 @@ public class Extractor extends Actuator {
             return null;
         }
 
-        log.info("Extracting document: id={}, path={}, mimeType={}",
-            doc.getId(), doc.getPath(), doc.getMimeType());
+        log.info("Extracting document: id={}, mimeType={}", doc.getId(), doc.getMimeType());
 
         try {
             // Check if the document is a ZIP file
@@ -69,8 +70,15 @@ public class Extractor extends Actuator {
                 return null;
             }
 
+            // The archive is the copy sitting in tmp
+            DocumentCopy archive = databaseService.findLive(doc.getId(), VaultArea.TMP);
+            if (archive == null) {
+                log.warn("No live copy in area {} for document: id={}", VaultArea.TMP, doc.getId());
+                return null;
+            }
+
             // Extract the ZIP file
-            extractZipAndCreateDocuments(doc);
+            extractZipAndCreateDocuments(doc, archive);
 
             // Return null - extraction is complete
             return null;
@@ -93,8 +101,8 @@ public class Extractor extends Actuator {
         return false;
     }
 
-    private void extractZipAndCreateDocuments(Document zipDoc) throws IOException {
-        Path zipPath = Paths.get(zipDoc.getPath());
+    private void extractZipAndCreateDocuments(Document zipDoc, DocumentCopy archive) throws IOException {
+        Path zipPath = Paths.get(archive.getPath());
 
         if (!Files.exists(zipPath)) {
             log.warn("ZIP file does not exist: {}", zipPath);
@@ -123,8 +131,9 @@ public class Extractor extends Actuator {
                 Document extractedDoc = createDocumentForExtractedFile(
                     zipDoc, extractedFilePath, entry.getName());
 
-                // Save to database
+                // Save to database, then record where the extracted file landed
                 Document savedDoc = databaseService.create(extractedDoc);
+                databaseService.addCopy(savedDoc, VaultArea.TMP, extractedFilePath.toString());
                 log.info("Extracted document created: id={}, parentId={}, name={}",
                     savedDoc.getId(), savedDoc.getParentId(), savedDoc.getName());
 
@@ -144,7 +153,6 @@ public class Extractor extends Actuator {
 
         return Document.builder()
             .parentId(zipDoc.getId())
-            .path(filePath.toString())
             .name(fileName)
             .extension(extension)
             .mimeType(mimeType)

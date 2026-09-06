@@ -1,6 +1,7 @@
 package com.fourthbrain.persistence;
 
 import com.fourthbrain.persistence.entity.Document;
+import com.fourthbrain.persistence.entity.DocumentCopy;
 import com.fourthbrain.persistence.entity.Tag;
 import com.fourthbrain.persistence.entity.DocumentTag;
 import com.fourthbrain.persistence.repository.*;
@@ -30,19 +31,22 @@ public class DatabaseService {
     private final DocumentRepository documentRepository;
     private final TagRepository tagRepository;
     private final DocumentTagRepository documentTagRepository;
+    private final DocumentCopyRepository documentCopyRepository;
 
     public DatabaseService(DocumentRepository documentRepository,
                           TagRepository tagRepository,
-                          DocumentTagRepository documentTagRepository) {
+                          DocumentTagRepository documentTagRepository,
+                          DocumentCopyRepository documentCopyRepository) {
         this.documentRepository = documentRepository;
         this.tagRepository = tagRepository;
         this.documentTagRepository = documentTagRepository;
+        this.documentCopyRepository = documentCopyRepository;
     }
 
     // ---- Document operations ----
 
-    public synchronized Document createDocument(String path, String content) {
-        Document doc = new Document(path, content);
+    public synchronized Document createDocument(String name, String content) {
+        Document doc = new Document(name, content);
         return documentRepository.save(doc);
     }
 
@@ -82,40 +86,120 @@ public class DatabaseService {
         return documentRepository.countByStatus(status);
     }
 
-    public synchronized Document move(Document doc, String newPath) throws IOException {
-        if (doc == null) {
-            throw new IllegalArgumentException("Document cannot be null");
+    // ---- Document copy operations (Story P1.8) ----
+
+    /**
+     * The live copy of a document in one area, or null if it has none there.
+     */
+    public DocumentCopy findLive(long documentId, String area) {
+        return documentCopyRepository.findLive(documentId, area).orElse(null);
+    }
+
+    /** Every live copy of a document, across areas. */
+    public List<DocumentCopy> findLive(long documentId) {
+        return documentCopyRepository.findLive(documentId);
+    }
+
+    /** Full location history, retired copies included. */
+    public List<DocumentCopy> findCopyHistory(long documentId) {
+        return documentCopyRepository.findHistory(documentId);
+    }
+
+    public synchronized DocumentCopy addCopy(Document doc, String area, String path) {
+        if (doc == null || doc.getId() == null) {
+            throw new IllegalArgumentException("Document must be persisted before it can hold a copy");
+        }
+        return addCopy(doc.getId(), area, path);
+    }
+
+    /**
+     * Records a copy of a document in an area. If that area already holds a
+     * live copy, it is retired first: a file was overwritten at that location,
+     * so the old row no longer describes anything on disk. This is what keeps
+     * the P1.8 invariant of one live copy per area.
+     */
+    public synchronized DocumentCopy addCopy(Long documentId, String area, String path) {
+        if (documentId == null) {
+            throw new IllegalArgumentException("Document id cannot be null");
+        }
+        if (area == null || area.isBlank()) {
+            throw new IllegalArgumentException("Area cannot be null or blank");
+        }
+        if (path == null || path.isBlank()) {
+            throw new IllegalArgumentException("Path cannot be null or blank");
+        }
+
+        documentCopyRepository.findLive(documentId, area).ifPresent(existing -> {
+            log.debug("Area {} already holds a live copy of doc={}, retiring copy={}",
+                    area, documentId, existing.getCopyId());
+            retire(existing);
+        });
+
+        DocumentCopy copy = DocumentCopy.builder()
+                .documentId(documentId)
+                .area(area)
+                .path(path)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        DocumentCopy saved = documentCopyRepository.save(copy);
+        log.info("Copy added: doc={} area={} copy={} path={}", documentId, area, saved.getCopyId(), path);
+        return saved;
+    }
+
+    /** Marks a copy as no longer present on disk. The row is kept. */
+    public synchronized DocumentCopy retire(DocumentCopy copy) {
+        if (copy == null) {
+            throw new IllegalArgumentException("Copy cannot be null");
+        }
+        if (!copy.isLive()) {
+            log.debug("Copy already retired: copy={}", copy.getCopyId());
+            return copy;
+        }
+        copy.setEndDate(LocalDateTime.now());
+        DocumentCopy saved = documentCopyRepository.save(copy);
+        log.info("Copy retired: doc={} area={} copy={}",
+                copy.getDocumentId(), copy.getArea(), copy.getCopyId());
+        return saved;
+    }
+
+    /**
+     * Moves the file behind a copy into another area: the file is relocated,
+     * the source copy retired, and a new copy recorded at the destination.
+     */
+    public synchronized DocumentCopy move(DocumentCopy source, String toArea, String newPath) throws IOException {
+        if (source == null) {
+            throw new IllegalArgumentException("Source copy cannot be null");
         }
         if (newPath == null || newPath.isBlank()) {
             throw new IllegalArgumentException("New path cannot be null or blank");
         }
 
-        String currentPath = doc.getPath();
-        if (currentPath == null || currentPath.isBlank()) {
-            throw new IllegalArgumentException("Document has no current path");
-        }
+        String currentPath = source.getPath();
 
         try {
-            // Move the file from current path to new path
-            Path source = Paths.get(currentPath);
-            Path destination = Paths.get(newPath);
+            Path from = Paths.get(currentPath);
+            Path to = Paths.get(newPath);
 
-            if (Files.exists(source)) {
-                Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+            if (Files.exists(from)) {
+                if (to.getParent() != null) {
+                    Files.createDirectories(to.getParent());
+                }
+                Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
                 log.info("File moved from {} to {}", currentPath, newPath);
             } else {
                 log.warn("Source file does not exist: {}", currentPath);
             }
 
-            // Update document with new path and timestamp
-            doc.setPath(newPath);
-            doc.setUpdatedAt(LocalDateTime.now());
+            retire(source);
+            DocumentCopy moved = addCopy(source.getDocumentId(), toArea, newPath);
 
-            // Save to database
-            Document updated = documentRepository.save(doc);
-            log.info("Document updated with new path: id={}, newPath={}", doc.getId(), newPath);
+            documentRepository.findById(source.getDocumentId()).ifPresent(doc -> {
+                doc.setUpdatedAt(LocalDateTime.now());
+                documentRepository.save(doc);
+            });
 
-            return updated;
+            return moved;
         } catch (IOException e) {
             log.error("Error moving file from {} to {}: {}", currentPath, newPath, e.getMessage());
             throw e;

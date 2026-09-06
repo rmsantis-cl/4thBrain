@@ -120,7 +120,9 @@ Note: Indexer reads `tmp` today, because `IngestionController` deposits uploads 
 - A clipped URL produces a document with `source_url` set and no copy row until something writes it to disk.
 - No document ever holds two live copies in the same area.
 
-**Migration.** None. `data/fourthbrain.db` does not exist yet, so the schema is created fresh.
+**Status: implemented 2026-09-06.** Verified by booting the application against a freshly created SQLite database: Hibernate `ddl-auto: validate` passes, which checks every mapped table and column, and `document_copy`, `source_url`, `area`, `end_date` and `copy_id` are all present in the database file. Startup does not complete, but for a defect outside this story — `Coordinator.register()` throws an NPE because each actuator is instantiated twice, once by component scan and once by `ActuatorThreadConfig`.
+
+**Migration.** None. `data/fourthbrain.db` does not exist yet, so the schema is created fresh. The `data/` directory has to exist before first run; SQLite will not create it.
 
 Worth recording, though: `schema.sql` is entirely `CREATE TABLE IF NOT EXISTS` under `sql.init.mode: always`, while JPA runs `ddl-auto: validate`. An existing database file therefore will not be upgraded — it will fail startup when validate finds `path` still present and `document_copy` missing. Anyone holding one deletes it rather than expecting an automatic migration.
 
@@ -199,3 +201,4 @@ From v03 Analysis & .v03/documets/design/:
 
 - 2026-09-03: Created three-phase delivery plan (Skeleton → Real Logic → Testing). Removed detailed Epic/Story breakdown in favor of pragmatic phasing. Reframed to avoid overengineering.
 - 2026-09-06: Added Story P1.8 (Document Copies) — drop `path` from the document table and entity, add a `document_copy` child table keyed by vault area (`tmp`/`incoming`/`indexing`/`raw`), add `source_url` to document. Decided: several live copies allowed, at most one per area, so each actuator resolves the copy for the area it works on; `DatabaseService.move(Document, String)` replaced by a copy-scoped API. No open decisions remain; ready to implement.
+- 2026-09-06: P1.8 implemented. Schema validated against a real SQLite database. Two pre-existing defects fixed in passing because they blocked verification: a duplicate orphan `com.fourthbrain.repo.DocumentRepository` that broke bean registration, and `Long` id columns that failed Hibernate validation (SQLite needs `INTEGER` for a rowid alias, not `BIGINT`). `Coordinator` annotated `@Component` so it can be injected. Still open, outside this story: actuators are instantiated twice (component scan and `ActuatorThreadConfig`), so `Coordinator.register()` NPEs and startup does not complete.

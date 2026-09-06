@@ -17,11 +17,11 @@ public class DocumentService {
     private DocumentRepository documentRepository;
 
     // Create
-    public Document createDocument(String path, String content) {
-        Document document = new Document(path, content);
+    public Document createDocument(String name, String content) {
+        Document document = new Document(name, content);
         document.setUpdatedAt(LocalDateTime.now());
         Document saved = documentRepository.save(document);
-        log.info("Document created: id={}, path={}", saved.getId(), saved.getPath());
+        log.info("Document created: id={}, name={}", saved.getId(), saved.getName());
         return saved;
     }
 
@@ -58,11 +58,11 @@ public class DocumentService {
         Optional<Document> existing = documentRepository.findById(id);
         if (existing.isPresent()) {
             Document document = existing.get();
-            if (updates.getPath() != null) document.setPath(updates.getPath());
             if (updates.getName() != null) document.setName(updates.getName());
             if (updates.getExtension() != null) document.setExtension(updates.getExtension());
             if (updates.getMimeType() != null) document.setMimeType(updates.getMimeType());
             if (updates.getContent() != null) document.setContent(updates.getContent());
+            if (updates.getSourceUrl() != null) document.setSourceUrl(updates.getSourceUrl());
             if (updates.getTopic() != null) document.setTopic(updates.getTopic());
             if (updates.getStatus() != null) document.setStatus(updates.getStatus());
             document.setUpdatedAt(LocalDateTime.now());

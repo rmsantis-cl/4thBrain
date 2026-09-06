@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.entity.Document;
 
 /**
  * Coordinator
  */
+@Component
 public class Coordinator {
 
     private static Map<Class<?>, List<Actuator>> registry = new HashMap<>();
