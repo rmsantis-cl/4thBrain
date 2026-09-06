@@ -31,82 +31,73 @@ public class ActuatorThreadConfig {
 
     @Bean
     @Scope("prototype")
-    public IngestorActuator ingestorActuator() {
-        return new IngestorActuator();
+    public Ingestor ingestor() {
+        return new Ingestor();
     }
 
     @Bean
     @Scope("prototype")
-    public TextExtractorActuator textExtractorActuator() {
-        return new TextExtractorActuator();
+    public Extractor extractor() {
+        return new Extractor();
     }
 
     @Bean
     @Scope("prototype")
-    public ClassifierActuator classifierActuator() {
-        return new ClassifierActuator();
+    public Classifier classifier() {
+        return new Classifier();
     }
 
     @Bean
     @Scope("prototype")
-    public IndexerActuator indexerActuator() {
-        return new IndexerActuator();
+    public Indexer indexer() {
+        return new Indexer();
     }
 
     @Bean
-    public IngestorActuator[] ingestorActuators(ObjectFactory<IngestorActuator> factory) {
-        IngestorActuator[] threads = new IngestorActuator[ingestorThreads];
+    public Ingestor[] ingestorActuators(ObjectFactory<Ingestor> factory) {
+        Ingestor[] threads = new Ingestor[ingestorThreads];
         for (int i = 0; i < ingestorThreads; i++) {
             threads[i] = factory.getObject();
             threads[i].setName("Ingestor-" + i);
-            threads[i].init();
+            threads[i].start();
         }
         log.info("Created {} Ingestor threads", ingestorThreads);
         return threads;
     }
 
     @Bean
-    public TextExtractorActuator[] textExtractorActuators(ObjectFactory<TextExtractorActuator> factory) {
-        TextExtractorActuator[] threads = new TextExtractorActuator[textExtractorThreads];
+    public Extractor[] extractorActuators(ObjectFactory<Extractor> factory) {
+        Extractor[] threads = new Extractor[textExtractorThreads];
         for (int i = 0; i < textExtractorThreads; i++) {
             threads[i] = factory.getObject();
-            threads[i].setName("TextExtractor-" + i);
-            threads[i].init();
+            threads[i].setName("Extractor-" + i);
+            threads[i].start();
         }
-        log.info("Created {} TextExtractor threads", textExtractorThreads);
+        log.info("Created {} Extractor threads", textExtractorThreads);
         return threads;
     }
 
     @Bean
-    public ClassifierActuator[] classifierActuators(ObjectFactory<ClassifierActuator> factory) {
-        ClassifierActuator[] threads = new ClassifierActuator[classifierThreads];
+    public Classifier[] classifierActuators(ObjectFactory<Classifier> factory) {
+        Classifier[] threads = new Classifier[classifierThreads];
         for (int i = 0; i < classifierThreads; i++) {
             threads[i] = factory.getObject();
             threads[i].setName("Classifier-" + i);
-            threads[i].init();
+            threads[i].start();
         }
         log.info("Created {} Classifier threads", classifierThreads);
         return threads;
     }
 
     @Bean
-    public IndexerActuator[] indexerActuators(ObjectFactory<IndexerActuator> factory) {
-        IndexerActuator[] threads = new IndexerActuator[indexerThreads];
+    public Indexer[] indexerActuators(ObjectFactory<Indexer> factory) {
+        Indexer[] threads = new Indexer[indexerThreads];
         for (int i = 0; i < indexerThreads; i++) {
             threads[i] = factory.getObject();
             threads[i].setName("Indexer-" + i);
-            threads[i].init();
+            threads[i].start();
         }
         log.info("Created {} Indexer threads", indexerThreads);
         return threads;
-    }
-
-    @Bean
-    public BriefingActuator briefingActuator(ObjectFactory<BriefingActuator> factory) {
-        BriefingActuator actuator = factory.getObject();
-        actuator.setName("Briefing");
-        actuator.init();
-        log.info("Created Briefing (scheduled)");
-        return actuator;
     }
 }

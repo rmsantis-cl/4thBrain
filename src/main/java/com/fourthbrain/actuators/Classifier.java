@@ -18,23 +18,9 @@ public class Classifier extends Actuator {
         log.info("Classifier initialized");
     }
 
-    @Override
-    protected Queue<Message> getQueue() {
-        return classifierQueue;
-    }
 
     @Override
-    public String getGerund() {
-        return "classifying";
-    }
-
-    @Override
-    public String getParticiple() {
-        return "classified";
-    }
-
-    @Override
-    public Actuator doTheThing(Message message) {
+    public String doTheThing(Message message) {
         if (message == null) {
             log.warn("Received null message");
             return null;

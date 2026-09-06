@@ -1,18 +1,21 @@
 package com.fourthbrain.actuators;
 
-import com.fourthbrain.persistence.DatabaseService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fourthbrain.messaging.Message;
+import com.fourthbrain.persistence.entity.Document;
+import com.fourthbrain.service.DocumentService;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import lombok.*;
-import lombok.AccessLevel;
 
+public abstract class Actuator extends Thread {
 
-@Data
- public abstract class Actuator extends Thread {
-
-
-    DocumentService service;
-    private static final ThreadGroup threadGroup = new ThreadGroup("Actuator");
+    private DocumentService service;
     private String ing;
     private String ed;
     private String name;
@@ -22,34 +25,36 @@ import lombok.AccessLevel;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private boolean running;
-  private final  Queue<Message> queue = new ConcurrentHashMap<>();
+
+    private final Map<Class<?>, Queue<Message>> map = new HashMap<>();
+    private final Map<Class<?>, Actuator> registry = new HashMap<>();
 
     public Actuator() {
-        super(getClass().getSimpleName());
-        log = LoggerFactory.getLogger(getClass());
+        super();
+        Coordinator.register(this);
         name = getClass().getSimpleName();
+        setName(name);
+        log = LoggerFactory.getLogger(getClass());
         setDaemon(true);
         log = LoggerFactory.getLogger(getClass());
         log.info("{}  started", name);
-        running=true;
-        ing=name.replace("er$","ing");
-        ed =name.replace("er$","ed");
-        log.info("{}   [ {} -> {} ] started", name,ing,ed);
+        running = true;
+        ing = name.replace("er$", "ing");
+        ed = name.replace("er$", "ed");
+        log.info("{}   [ {} -> {} ] started", name, ing, ed);
         start();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info    ("Shutdown hook triggered");
-            shutdown();
-        }));
+
     }
+
     protected Queue<Message> getQueue() {
-        if ( !queueMap.containsKey(getClass()) ) {
-            synchronized(queueMap) {
-                if ( !queueMap.containsKey(getClass()) ) {
-                queueMap.put(getClass(), new ConcurrentLinkedQueue<>());
+        if (!map.containsKey(getClass())) {
+            synchronized (map) {
+                if (!map.containsKey(getClass())) {
+                    map.put(getClass(), new ConcurrentLinkedQueue<>());
                 }
             }
         }
-        return queueMap.get(getClass());
+        return map.get(getClass());
     }
 
     @Override
@@ -67,97 +72,33 @@ import lombok.AccessLevel;
                     log.debug("queue ->  doc={} status={}", d.id(), d.getStatus());
                 }
                 String oldStatus = d.getStatus();
-                docService.setStatus(d, ing);
+                service.setStatus(d, ing);
                 log.info("processing doc={} {}->{}", d.id(), oldStatus, ing);
-                doThing(d);
-                docService.setStatus(d, ed);
+                String n = doTheThing(d);
+                service.setStatus(d, ed);
                 log.info("completed doc={} {}->{}", d.id(), ing, ed);
-                Actuantor follow = getNextActuator(d);
-                if (follow) {
+                if (n != null) {
+                    Actuator follow = Coordinator.get(n);
                     Message next = Message.builder()
-                        .document(d)
-                        .from(this)
-                        .to(nextActuator)
-                        .build();
-                    log.debug("message {}:  {} is ready for you", follow.name(), d.id());
-                    follow.send(next);
+                            .document(d)
+                            .from(this)
+                            .to(follow)
+                            .build();
+                    log.debug("message {}:  {} is ready for you", follow.getName(), d.id());
+                    follow.getQueue().offer(next);
                 } else {
                     log.info("no next actuator for doc={}", d.id());
                 }
-
-
 
             } catch (Throwable t) {
                 log.error("Main loop error", t);
             }
 
-
-
-
-
-        log.info("Thread exiting.");
-    }
-
-    /**
-     * Enqueue a docId for processing.
-     * Called by previous actuator or entry point (REST endpoint, file watcher).
-     */
-    public void message(Integer docId) {
-        getQueue().offer(docId);
-        log.debug("Enqueued docId={} (queue size: {})", docId, getQueue().size());
-    }
-
-    /**
-     * Update document status in database.
-     */
-    private void updateStatus(Integer docId, String status) {
-        databaseService.updateDocumentStatus(docId.longValue(), status);
-    }
-
-    /**
-     * Stop the actuator gracefully.
-     */
-    public void stopActuator() {
-        running = false;
-        try {
-            join(5000); // Wait up to 5 seconds
-            if (isAlive()) {
-                log.error("Did not stop gracefully.");
-            }
-        } catch (InterruptedException e) {
-            log.error("Error stopping: {}", e.getMessage());
+            log.info("Thread exiting.");
         }
     }
 
-    /**
-     * Get the static queue for this actuator class.
-     * Each concrete subclass defines its own static Queue<Integer>.
-     * Multiple instances share the same queue (horizontal scaling).
-     */
-    protected abstract java.util.Queue<Integer> getQueue();
+    public abstract String doTheThing(Document document);
 
-    /**
-     * Get the gerund (present participle) status.
-     * E.g., "ingesting", "extracting", "classifying"
-     */
-    public abstract String getGerund();
 
-    /**
-     * Get the participle (past participle) status.
-     * E.g., "ingested", "extracted", "classified"
-     */
-    public abstract String getParticiple();
-
-    /**
-     * Process a docId and return the next actuator in the chain.
-     * Return null if this is the final stage.
-     */
-    public abstract String doTheThing(Message);
-
-    /**
-     * Get queue size (for monitoring).
-     */
-    public int getQueueSize() {
-        return getQueue().size();
-    }
 }

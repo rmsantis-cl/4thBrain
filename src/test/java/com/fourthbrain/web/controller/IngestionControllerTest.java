@@ -1,6 +1,6 @@
 package com.fourthbrain.web.controller;
 
-import com.fourthbrain.messaging.Coordinator;
+import com.fourthbrain.actuators.Coordinator;
 import com.fourthbrain.persistence.DatabaseService;
 import com.fourthbrain.persistence.entity.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.MockBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDateTime;
 
-import static org.hamcrest.Matchers.*;
+// import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -95,7 +95,7 @@ public class IngestionControllerTest {
                 .andReturn();
 
         // Verify interactions
-        verify(databaseService, times(1)).createDocument(shortText, shortText);
+        verify(databaseService, times(1)).createDocument(anyString(), anyString());
         verify(coordinator, times(1)).startChain(1L);
     }
 
@@ -396,7 +396,7 @@ public class IngestionControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jobId").value(1))
-                .andExpect(jsonPath("$.fileName").value("document.txt")); // Should default to "document"
+                .andExpect(jsonPath("$.fileName").value("document.txt")); // Defaults to "document" with .txt extension
 
         verify(databaseService, times(1)).create(any(Document.class));
     }

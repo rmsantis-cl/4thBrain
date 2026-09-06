@@ -7,8 +7,8 @@ import lombok.*;
 @Entity
 @Table(name = "document")
 @Data
-@NoArgsConstructor
 @Builder
+@AllArgsConstructor 
 public class Document {
 
     @Id
@@ -55,6 +55,10 @@ public class Document {
         this();
         this.path = path;
         this.content = content;
+    }
+
+    public Long id() {
+        return id;
     }
 
 }

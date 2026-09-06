@@ -1,6 +1,12 @@
 package com.fourthbrain.messaging;
 
+import java.util.Date;
+
+import com.fourthbrain.actuators.Actuator;
 import com.fourthbrain.persistence.entity.Document;
+
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Simple message passed between actuators.
@@ -9,10 +15,13 @@ import com.fourthbrain.persistence.entity.Document;
  */
 
 @Slf4j
-@Builder
+@Data
+@Builder 
+@AllArgsConstructor 
 public class Message {
 
-    private Document payload;
+
+    private Document document;
     private Actuator from;
     private Actuator to;
     private Date createdAt;
@@ -20,9 +29,10 @@ public class Message {
 
 
     public Message(Actuator from, Actuator to, Document payload) {
-        this.from = from;
-        this.to = to;
-        this.payload = payload;
+        setFrom(from);
+        setTo(to);
+        setDocument(payload);
+
         this.createdAt = new Date();
         log.info("Created message from {} to {}: {}", from, to, payload);
     }
@@ -32,7 +42,7 @@ public class Message {
     }
     public String id() {
 
-        return String.format("Mesasge[%s] (%s->%s)",toAddress(payload),from.getName(),to.getName());
+        return String.format("Mesasge[%s] (%s->%s)",toAddress(document),from.getName(),to.getName());
     }
 
 
@@ -40,4 +50,6 @@ public class Message {
     public String toString() {
         return String.format("%s createdAt=%s ",id(), createdAt);
     }
+
+
 }

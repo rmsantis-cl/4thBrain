@@ -25,6 +25,9 @@ dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.44.0.0'
     implementation 'org.hibernate.orm:hibernate-community-dialects:6.4.0.Final'
 
+    // Apache Commons
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+
     // Logging
     implementation 'org.springframework.boot:spring-boot-starter-logging'
 

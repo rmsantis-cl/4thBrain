@@ -101,4 +101,8 @@ public class DocumentService {
         documentRepository.deleteAll();
         log.warn("All documents deleted");
     }
+
+    public Document setStatus(Document d, String ing) {
+        return updateDocumentStatus(d.getId(),ing);
+    }
 }

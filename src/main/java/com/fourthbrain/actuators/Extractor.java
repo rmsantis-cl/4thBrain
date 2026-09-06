@@ -42,15 +42,7 @@ public class Extractor extends Actuator {
         return extractorQueue;
     }
 
-    @Override
-    public String getGerund() {
-        return "extracting";
-    }
 
-    @Override
-    public String getParticiple() {
-        return "extracted";
-    }
 
     @Override
     public Actuator doTheThing(Message message) {
@@ -220,5 +212,11 @@ public class Extractor extends Actuator {
             extractorQueue.offer(message);
             log.debug("Message enqueued to Extractor: docId={}", message.getDocument().getId());
         }
+    }
+
+    @Override
+    public String doTheThing() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'doTheThing'");
     }
 }

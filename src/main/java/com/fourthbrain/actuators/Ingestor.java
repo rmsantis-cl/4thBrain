@@ -25,7 +25,7 @@ public class Ingestor extends Actuator {
     private Indexer indexer;
 
     public Ingestor() {
-        super();
+        super(Ingestor.class);
         log.info("Ingestor initialized");
     }
 

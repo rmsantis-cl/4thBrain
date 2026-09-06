@@ -1,9 +1,10 @@
 package com.fourthbrain.web.controller;
 
-import com.fourthbrain.messaging.Coordinator;
+import com.fourthbrain.actuators.Coordinator;
 import com.fourthbrain.persistence.DatabaseService;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +15,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.io.IOException;
-import java.io.InputStream;
-import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @RestController
@@ -120,21 +119,20 @@ public class IngestionController {
 
         // Save to database
         Document savedDoc = databaseService.create(doc);
-        log.info("Saved record on ",saveDoc.getId());
-        Long docId = savedDoc.getId();
+        log.info("Saved record on ",savedDoc.id());
 
         // Start pipeline
-        coordinator.startChain(docId);
+        coordinator.sendMessage("Ingestor",savedDoc);
 
         return Map.of(
             "message", "File received and queued",
-            "jobId", docId,
+            "id", savedDoc.id(),
             "fileName", doc.getName(),
             "mimeType", doc.getMimeType()
         );
     }
 
-    private String getExtensionFromMimeType(String mimeType) {
+    private static String getExtensionFromMimeType(String mimeType) {
         if (StringUtils.isBlank(mimeType)) {
             return "";
         }
@@ -157,37 +155,29 @@ public class IngestionController {
 
     @PostMapping("/text")
     public Map<String, Object> submitText(@RequestBody Map<String, String> payload) {
-        String text = payload.get("text");
-        String tags = payload.get("tags");
-        System.out.println("[IngestionController] submitText: text length=" + (text != null ? text.length() : 0) + ", tags=" + tags);
+        // String text = payload.get("text");
+        // String tags = payload.get("tags");
+        log.info("Not implemented");
+        return  Map.of("not","implemented");
+        // System.out.println("[IngestionController] submitText: text length=" + (text != null ? text.length() : 0) + ", tags=" + tags);
 
-        // Create document in database
-        Long docId = databaseService.createDocument("text", text).getId();
+        // // Create document in database
+        // Long docId = databaseService.createDocument("text", text).getId();
 
-        // Start pipeline
-        coordinator.startChain(docId);
+        // coordinator.sendMessage("Ingestor",docId);
 
-        return Map.of(
-            "message", "Text received and queued",
-            "jobId", docId
-        );
+
+        // return Map.of(
+        //     "message", "Text received and queued",
+        //     "jobId", docId
+        // );
     }
 
     @PostMapping("/url")
     public Map<String, Object> submitUrl(@RequestBody Map<String, String> payload) {
         String url = payload.get("url");
         String tags = payload.get("tags");
-        System.out.println("[IngestionController] submitUrl: " + url + ", tags=" + tags);
-
-        // Create document in database
-        Long docId = databaseService.createDocument(url, "(URL: " + url + ")").getId();
-
-        // Start pipeline
-        coordinator.startChain(docId);
-
-        return Map.of(
-            "message", "URL received and queued",
-            "jobId", docId
-        );
+        log.info("Not implemented");
+        return  Map.of("not","implemented");
     }
 }
