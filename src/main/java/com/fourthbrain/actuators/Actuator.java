@@ -16,8 +16,6 @@ import lombok.*;
 public abstract class Actuator extends Thread {
 
     private DocumentService service;
-    private String ing;
-    private String ed;
     private String name;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
@@ -37,11 +35,8 @@ public abstract class Actuator extends Thread {
         log = LoggerFactory.getLogger(getClass());
         setDaemon(true);
         log = LoggerFactory.getLogger(getClass());
-        log.info("{}  started", name);
         running = true;
-        ing = name.replace("er$", "ing");
-        ed = name.replace("er$", "ed");
-        log.info("{}   [ {} -> {} ] started", name, ing, ed);
+        log.info("{}   [ {} -> {} ] started", name, getGerund(), getParticiple());
         start();
 
     }
@@ -55,6 +50,13 @@ public abstract class Actuator extends Thread {
             }
         }
         return map.get(getClass());
+    }
+
+    public void enqueueMessage(Message message) {
+        if (message != null) {
+            getQueue().offer(message);
+            log.debug("Message enqueued to {}: docId={}", name, message.getDocument().getId());
+        }
     }
 
     @Override
@@ -72,11 +74,11 @@ public abstract class Actuator extends Thread {
                     log.debug("queue ->  doc={} status={}", d.id(), d.getStatus());
                 }
                 String oldStatus = d.getStatus();
-                service.setStatus(d, ing);
-                log.info("processing doc={} {}->{}", d.id(), oldStatus, ing);
+                service.setStatus(d, getGerund());
+                log.info("processing doc={} {}->{}", d.id(), oldStatus, getGerund());
                 String n = doTheThing(d);
-                service.setStatus(d, ed);
-                log.info("completed doc={} {}->{}", d.id(), ing, ed);
+                service.setStatus(d, getParticiple());
+                log.info("completed doc={} {}->{}", d.id(), getGerund(), getParticiple());
                 if (n != null) {
                     Actuator follow = Coordinator.get(n);
                     Message next = Message.builder()
@@ -98,6 +100,13 @@ public abstract class Actuator extends Thread {
         }
     }
 
+    /** Status while this actuator is working, e.g. "ingesting". */
+    public abstract String getGerund();
+
+    /** Status once this actuator is done, e.g. "ingested". */
+    public abstract String getParticiple();
+
+    /** Processes the document; returns the name of the next actuator, or null to end the chain. */
     public abstract String doTheThing(Document document);
 
 

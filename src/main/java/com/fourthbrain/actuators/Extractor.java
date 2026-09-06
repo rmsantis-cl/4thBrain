@@ -42,18 +42,20 @@ public class Extractor extends Actuator {
         return extractorQueue;
     }
 
-
+    @Override
+    public String getGerund() {
+        return "extracting";
+    }
 
     @Override
-    public Actuator doTheThing(Message message) {
-        if (message == null) {
-            log.warn("Received null message");
-            return null;
-        }
+    public String getParticiple() {
+        return "extracted";
+    }
 
-        Document doc = message.getDocument();
+    @Override
+    public String doTheThing(Document doc) {
         if (doc == null) {
-            log.warn("Message contains null document");
+            log.warn("Received null document");
             return null;
         }
 
@@ -205,18 +207,5 @@ public class Extractor extends Actuator {
         } catch (Exception e) {
             log.error("Error sending document to Ingestor: id={}", doc.getId(), e);
         }
-    }
-
-    public void enqueueMessage(Message message) {
-        if (message != null) {
-            extractorQueue.offer(message);
-            log.debug("Message enqueued to Extractor: docId={}", message.getDocument().getId());
-        }
-    }
-
-    @Override
-    public String doTheThing() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doTheThing'");
     }
 }

@@ -2,6 +2,7 @@ package com.fourthbrain.actuators;
 
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.entity.Document;
+import com.fourthbrain.persistence.DatabaseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,15 +49,9 @@ public class Indexer extends Actuator {
     }
 
     @Override
-    public Actuator doTheThing(Message message) {
-        if (message == null) {
-            log.warn("Received null message");
-            return null;
-        }
-
-        Document doc = message.getDocument();
+    public String doTheThing(Document doc) {
         if (doc == null) {
-            log.warn("Message contains null document");
+            log.warn("Received null document");
             return null;
         }
 

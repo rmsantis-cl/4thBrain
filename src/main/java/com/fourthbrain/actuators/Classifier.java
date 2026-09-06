@@ -18,17 +18,25 @@ public class Classifier extends Actuator {
         log.info("Classifier initialized");
     }
 
+    @Override
+    protected Queue<Message> getQueue() {
+        return classifierQueue;
+    }
 
     @Override
-    public String doTheThing(Message message) {
-        if (message == null) {
-            log.warn("Received null message");
-            return null;
-        }
+    public String getGerund() {
+        return "classifying";
+    }
 
-        Document doc = message.getDocument();
+    @Override
+    public String getParticiple() {
+        return "classified";
+    }
+
+    @Override
+    public String doTheThing(Document doc) {
         if (doc == null) {
-            log.warn("Message contains null document");
+            log.warn("Received null document");
             return null;
         }
 
@@ -43,18 +51,10 @@ public class Classifier extends Actuator {
 
             log.debug("Document classification complete: id={}", doc.getId());
 
-            // Return next actuator (Indexer) or null if end of pipeline
-            return null;
+            return "Indexer";
         } catch (Exception e) {
             log.error("Error classifying document: id={}", doc.getId(), e);
             return null;
-        }
-    }
-
-    public void enqueueMessage(Message message) {
-        if (message != null) {
-            classifierQueue.offer(message);
-            log.debug("Message enqueued to Classifier: docId={}", message.getDocument().getId());
         }
     }
 }

@@ -38,8 +38,8 @@ public class Coordinator {
     }
 
     public Map<String, Long> getStatusCounts() {
-        return (Map<String,Long>)actuator.entrySet().stream()
-                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue().getFirst().getQueue().size()));
+        return actuator.entrySet().stream()
+                .collect(Collectors.toMap(x -> x.getKey(), x -> (long) x.getValue().getFirst().getQueue().size()));
     }
 
     public void startChain(long anyLong) {

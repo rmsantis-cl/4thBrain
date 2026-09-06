@@ -45,15 +45,9 @@ public class Clipper extends Actuator {
     }
 
     @Override
-    public Actuator doTheThing(Message message) {
-        if (message == null) {
-            log.warn("Received null message");
-            return null;
-        }
-
-        Document doc = message.getDocument();
+    public String doTheThing(Document doc) {
         if (doc == null) {
-            log.warn("Message contains null document");
+            log.warn("Received null document");
             return null;
         }
 
@@ -156,13 +150,6 @@ public class Clipper extends Actuator {
             log.info("Clipped document sent to Ingestor: id={}", doc.getId());
         } catch (Exception e) {
             log.error("Error sending document to Ingestor: id={}", doc.getId(), e);
-        }
-    }
-
-    public void enqueueMessage(Message message) {
-        if (message != null) {
-            clipperQueue.offer(message);
-            log.debug("Message enqueued to Clipper: docId={}", message.getDocument().getId());
         }
     }
 }
