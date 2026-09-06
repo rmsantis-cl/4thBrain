@@ -50,6 +50,7 @@ Delivered in three phases:
 - **P1.6 — REST API Skeleton:** IngestionController, SearchController, StatusController, ChatController, AdminController. All accept payloads, create database records, call Coordinator.startChain(), return Job IDs. No real processing.
 - **P1.7 — Web UI Wiring:** Static HTML at /chat (from v03 or new minimal shell). Form inputs POST to /api/ingest. Dashboard polls /api/status. No actual job progress visible yet (all jobs marked Completed immediately).
 - **P1.8 — Document Copies:** Remove `path` from the document table and the Document entity. Add a `document_copy` table recording each physical location a document occupies, keyed by vault area, with its own created and end dates. Add `source_url` to document for clipped pages. Detail below.
+- **P1.9 — Actuator Instantiation & Registration:** Give actuator creation a single owner. Actuators are currently built twice, by component scan and by ActuatorThreadConfig, which crashes registration and aborts startup. Detail below.
 
 ### Story P1.8 — Document Copies
 
@@ -126,6 +127,51 @@ Note: Indexer reads `tmp` today, because `IngestionController` deposits uploads 
 
 Worth recording, though: `schema.sql` is entirely `CREATE TABLE IF NOT EXISTS` under `sql.init.mode: always`, while JPA runs `ddl-auto: validate`. An existing database file therefore will not be upgraded — it will fail startup when validate finds `path` still present and `document_copy` missing. Anyone holding one deletes it rather than expecting an automatic migration.
 
+### Story P1.9 — Actuator Instantiation & Registration
+
+**Problem.** Every actuator is built twice, and startup dies on the second one.
+
+`Ingestor`, `Extractor`, `Classifier`, `Indexer` and `Clipper` each carry `@Component`, so component scan builds one. `ActuatorThreadConfig` also declares `@Bean @Scope("prototype")` factories for four of them plus array beans that call `factory.getObject()`, so it builds another. Two instances of the same class then reach `Coordinator.register()`:
+
+```java
+if (!registry.containsKey(a.getClass())) {   // guard is keyed by CLASS
+    registry.put(a.getClass(), new ArrayList<>());
+    actuator.put(a.getName(), new ArrayList<>());   // but this map is keyed by NAME
+}
+registry.get(a.getClass()).add(a);
+actuator.get(a.getName()).add(a);   // null on the second instance -> NPE
+```
+
+The second instance takes the guard's false branch, so no list is ever created under its name, and `actuator.get(...)` returns null. The NPE propagates out of the `ingestor` bean factory method, `ingestorActuators` fails, and the context aborts. That is what stops the application starting today.
+
+Three further defects sit underneath, none fixable independently of the first:
+
+- **Registration runs before naming.** `Actuator.java:32` calls `Coordinator.register(this)`; `:34` calls `setName(name)`. At registration the object still carries Thread's generated name, so the routing map is keyed `Thread-7` rather than `Ingestor`. `Actuator.run()` routes via `Coordinator.get(n)` where `n` is a class simple name returned by `doTheThing`, so every lookup would miss even without the NPE.
+- **The thread is started twice.** `Actuator.java:40` calls `start()` in the constructor, and `ActuatorThreadConfig` calls `start()` again on the same object (`:62`, `:73`, `:84`, `:97`). The second call throws `IllegalThreadStateException`.
+- **The thread runs before injection.** Starting inside the constructor puts the loop live before Spring has populated any `@Autowired` field. `Actuator.service` is worse than racy — it carries no annotation at all, so `DocumentService` is never injected and `service.setStatus(...)` NPEs on the first message regardless.
+
+**Change.** One owner for creation, and a constructor that does no lifecycle work.
+
+1. `ActuatorThreadConfig` becomes the sole creator. Drop `@Component` from all five actuator classes.
+2. Add `Clipper` to the config and `actuators.threads.clipper: 1` to application.yaml. It is the one actuator with no thread-count entry, so it is scanned-only and scales differently from its siblings for no stated reason.
+3. `Actuator`'s constructor sets up name, logger and flags only: remove the `Coordinator.register(this)` at `:32` and the `start()` at `:40`.
+4. Per instance the config does, in this order: obtain from `ObjectFactory` so Spring injects it, `setName("Ingestor-0")` for readable logs, `Coordinator.register(a)`, then `start()`. Registering and starting only after injection closes the race above.
+5. `Coordinator.register()` keys the routing map on `a.getClass().getSimpleName()`, not `a.getName()`. Thread names carry an index suffix (`Ingestor-0`) while routing asks for the bare class name (`Ingestor`), so the two must not share a key. Seed both maps with `computeIfAbsent`, so neither depends on the other's guard.
+6. `Actuator.service` gains `@Autowired`, or moves to setter injection, which prototypes handle cleanly.
+7. `Extractor` and `Clipper` autowire an `Ingestor` field. Once `Ingestor` is a prototype, injecting it mints a fresh unregistered actuator. Both should reach it through `Coordinator.get("Ingestor")`, the way `Actuator.run()` already routes.
+
+Several instances of one class stay correct under this design because they share a static queue, so `Coordinator.get(name)` returning the first registered instance still enqueues work any of them can pick up.
+
+**Acceptance criteria.**
+
+- `actuators.threads.<name>: N` produces exactly N instances of that class and no more — asserted on registry size, not on log lines.
+- The application logs `Started FourthBrainApplication`.
+- `Coordinator.get(...)` returns a registered instance for `Ingestor`, `Extractor`, `Classifier`, `Indexer` and `Clipper`.
+- No `IllegalThreadStateException` anywhere in the startup log.
+- Every actuator holds a non-null `DocumentService` before its thread processes a message.
+
+**Out of scope, needs its own story.** `Actuator.run()` polls with `getQueue().poll()` and dereferences the result without a null check, so an empty queue throws an NPE, caught by the loop's own `catch (Throwable)`, with no sleep or back-off between iterations — a busy spin costing a core per actuator. `Thread exiting.` is logged inside the loop rather than after it. Fixing instantiation makes the application start; it does not make this loop behave.
+
 ---
 
 ## Phase 2: Real Actuator Implementation
@@ -201,4 +247,5 @@ From v03 Analysis & .v03/documets/design/:
 
 - 2026-09-03: Created three-phase delivery plan (Skeleton → Real Logic → Testing). Removed detailed Epic/Story breakdown in favor of pragmatic phasing. Reframed to avoid overengineering.
 - 2026-09-06: Added Story P1.8 (Document Copies) — drop `path` from the document table and entity, add a `document_copy` child table keyed by vault area (`tmp`/`incoming`/`indexing`/`raw`), add `source_url` to document. Decided: several live copies allowed, at most one per area, so each actuator resolves the copy for the area it works on; `DatabaseService.move(Document, String)` replaced by a copy-scoped API. No open decisions remain; ready to implement.
-- 2026-09-06: P1.8 implemented. Schema validated against a real SQLite database. Two pre-existing defects fixed in passing because they blocked verification: a duplicate orphan `com.fourthbrain.repo.DocumentRepository` that broke bean registration, and `Long` id columns that failed Hibernate validation (SQLite needs `INTEGER` for a rowid alias, not `BIGINT`). `Coordinator` annotated `@Component` so it can be injected. Still open, outside this story: actuators are instantiated twice (component scan and `ActuatorThreadConfig`), so `Coordinator.register()` NPEs and startup does not complete.
+- 2026-09-06: P1.8 implemented. Schema validated against a real SQLite database. Two pre-existing defects fixed in passing because they blocked verification: a duplicate orphan `com.fourthbrain.repo.DocumentRepository` that broke bean registration, and `Long` id columns that failed Hibernate validation (SQLite needs `INTEGER` for a rowid alias, not `BIGINT`). `Coordinator` annotated `@Component` so it can be injected. Still open, outside this story: actuators are instantiated twice (component scan and `ActuatorThreadConfig`), so `Coordinator.register()` NPEs and startup does not complete. Now tracked as P1.9.
+- 2026-09-06: Added Story P1.9 (Actuator Instantiation & Registration) — `ActuatorThreadConfig` becomes the sole creator, `@Component` dropped from the five actuator classes, registration and thread start move out of the constructor to after injection, and the Coordinator routing map is keyed by class simple name rather than thread name. The run loop's busy-spin NPE is recorded as out of scope and still needs a story of its own.
