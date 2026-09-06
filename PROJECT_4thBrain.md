@@ -154,17 +154,24 @@ Three further defects sit underneath, none fixable independently of the first:
 - **The thread is started twice.** `Actuator.java:40` calls `start()` in the constructor, and `ActuatorThreadConfig` calls `start()` again on the same object (`:62`, `:73`, `:84`, `:97`). The second call throws `IllegalThreadStateException`.
 - **The thread runs before injection.** Starting inside the constructor puts the loop live before Spring has populated any `@Autowired` field. `Actuator.service` is worse than racy — it carries no annotation at all, so `DocumentService` is never injected and `service.setStatus(...)` NPEs on the first message regardless.
 
-**Change.** One owner for creation, and a constructor that does no lifecycle work.
+**Design.** See `documets/design/STARTUP-SEQUENCE.md` for the detailed initialization order and sequence diagram. Summary:
 
 1. `ActuatorThreadConfig` becomes the sole creator. Drop `@Component` from all five actuator classes.
-2. Add `Clipper` to the config and `actuators.threads.clipper: 1` to application.yaml. It is the one actuator with no thread-count entry, so it is scanned-only and scales differently from its siblings for no stated reason.
-3. `Actuator`'s constructor sets up name, logger and flags only: remove the `Coordinator.register(this)` at `:32` and the `start()` at `:40`.
-4. Per instance the config does, in this order: obtain from `ObjectFactory` so Spring injects it, `setName("Ingestor-0")` for readable logs, `Coordinator.register(a)`, then `start()`. Registering and starting only after injection closes the race above.
-5. `Coordinator.register()` keys the routing map on `a.getClass().getSimpleName()`, not `a.getName()`. Thread names carry an index suffix (`Ingestor-0`) while routing asks for the bare class name (`Ingestor`), so the two must not share a key. Seed both maps with `computeIfAbsent`, so neither depends on the other's guard.
-6. `Actuator.service` gains `@Autowired`, or moves to setter injection, which prototypes handle cleanly.
-7. `Extractor` and `Clipper` autowire an `Ingestor` field. Once `Ingestor` is a prototype, injecting it mints a fresh unregistered actuator. Both should reach it through `Coordinator.get("Ingestor")`, the way `Actuator.run()` already routes.
+2. Create a new `ActuatorManager` bean:
+   - `@PostConstruct` → create all instances via `ObjectFactory`, inject, name as `<Type>-<index>`, register all with Coordinator.
+   - `ApplicationReadyEvent` listener → start every thread, exactly once, only after the context is fully refreshed.
+   - `@PreDestroy` → `shutdown()` each actuator (clear `running`, interrupt, join).
+3. `Actuator`'s constructor sets up name, logger and flags only: remove `Coordinator.register(this)` and `start()`.
+4. `Coordinator.register()` keys the routing map on `a.getClass().getSimpleName()`, not `a.getName()`. Seed both maps with `computeIfAbsent`, so neither depends on the other's guard.
+5. `Actuator.service` gains `@Autowired`, or moves to setter injection, which prototypes handle cleanly.
+6. `Extractor` and `Clipper` autowire an `Ingestor` field. Once `Ingestor` is a prototype, injecting it mints a fresh unregistered actuator. Both should reach it through `Coordinator.get("Ingestor")`, the way `Actuator.run()` already routes.
 
 Several instances of one class stay correct under this design because they share a static queue, so `Coordinator.get(name)` returning the first registered instance still enqueues work any of them can pick up.
+
+**Configuration changes:**
+
+- Add `actuators.threads.clipper: 1` to application.yaml. `Clipper` exists and is scanned, but has no thread-count entry, so it scales differently from its siblings for no stated reason.
+- `actuators.threads.briefing: 1` is configured and nothing reads it — no Briefing class exists. Remove it, or keep it with a comment marking it reserved for Phase 2.
 
 **Acceptance criteria.**
 
@@ -173,8 +180,9 @@ Several instances of one class stay correct under this design because they share
 - `Coordinator.get(...)` returns a registered instance for `Ingestor`, `Extractor`, `Classifier`, `Indexer` and `Clipper`.
 - No `IllegalThreadStateException` anywhere in the startup log.
 - Every actuator holds a non-null `DocumentService` before its thread processes a message.
+- `shutdown()` stops an actuator's thread within a bounded time.
 
-**Out of scope**, tracked as P1.10: the run loop's busy spin.
+**Out of scope**, tracked as P1.10: the run loop's busy spin, and the `running` flag having no way to be cleared outside `@PreDestroy`.
 
 ### Story P1.10 — Actuator Run Loop
 

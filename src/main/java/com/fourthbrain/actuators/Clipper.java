@@ -5,24 +5,19 @@ import com.fourthbrain.persistence.DatabaseService;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-@Component
 @Slf4j
 public class Clipper extends Actuator {
 
-    private static final Queue<Message> clipperQueue = new ConcurrentLinkedQueue<>();
+    private static final BlockingQueue<Message> clipperQueue = new LinkedBlockingQueue<>();
 
     @Autowired
     private DatabaseService databaseService;
-
-    @Autowired
-    private Ingestor ingestor;
 
     public Clipper() {
         super();
@@ -30,7 +25,7 @@ public class Clipper extends Actuator {
     }
 
     @Override
-    protected Queue<Message> getQueue() {
+    protected BlockingQueue<Message> getQueue() {
         return clipperQueue;
     }
 
@@ -135,6 +130,10 @@ public class Clipper extends Actuator {
     }
 
     private void sendToIngestor(Document doc) {
+        // Routed through the Coordinator rather than autowired directly: Ingestor
+        // is a prototype bean, so an @Autowired field here would mint a fresh,
+        // unregistered instance instead of reaching a registered one (P1.9).
+        Actuator ingestor = Coordinator.get("Ingestor");
         if (ingestor == null) {
             log.warn("Ingestor actuator not available - cannot send document: id={}", doc.getId());
             return;

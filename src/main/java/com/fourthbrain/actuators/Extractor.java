@@ -8,22 +8,20 @@ import com.fourthbrain.persistence.entity.DocumentCopy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-@Component
 @Slf4j
 public class Extractor extends Actuator {
 
-    private static final Queue<Message> extractorQueue = new ConcurrentLinkedQueue<>();
+    private static final BlockingQueue<Message> extractorQueue = new LinkedBlockingQueue<>();
 
     @Value("${vault.tmp}")
     private String vaultTmpPath;
@@ -31,16 +29,13 @@ public class Extractor extends Actuator {
     @Autowired
     private DatabaseService databaseService;
 
-    @Autowired
-    private Ingestor ingestor;
-
     public Extractor() {
         super();
         log.info("Extractor initialized");
     }
 
     @Override
-    protected Queue<Message> getQueue() {
+    protected BlockingQueue<Message> getQueue() {
         return extractorQueue;
     }
 
@@ -197,6 +192,10 @@ public class Extractor extends Actuator {
     }
 
     private void sendToIngestor(Document doc) {
+        // Routed through the Coordinator rather than autowired directly: Ingestor
+        // is a prototype bean, so an @Autowired field here would mint a fresh,
+        // unregistered instance instead of reaching a registered one (P1.9).
+        Actuator ingestor = Coordinator.get("Ingestor");
         if (ingestor == null) {
             log.warn("Ingestor actuator not available - cannot send document: id={}", doc.getId());
             return;

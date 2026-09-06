@@ -3,16 +3,14 @@ package com.fourthbrain.actuators;
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import java.net.URL;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-@Component
 @Slf4j
 public class Ingestor extends Actuator {
 
-    private static final Queue<Message> ingestorQueue = new ConcurrentLinkedQueue<>();
+    private static final BlockingQueue<Message> ingestorQueue = new LinkedBlockingQueue<>();
 
     public Ingestor() {
         super();
@@ -20,7 +18,7 @@ public class Ingestor extends Actuator {
     }
 
     @Override
-    protected Queue<Message> getQueue() {
+    protected BlockingQueue<Message> getQueue() {
         return ingestorQueue;
     }
 

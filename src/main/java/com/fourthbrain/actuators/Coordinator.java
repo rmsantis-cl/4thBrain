@@ -17,23 +17,20 @@ import com.fourthbrain.persistence.entity.Document;
 @Component
 public class Coordinator {
 
-    private static Map<Class<?>, List<Actuator>> registry = new HashMap<>();
-    private static Map<String, List<Actuator>> actuator = new HashMap<>();
+    // Keyed by class simple name ("Ingestor"), not by thread name ("Ingestor-0"):
+    // routing asks for the bare class name, and several instances of one class
+    // share this same entry (P1.9).
+    private static final Map<String, List<Actuator>> registry = new HashMap<>();
 
     public static void register(Actuator a) {
         synchronized (registry) {
-            if (!registry.containsKey(a.getClass())) {
-                registry.put(a.getClass(), new ArrayList<>());
-                actuator.put(a.getName(), new ArrayList<>());
-            }
-            registry.get(a.getClass()).add(a);
-            actuator.get(a.getName()).add(a);
-
+            registry.computeIfAbsent(a.getClass().getSimpleName(), k -> new ArrayList<>()).add(a);
         }
     }
 
     public static Actuator get(String name) {
-        return actuator.containsKey(name) ? actuator.get(name).getFirst() : null;
+        List<Actuator> instances = registry.get(name);
+        return (instances == null || instances.isEmpty()) ? null : instances.getFirst();
     }
 
     public void sendMessage(String actuator, Document doc) {
@@ -41,7 +38,7 @@ public class Coordinator {
     }
 
     public Map<String, Long> getStatusCounts() {
-        return actuator.entrySet().stream()
+        return registry.entrySet().stream()
                 .collect(Collectors.toMap(x -> x.getKey(), x -> (long) x.getValue().getFirst().getQueue().size()));
     }
 

@@ -28,6 +28,8 @@ actuators:
     textExtractor: 1
     classifier: 1
     indexer: 1
+    clipper: 1
+    # No Briefing class exists in src/main yet; reserved for Phase 2 (P1.9).
     briefing: 1
 
 ollama:

@@ -8,21 +8,19 @@ import com.fourthbrain.persistence.VaultArea;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-@Component
 @Slf4j
 public class Indexer extends Actuator {
 
-    private static final Queue<Message> indexerQueue = new ConcurrentLinkedQueue<>();
+    private static final BlockingQueue<Message> indexerQueue = new LinkedBlockingQueue<>();
 
     @Value("${vault.indexing}")
     private String vaultIndexingPath;
@@ -45,7 +43,7 @@ public class Indexer extends Actuator {
     }
 
     @Override
-    protected Queue<Message> getQueue() {
+    protected BlockingQueue<Message> getQueue() {
         return indexerQueue;
     }
 

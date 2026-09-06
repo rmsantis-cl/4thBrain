@@ -3,15 +3,13 @@ package com.fourthbrain.actuators;
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-@Component
 @Slf4j
 public class Classifier extends Actuator {
 
-    private static final Queue<Message> classifierQueue = new ConcurrentLinkedQueue<>();
+    private static final BlockingQueue<Message> classifierQueue = new LinkedBlockingQueue<>();
 
     public Classifier() {
         super();
@@ -19,7 +17,7 @@ public class Classifier extends Actuator {
     }
 
     @Override
-    protected Queue<Message> getQueue() {
+    protected BlockingQueue<Message> getQueue() {
         return classifierQueue;
     }
 
