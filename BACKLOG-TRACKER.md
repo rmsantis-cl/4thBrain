@@ -2,8 +2,8 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 1.3
-  created-by: Claude Haiku 4.5
+  version: 1.4
+  created-by: Claude Code
   date: 2026-09-07
 ---
 
@@ -71,8 +71,8 @@ Section meanings:
 | P1.7 | Web UI Wiring | Phase 1 skeleton | |
 | P1.8 | Document Copies | 2026-09-06 | Verified against a fresh database |
 
-No Bugs are currently logged. A Bug row goes in the table matching its status, kept in sync
-with the per-bug file.
+Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
+in sync with the per-bug file.
 
 ## Story Detail Files
 
@@ -91,7 +91,7 @@ Bug tracking follows the same process as stories. Detailed descriptions for each
 
 | ID | Title | Blocked by | Note |
 |----|-------|-----------|------|
-| BUG-001 | UI Is Not Showing Up | P1.7 | UIController or static resources not serving; blocks P1.13, P3.4 |
+| BUG-001 | UI Is Not Showing Up | Fix approach undecided | Diagnosed: controllers return view names with no template engine on the classpath. Same defect breaks AdminController's three pages. Blocks P1.13, P3.4 |
 
 See `documents/bug/BUG-XXX.md` for full details on any bug.
 
@@ -110,3 +110,4 @@ See `documents/bug/BUG-XXX.md` for full details on any bug.
 - 2026-09-07: Added P2.8 (MarkItDown spike) to READY. P2.3 gains it as a second blocker. Counts now 25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
 - 2026-09-07: Created individual story files under `documents/story/`. Added P3.5 (JUnit 5 upgrade) to READY. Renamed `documets/` directory to `documents/`. Updated summary to 26 stories: 1 WIP, 4 READY, 13 NOT-READY, 8 COMPLETED.
 - 2026-09-07: Added BUG-001 (UI Is Not Showing Up) to NOT-READY. Created Bugs section and per-bug documentation structure matching story files. Summary updated: 26 stories, 1 bug NOT-READY.
+- 2026-09-07: BUG-001 diagnosed. Cause is view resolution, not static resources: the controllers return view names and no template engine is on the classpath. Its blocker is now the choice of fix, not P1.7.
