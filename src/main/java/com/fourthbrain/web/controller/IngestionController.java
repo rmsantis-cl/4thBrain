@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.Files;
@@ -131,11 +132,12 @@ public class IngestionController {
         log.info("Saved record on {}", savedDoc.id());
 
         // Start pipeline
-        coordinator.sendMessage("Ingestor",savedDoc);
+        coordinator.startChain(savedDoc.id());
 
         return Map.of(
-            "message", "File received and queued",
             "id", savedDoc.id(),
+            "status", "ingesting",
+            "message", "File received and queued",
             "fileName", doc.getName(),
             "mimeType", doc.getMimeType()
         );
@@ -162,31 +164,58 @@ public class IngestionController {
         };
     }
 
-    @PostMapping("/text")
-    public Map<String, Object> submitText(@RequestBody Map<String, String> payload) {
-        // String text = payload.get("text");
-        // String tags = payload.get("tags");
-        log.info("Not implemented");
-        return  Map.of("not","implemented");
-        // System.out.println("[IngestionController] submitText: text length=" + (text != null ? text.length() : 0) + ", tags=" + tags);
+    /**
+     * Ingest by value: a body carries either a "url" or a "text" key, never both
+     * (ADR26 decision 6). The UI's own type-detection picks the key; this handler
+     * does not re-derive the type. Replaces the former /text and /url endpoints.
+     */
+    @PostMapping("/capture")
+    public Map<String, Object> capture(@RequestBody Map<String, String> payload) {
+        String url = StringUtils.trimToNull(payload.get("url"));
+        String text = StringUtils.trimToNull(payload.get("text"));
 
-        // // Create document in database
-        // Long docId = databaseService.createDocument("text", text).getId();
+        if ((url == null) == (text == null)) {
+            throw new IllegalArgumentException("Request body must set exactly one of 'url' or 'text'");
+        }
 
-        // coordinator.sendMessage("Ingestor",docId);
+        Document doc = (url != null) ? buildUrlDocument(url) : buildTextDocument(text);
+        Document savedDoc = databaseService.create(doc);
+        log.info("Captured document: id={}, sourceUrl={}", savedDoc.getId(), savedDoc.getSourceUrl());
 
+        coordinator.startChain(savedDoc.getId());
 
-        // return Map.of(
-        //     "message", "Text received and queued",
-        //     "jobId", docId
-        // );
+        return Map.of(
+            "id", savedDoc.getId(),
+            "status", "ingesting",
+            "message", url != null ? "URL received and queued" : "Text received and queued"
+        );
     }
 
-    @PostMapping("/url")
-    public Map<String, Object> submitUrl(@RequestBody Map<String, String> payload) {
-        String url = payload.get("url");
-        String tags = payload.get("tags");
-        log.info("Not implemented");
-        return  Map.of("not","implemented");
+    /** No copy row: the URL is provenance, not a location, so it lives in source_url (P1.8, ADR26). */
+    private static Document buildUrlDocument(String url) {
+        return Document.builder()
+            .sourceUrl(url)
+            .content("")
+            .status("New")
+            .createdAt(java.time.LocalDateTime.now())
+            .updatedAt(java.time.LocalDateTime.now())
+            .build();
+    }
+
+    /** No copy row: nothing is on disk. */
+    private static Document buildTextDocument(String text) {
+        return Document.builder()
+            .content(text)
+            .mimeType("text/plain")
+            .status("New")
+            .createdAt(java.time.LocalDateTime.now())
+            .updatedAt(java.time.LocalDateTime.now())
+            .build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleBadCapture(IllegalArgumentException e) {
+        return Map.of("message", e.getMessage());
     }
 }

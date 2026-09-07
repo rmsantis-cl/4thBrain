@@ -85,15 +85,16 @@ public class Ingestor extends Actuator {
     }
 
     private boolean isUrl(Document doc) {
-        String content = doc.getContent();
-        if (content == null || content.isEmpty()) {
+        // source_url is the field of record for a submitted URL (ADR26 decision 4).
+        String sourceUrl = doc.getSourceUrl();
+        if (sourceUrl == null || sourceUrl.isEmpty()) {
             return false;
         }
 
-        content = content.trim();
+        sourceUrl = sourceUrl.trim();
         try {
-            new URL(content);
-            return content.startsWith("http://") || content.startsWith("https://");
+            new URL(sourceUrl);
+            return sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://");
         } catch (Exception e) {
             return false;
         }

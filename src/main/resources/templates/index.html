@@ -459,7 +459,7 @@
         fetch("/api/ingest/file", { method: "POST", body: formData })
           .then(res => res.json())
           .then(data => {
-            fileResult.textContent = (data.message || "File uploaded") + " (jobId: " + data.jobId + ")";
+            fileResult.textContent = (data.message || "File uploaded") + " (id: " + data.id + ")";
             document.getElementById("file-tags-input").value = "";
           })
           .catch(() => { fileResult.textContent = "Upload failed."; });
@@ -474,14 +474,14 @@
         if (!text.trim()) return;
         textResult.textContent = "Submitting…";
         textResult.classList.add("visible");
-        fetch("/api/ingest/text", {
+        fetch("/api/ingest/capture", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, tags: document.getElementById("text-tags-input").value })
         })
           .then(res => res.json())
           .then(data => {
-            textResult.textContent = (data.message || "Text submitted") + " (jobId: " + data.jobId + ")";
+            textResult.textContent = (data.message || "Text submitted") + " (id: " + data.id + ")";
             document.getElementById("text-input").value = "";
             document.getElementById("text-tags-input").value = "";
           })
@@ -497,14 +497,14 @@
         if (!url.trim()) return;
         urlResult.textContent = "Submitting…";
         urlResult.classList.add("visible");
-        fetch("/api/ingest/url", {
+        fetch("/api/ingest/capture", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url, tags: document.getElementById("url-tags-input").value })
         })
           .then(res => res.json())
           .then(data => {
-            urlResult.textContent = (data.message || "URL submitted") + " (jobId: " + data.jobId + ")";
+            urlResult.textContent = (data.message || "URL submitted") + " (id: " + data.id + ")";
             document.getElementById("url-input").value = "";
             document.getElementById("url-tags-input").value = "";
           })
