@@ -2,7 +2,7 @@
 name: INDEX
 description: Master index of documentation and design artifacts in 4thBrain v04 Java/Spring Boot
 metadata:
-  version: 2.6
+  version: 2.7
   created-by: Claude Code
   date: 2026-09-07
 ---
@@ -58,3 +58,4 @@ them, and duplicating that here only produced rows that drifted from the code.
 | documents/story/P3.5.md | [2026-09-07] Upgrade to JUnit 5 (Jupiter) — migrate all tests from JUnit 4, replace annotations and lifecycle<br>[2026-09-07] Rewritten against what the tree actually contained: the migration had already happened, and the story's real subject is a dangling `junit:junit` on the test classpath with no vintage engine, which turns a JUnit 4 test into a silent zero-test pass. Status section added recording the removal, the `@MockBean` → `@MockitoBean` change folded in, and the four verifications. Status COMPLETED |
 | documents/bug/BUG-001.md | [2026-09-07] Web UI fails to load on localhost:8080 or localhost:8080/chat; UIController routing or static resources issue; blocks P1.13 and P3.4<br>[2026-09-07] Diagnosed against the code: UIController and AdminController are `@Controller`s returning view names, and build.gradle carries no template engine, so the names resolve to nothing; `@GetMapping("/")` also suppresses the welcome page that would otherwise serve static/index.html. Missing CSS/JS and static-resource config ruled out. Three fix options recorded, none chosen<br>[2026-09-07] Fix decided: Thymeleaf (ADR25), carried out by Story P1.14. Recorded that the cheaper option was the better one on the evidence and was passed over for roadmap reasons, so the tradeoff survives review. Status READY<br>[2026-09-07] Closed by P1.14 and verified against a running application |
 | documents/bug/BUG-002.md | [2026-09-07] A fresh clone will not start: `application.yaml` points SQLite at `data/fourthbrain.db`, SQLite creates the file but not its parent directory, and `data/` is untracked. Found during P1.14 verification, where it masked P1.9's true status. Three fix options; `vault/` and `tmp/` have the same gap |
+| documents/simple-claude-plan.md | [2026-09-07] Audit of the Claude governance layer — rules, skills, agents, settings and the tracking documents — listing ten findings, eight dead file references, and a three-pass plan to cut 9 rules to 5, 8 project skills to 0 and four status-tracking places to one |
