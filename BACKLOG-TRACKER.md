@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
+26 stories: 1 WIP, 4 READY, 13 NOT-READY, 8 COMPLETED.
 
 ### WIP
 
@@ -37,6 +37,7 @@ Section meanings:
 | P1.10 | Actuator Run Loop | Explicitly out of scope for P1.9, so not blocked by it |
 | P1.12 | Status Endpoint Reports Document Counts | No dependency |
 | P2.8 | Spike: MarkItDown as the Extractor's converter | Runs against files on disk; needs no booting application |
+| P3.5 | Upgrade to JUnit 5 | No dependency; testing infrastructure modernization |
 
 ### NOT-READY
 
@@ -72,113 +73,26 @@ Section meanings:
 No Bugs are currently logged. A Bug row goes in the table matching its status, kept in sync
 with the per-bug file.
 
-## WIP
+## Story Detail Files
 
-### P1.9 — Actuator Instantiation & Registration
+Detailed descriptions and acceptance criteria for each story are maintained in individual files under `documents/story/`:
+- P1.8 through P1.13 (Phase 1)
+- P2.1 through P2.8 (Phase 2)
+- P3.1 through P3.5 (Phase 3)
 
-Give actuator creation a single owner. Every actuator is currently built twice, by component
-scan and again by `ActuatorThreadConfig`, and the second instance NPEs in
-`Coordinator.register()` because the guard is keyed by class while the map it seeds is keyed by
-name. That NPE aborts the Spring context, which is why the application does not start.
+See `documents/story/PXXX.md` for full details on any story.
 
-Three defects sit underneath it: registration runs before the thread is named, `start()` is
-called twice, and the thread starts before Spring has injected anything.
+## Notes
 
-Acceptance criteria are written. `src/main/java/com/fourthbrain/actuators/Actuator.java` is
-mid-restructure (it became an abstract class extending `Thread`), and the constructor still
-calls `Coordinator.register(this)` and `start()`, both of which this story removes.
+**Phase 2 blocking:** All Phase 2 stories (P2.1–P2.7) are blocked by Phase 1 not booting. P2.3 has a second blocker: its extraction stack is inherited from v03 Node.js (Turndown, Mammoth) and must be re-chosen via P2.8 spike.
 
-Note: `gradle build` does not currently compile. That is a separate missing-import problem in
-`Indexer.java`, not part of this story.
+**Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 (JUnit 5 upgrade) has no dependencies and can proceed independently.
 
-## READY
-
-### P1.10 — Actuator Run Loop
-
-`Actuator.run()` polls with `poll()`, dereferences the null it gets on an empty queue, swallows
-the NPE in `catch (Throwable)`, and loops again with no back-off. Five idle actuators spin five
-cores. Replace the queue with a `BlockingQueue` and take with `take()`, which is what P1.3
-specified originally. Also add a real `shutdown()`, move the exit log outside the loop, and
-narrow the `Throwable` catch.
-
-Not blocked by P1.9 — P1.9 explicitly puts this out of its own scope.
-
-### P1.12 — Status Endpoint Reports Document Counts
-
-`/api/status` returns zeros for every stage. `StatusController` reads keys named after document
-statuses, `Coordinator.getStatusCounts()` returns queue depths keyed by actuator name, and the
-two key spaces never intersect. Source the counts from `DocumentRepository.countByStatus`
-instead, and derive the stage list from the actuators' own gerund/participle values so a new
-actuator shows up without editing the controller.
-
-### P2.8 — Spike: MarkItDown as the Extractor's converter
-
-Timeboxed at one day. P2.3 names Turndown and Mammoth, JavaScript libraries inherited from v03, so
-v04's extraction stack was never actually chosen and `Extractor` converts nothing today. The spike
-measures `microsoft/markitdown` (Python, MIT) against Apache Tika on a real fixture corpus, and
-settles how the JVM would call the Python side. Options and tradeoffs are written up in
-`documets/design/SPIKE-MARKITDOWN.md`.
-
-Not blocked by Phase 1: it runs against files on disk, outside the actuator chain. Output is a
-recommendation, an ADR, and a rewritten P2.3. No production code lands under this story.
-
-## NOT-READY
-
-### P1.11 — Coordinator Entry Point & Message Addressing
-
-**Blocked by P1.9**, which changes how actuators land in the registry.
-
-Two entry points exist and the one the tests use throws. `startChain()` is an unimplemented
-stub; `IngestionController` calls `sendMessage()` instead, which builds messages with a null
-`from` that NPE the moment anything logs them.
-
-### P1.13 — Text and URL Ingestion Endpoints
-
-**Blocked by P1.11.** Rewriting the tests before the entry point is settled would only move them
-onto a contract that is about to change.
-
-`POST /api/ingest/text` and `/url` return `{"not":"implemented"}`. All 23 tests in
-`IngestionControllerTest` assert the removed Job design.
-
-### P2.1–P2.7 — Phase 2, Real Actuator Implementation
-
-**Blocked by Phase 1.** The application does not start, so no actuator logic can be exercised
-end to end.
-
-P2.1 OllamaClient & ConcurrencyGate · P2.2 Ingestor · P2.3 TextExtractor · P2.4 Classifier ·
-P2.5 Indexer · P2.6 Briefing · P2.7 File Watcher.
-
-P2.3 carries a second blocker: its extraction stack is the v03 Node one and has to be re-chosen,
-which is what P2.8 is for.
-
-Worth flagging: the Phase 2 deliverable checkboxes in `PROJECT_4thBrain.md` are ticked, which
-contradicts Phase 1 not booting. Treat those ticks as stale rather than as evidence of
-completion.
-
-### P3.1–P3.4 — Phase 3, Testing & Verification
-
-**Blocked by Phase 2**, except P3.3, which is blocked by P1.13.
-
-P3.1 Unit Tests · P3.2 Integration Tests · P3.3 REST API Tests · P3.4 Smoke Test.
-
-The Phase 3 checkboxes carry the same staleness problem as Phase 2's.
-
-## COMPLETED
-
-Listed in the Summary above.
-
-P1.8 is the only one with recorded verification: the application was booted against a fresh
-SQLite database with `ddl-auto: validate` passing, confirming `document_copy`, `source_url`,
-`area`, `end_date` and `copy_id` all exist and `document.path` is gone.
-
-P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known defects now
-carried by a later story — P1.10, P1.11 and P1.13 respectively. They are not re-opened; the
-follow-up story owns the fix.
+**Completed stories:** P1.8 verified against fresh SQLite database. P1.3, P1.4, P1.6 marked complete as skeleton wiring but carry known defects now tracked in later stories (P1.10, P1.11, P1.13); they are not re-opened.
 
 ## Changelog
 
 - 2026-09-06: Created. Seeded from the 24 stories in `PROJECT_4thBrain.md`.
-- 2026-09-06: Summary split into four tables, one per status. The COMPLETED section's own table
-  was dropped as a duplicate of the Summary's.
-- 2026-09-07: Added P2.8 (MarkItDown spike) to READY. P2.3 gains it as a second blocker. Counts now
-  25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
+- 2026-09-06: Summary split into four tables, one per status. The COMPLETED section's own table was dropped as a duplicate of the Summary's.
+- 2026-09-07: Added P2.8 (MarkItDown spike) to READY. P2.3 gains it as a second blocker. Counts now 25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
+- 2026-09-07: Created individual story files under `documents/story/`. Added P3.5 (JUnit 5 upgrade) to READY. Renamed `documets/` directory to `documents/`. Updated summary to 26 stories: 1 WIP, 4 READY, 13 NOT-READY, 8 COMPLETED.

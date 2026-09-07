@@ -54,8 +54,11 @@ v04/
 │       └── client.js                     (REST API client)
 ├── src/test/java/com/fourthbrain/
 │   └── (unit + integration tests, Phase 3)
-└── documets/
-    └── (design docs, inherited from v03)
+└── documents/
+    ├── design/
+    │   └── (design docs and system specs)
+    └── story/
+        └── (individual story files, P1.8–P3.5)
 ```
 
 ## Phase 1: Skeleton & Full Architecture (Wiring Only)
