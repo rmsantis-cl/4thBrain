@@ -2,8 +2,8 @@
 name: INDEX
 description: Master index of documentation and design artifacts in 4thBrain v04 Java/Spring Boot
 metadata:
-  version: 1.5
-  created-by: Claude Code
+  version: 1.6
+  created-by: Claude Haiku 4.5
   date: 2026-09-07
 ---
 
@@ -44,3 +44,4 @@ them, and duplicating that here only produced rows that drifted from the code.
 | documents/story/P3.3.md | [2026-09-07] REST API tests via MockMvc for all endpoints (file/text/URL ingestion, status, search, chat) |
 | documents/story/P3.4.md | [2026-09-07] Manual smoke test — browser UI, file upload, watch pipeline progress through dashboard |
 | documents/story/P3.5.md | [2026-09-07] Upgrade to JUnit 5 (Jupiter) — migrate all tests from JUnit 4, replace annotations and lifecycle |
+| documents/bug/BUG-001.md | [2026-09-07] Web UI fails to load on localhost:8080 or localhost:8080/chat; UIController routing or static resources issue; blocks P1.13 and P3.4 |
