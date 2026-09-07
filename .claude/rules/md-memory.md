@@ -1,6 +1,6 @@
 # /MEMORY.md maintenance
 
-Rules for maintaining the project's `/MEMORY.md` file (project-local, plain-text session memory — distinct from Claude Code's own memory system). Based on `documets/method/MD-MEMORY-INSTRUCTIONS.md`. This rule file itself changes rarely; project data belongs only in `/MEMORY.md`.
+Rules for maintaining the project's `/MEMORY.md` file (project-local, plain-text session memory — distinct from Claude Code's own memory system). Based on `documents/method/MD-MEMORY-INSTRUCTIONS.md`. This rule file itself changes rarely; project data belongs only in `/MEMORY.md`.
 
 ## Update rules
 

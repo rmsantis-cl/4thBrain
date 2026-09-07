@@ -80,7 +80,7 @@ metadata:
 
 ### Example 1: File with backup-cycle: session, never backed up
 
-**File:** `documets/story/story-6.1.md` with `metadata: backup-cycle: session`
+**File:** `documents/story/story-6.1.md` with `metadata: backup-cycle: session`
 
 **Action:**
 1. Recognize `backup-cycle: session` in header
@@ -92,7 +92,7 @@ metadata:
 
 ### Example 2: File with read-only: true
 
-**File:** `documets/design/schema.sql` with `read-only: true`
+**File:** `documents/design/schema.sql` with `read-only: true`
 
 **Action:**
 1. Recognize `read-only: true` in header
@@ -101,7 +101,7 @@ metadata:
 
 ### Example 3: Backup-cycle file, backup already exists from this session
 
-**File:** `documets/story/story-6.1.md` with `metadata: backup-cycle: session`
+**File:** `documents/story/story-6.1.md` with `metadata: backup-cycle: session`
 **Backup exists:** `.backup/story-6.1_20260828.md` (created earlier today)
 
 **Action:**

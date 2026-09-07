@@ -55,7 +55,7 @@ def get_est_timestamp() -> str:
     est_time = now_utc - timedelta(hours=hours_offset)
     return est_time.strftime("%Y-%m-%dT%H:%M:%S") + offset
 
-def find_batch_id_in_tracker(friendly_id: str, tracker_path: str = "documets/BATCH_TRACKER.md") -> Optional[str]:
+def find_batch_id_in_tracker(friendly_id: str, tracker_path: str = "documents/BATCH_TRACKER.md") -> Optional[str]:
     """Find the real batch ID (msgbatch_*) from BATCH_TRACKER.md"""
     if not os.path.exists(tracker_path):
         print(f"Error: {tracker_path} not found", file=sys.stderr)
@@ -94,7 +94,7 @@ def query_batch_api(batch_id: str, api_key: str) -> dict:
         print(f"Error: Failed to query Batch API: {e}", file=sys.stderr)
         sys.exit(1)
 
-def update_tracker(friendly_id: str, display_status: str, tracker_path: str = "documets/BATCH_TRACKER.md"):
+def update_tracker(friendly_id: str, display_status: str, tracker_path: str = "documents/BATCH_TRACKER.md"):
     """Update BATCH_TRACKER.md with latest status"""
     if not os.path.exists(tracker_path):
         print(f"Error: {tracker_path} not found", file=sys.stderr)

@@ -1,6 +1,6 @@
 # File Format
 
-Rules for any file in this project that carries a YAML file header (a `---`-delimited block at the very top, with no text before it). Based on `documets/method/BOOT.md`. Applies project-wide.
+Rules for any file in this project that carries a YAML file header (a `---`-delimited block at the very top, with no text before it). Based on `documents/method/BOOT.md`. Applies project-wide.
 
 ## File header
 

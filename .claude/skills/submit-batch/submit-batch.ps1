@@ -72,7 +72,7 @@ if (-not $apiKey) {
 }
 
 # Load batch template
-$templatePath = "documets/batch-tool.txt"
+$templatePath = "documents/batch-tool.txt"
 if (-not (Test-Path $templatePath)) {
     Write-Error "batch-tool.txt not found at $templatePath"
     exit 1
@@ -90,7 +90,7 @@ $guardrails = @"
 
 This repository requires:
 
-1. **design-before-implementation** (.claude/rules/design-before-implementation.md): Before writing/editing application code, confirm it traces to an existing Epic+Story (documets/design/Project 4thBrain.md) and a design artifact sufficient to implement from. If either is missing, do not implement around the gap -- log a Design Debt entry in documets/DESIGN-DEBT.md instead.
+1. **design-before-implementation** (.claude/rules/design-before-implementation.md): Before writing/editing application code, confirm it traces to an existing Epic+Story (documents/design/Project 4thBrain.md) and a design artifact sufficient to implement from. If either is missing, do not implement around the gap -- log a Design Debt entry in documents/DESIGN-DEBT.md instead.
 
 2. **No destructive git commands** (git commit, git push, git reset --hard, etc.) unless the task description explicitly asks. Leave finished work as uncommitted changes.
 
@@ -165,7 +165,7 @@ try {
     Write-Host "Requests queued: $queuedCount" -ForegroundColor Gray
 
     # Update BATCH_TRACKER.md
-    $trackerPath = "documets/BATCH_TRACKER.md"
+    $trackerPath = "documents/BATCH_TRACKER.md"
 
     if (Test-Path $trackerPath) {
         $content = Get-Content $trackerPath -Raw

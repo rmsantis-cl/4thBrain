@@ -1,6 +1,6 @@
 ---
 name: submit-batch
-description: Submit a coding task to Anthropic's Batch API for unattended, cost-effective processing (half the price of standard API calls). Submits immediately with a batch ID, tracked in BATCH_TRACKER.md, retrievable later when complete. See documets/batch-tool.txt for the template, decision protocol, and invocation examples.
+description: Submit a coding task to Anthropic's Batch API for unattended, cost-effective processing (half the price of standard API calls). Submits immediately with a batch ID, tracked in BATCH_TRACKER.md, retrievable later when complete. See documents/batch-tool.txt for the template, decision protocol, and invocation examples.
 ---
 
 ## Invocation
@@ -45,7 +45,7 @@ If invoked with no task description, ask the user what task to submit.
 
 ## What this does
 
-Wraps the task description in the Batch API template at `documets/batch-tool.txt`, formats it as a Batch API request (JSONL), submits to Anthropic's infrastructure via the Batch API, and returns control immediately with a batch ID. The request is queued and processed asynchronously at lower cost. Results are retrievable using the batch ID once processing completes.
+Wraps the task description in the Batch API template at `documents/batch-tool.txt`, formats it as a Batch API request (JSONL), submits to Anthropic's infrastructure via the Batch API, and returns control immediately with a batch ID. The request is queued and processed asynchronously at lower cost. Results are retrievable using the batch ID once processing completes.
 
 Multiple submissions create multiple independent batch jobs, each tracked in `BATCH_TRACKER.md`.
 
@@ -60,7 +60,7 @@ Multiple submissions create multiple independent batch jobs, each tracked in `BA
 
 ## Steps
 
-1. **Read `documets/batch-tool.txt` fresh** (template is the single source of truth). Substitute task description for `${task description}` on the `Submit to batch` line.
+1. **Read `documents/batch-tool.txt` fresh** (template is the single source of truth). Substitute task description for `${task description}` on the `Submit to batch` line.
 
 2. **Detect override/gate keywords** in the task description:
    - `[OVERRIDE: DISABLE AUTONOMOUS DIRECTIVES]` → embedded in batch job, Claude pauses at decisions

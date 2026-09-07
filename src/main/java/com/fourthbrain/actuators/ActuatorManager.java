@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Sole owner of actuator lifecycle (P1.9, see documets/design/STARTUP-SEQUENCE.md).
+ * Sole owner of actuator lifecycle (P1.9, see documents/design/STARTUP-SEQUENCE.md).
  *
  * Phase A (@PostConstruct) creates every actuator instance through its
  * ObjectFactory, which is what makes Spring inject it, and names it.

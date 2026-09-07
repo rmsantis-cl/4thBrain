@@ -12,7 +12,7 @@ Write-Host "ðŸ§ª Testing Batch API Submission" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 
 # Verify prerequisites
-$trackerPath = "documets/BATCH_TRACKER.md"
+$trackerPath = "documents/BATCH_TRACKER.md"
 if (-not (Test-Path $trackerPath)) {
     Write-Error "BATCH_TRACKER.md not found"
     exit 1
