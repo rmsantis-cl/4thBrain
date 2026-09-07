@@ -1,6 +1,6 @@
 # File Indexing
 
-INDEX maintenance for files created/updated under `file-versioning.md`. Based on `documets/method/BOOT.md`. Applies project-wide.
+INDEX maintenance for files created/updated under `file-versioning.md`. Based on `documents/method/BOOT.md`. Applies project-wide.
 
 - A file named `INDEX` tracks every artifact, spec, interview log, and foundational instruction file created or used in this project, except those excluded below.
 - It has its own file header (see `file-format.md`), plus a two-column table: `File Name`, `History`.

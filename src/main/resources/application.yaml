@@ -47,9 +47,11 @@ vault:
     # Area the Indexer takes its source copy from. Becomes "incoming"
     # once Extractor writes sanitized output there (P2.3).
     source-area: tmp
-  
+
 
 logging:
+  file:
+    name: 'log/application.log'
   level:
-    root: INFO
+    root: WARN
     com.fourthbrain: DEBUG

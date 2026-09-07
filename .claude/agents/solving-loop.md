@@ -58,7 +58,7 @@ Loop:
      - All items with status READY or WIP (stories)
      - All tasks with status pending/in-progress
      - Dependencies all COMPLETED
-     - Write to documets/loop/list-${pass_num}.txt
+     - Write to documents/loop/list-${pass_num}.txt
   
   3. Stop conditions (check in order):
      a) Ready set is empty → ALL WORK DONE, exit ✓
@@ -100,7 +100,7 @@ Loop:
   8. Update documentation:
      - BACKLOG-TRACKER.md (bump version, set date)
      - TODO-TRACKER.md (bump version, set date)
-     - Story files under documets/story/
+     - Story files under documents/story/
      - DESIGN-DEBT.md if gaps found
   
   9. Log pass summary:

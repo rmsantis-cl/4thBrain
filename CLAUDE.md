@@ -48,14 +48,19 @@ v04/
 ├── src/main/resources/
 │   ├── application.yaml                  (Spring config: port, DB path, thread counts, Ollama URL)
 │   ├── schema.sql                        (SQLite DDL: document, tag, document_tag tables only)
-│   └── static/
-│       ├── index.html / chat.html        (UI with 7 panels)
-│       ├── styles.css                    (design from v03)
-│       └── client.js                     (REST API client)
+│   ├── templates/                        (server-rendered pages — see ADR25)
+│   │   ├── index.html                    (main UI, 7 panels; self-contained, inline CSS + JS)
+│   │   ├── admin.html                    (admin menu)
+│   │   ├── admin-db.html                 (database browser)
+│   │   └── api-docs.html                 (API documentation page)
+│   └── static/                           (assets a page links to — no pages)
 ├── src/test/java/com/fourthbrain/
 │   └── (unit + integration tests, Phase 3)
-└── documets/
-    └── (design docs, inherited from v03)
+└── documents/
+    ├── design/
+    │   └── (design docs and system specs)
+    └── story/
+        └── (individual story files, P1.8–P3.5)
 ```
 
 ## Phase 1: Skeleton & Full Architecture (Wiring Only)
@@ -105,6 +110,7 @@ v04/
 - **Synchronized writes:** DatabaseService uses method-level synchronization to enforce brief, serialized transactions (ADR17).
 - **Phase 1 stubs everything:** Actuators log and update status; no real business logic until Phase 2.
 - **Spring Boot idiomatic:** @Autowired dependencies, @Slf4j logging, @Component + @Scheduled, no constructors.
+- **Adding a UI page (ADR25):** the page goes in `src/main/resources/templates/`, and its `@Controller` method returns the file's name without the extension. `static/` holds assets a page links to, not pages an endpoint serves. Thymeleaf renders plain HTML unchanged, so a new page needs no `th:` attributes to work. One trap: JavaScript template literals use `${...}`, the same delimiter as Thymeleaf expressions. They pass through safely because Thymeleaf only evaluates inside a `<script>` carrying `th:inline="javascript"` — so do not add that attribute to a script using template literals, and mark a block `th:inline="none"` if it ever needs protecting.
 
 ## Working in This Repository
 
@@ -117,6 +123,8 @@ v04/
 ## Changelog
 
 - 2026-09-03: Phase 1 skeleton complete. Removed Job class entirely (document status sufficient). Thread configuration via application.yaml (default 1 per actuator). Coordinator updates Document status, no Job records. StatusController returns actual Document counts. All logging via @Slf4j without class names. Created FourthBrainApplication main class, ActuatorThreadConfig, schema.sql (no job table).
+- 2026-09-07: BUG-001 diagnosed — five endpoints returned view names with no template engine installed, so the UI had never rendered. ADR25 settles the view layer on Thymeleaf, with served pages in `templates/`; Story P1.14 carries it out. Repository structure corrected: `chat.html`, `styles.css` and `client.js` were listed here but have never existed, and `templates/` was missing.
+- 2026-09-07: Governance trimmed. Removed `.claude/rules/merge-to-v03.md` (v03 is no longer the branch of record; v04 is), `.claude/rules/md-memory.md` and the `submit-batch` / `got-batch` skills, which drove off a `batch-tool.txt` and a `BATCH_TRACKER.md` that exist nowhere in the repository. Removed the leftover `documets/` directory, whose two design docs had been duplicated into `documents/` without the originals being deleted.
 
 ## Key Decisions
 

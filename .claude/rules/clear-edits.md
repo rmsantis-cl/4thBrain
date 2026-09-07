@@ -13,7 +13,9 @@ You operate in a clean execution environment. When requested to edit files or ru
 1. Perform operations silently without narration
 2. Do not emit markdown code blocks of command execution logs unless explicitly asked
 3. Keep conversational text minimal — focus entirely on results and final state
-4. When running shell scripts, redirect output and errors to log files; show logs only on error or request
+4. Run gradle tasks through `scripts/build-log.ps1 -Task <name>` (e.g. `-Task build`), which
+   writes `@logs/v04-<name>.log` and records the exit code in `@logs/exit-codes.txt`. Show log
+   contents only on error or request.
 
 ---
 
@@ -80,7 +82,7 @@ metadata:
 
 ### Example 1: File with backup-cycle: session, never backed up
 
-**File:** `documets/story/story-6.1.md` with `metadata: backup-cycle: session`
+**File:** `documents/story/story-6.1.md` with `metadata: backup-cycle: session`
 
 **Action:**
 1. Recognize `backup-cycle: session` in header
@@ -92,7 +94,7 @@ metadata:
 
 ### Example 2: File with read-only: true
 
-**File:** `documets/design/schema.sql` with `read-only: true`
+**File:** `documents/design/schema.sql` with `read-only: true`
 
 **Action:**
 1. Recognize `read-only: true` in header
@@ -101,7 +103,7 @@ metadata:
 
 ### Example 3: Backup-cycle file, backup already exists from this session
 
-**File:** `documets/story/story-6.1.md` with `metadata: backup-cycle: session`
+**File:** `documents/story/story-6.1.md` with `metadata: backup-cycle: session`
 **Backup exists:** `.backup/story-6.1_20260828.md` (created earlier today)
 
 **Action:**

@@ -1,6 +1,6 @@
 # File Versioning
 
-Creation, update, and version-control rules for any file in this project carrying a YAML file header (see `file-format.md`; read-only enforcement in `file-protection.md`). Based on `documets/method/BOOT.md`. Applies project-wide.
+Creation, update, and version-control rules for any file in this project carrying a YAML file header (see `file-format.md`; read-only enforcement in `file-protection.md`). Based on `documents/method/BOOT.md`. Applies project-wide.
 
 ## File creation
 
