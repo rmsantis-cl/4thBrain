@@ -5,8 +5,8 @@
 | Property | Value |
 | :---- | :---- |
 | **Document Title** | Project 4thBrain v04 — Three-Phase Delivery Plan |
-| **Version** | 1.1 |
-| **Date** | 2026-09-06 |
+| **Version** | 1.2 |
+| **Date** | 2026-09-07 |
 | **Status** | Design Phase — Ready to Start Phase 1 |
 
 ---
@@ -299,6 +299,45 @@ Depends on P1.11 for the entry point. Until that is settled, rewriting the tests
 - **P2.5 — Indexer Real Logic:** Writes classified document to vault target subfolder, calls Smart Connections MCP to trigger indexing, marks Document as Indexed in database.
 - **P2.6 — Briefing Real Logic:** Scheduled bean (6 AM) queries recent documents, builds Ollama prompt, calls OllamaClient, writes briefing Markdown to vault.
 - **P2.7 — File Watcher:** Monitors `$RAW_DIR` for new files, creates Document record, calls Coordinator.startChain() to begin pipeline.
+- **P2.8 — Spike: MarkItDown as the Extractor's converter:** Timeboxed evaluation of `microsoft/markitdown` against Apache Tika, and of the ways a Spring Boot process can call an external Python tool. Blocks P2.3, which currently names a stack v04 cannot run. Detail below.
+
+### Story P2.8 — Spike: MarkItDown as the Extractor's converter
+
+**Problem.** P2.3 specifies "PDF → OpenDataLoader, HTML → Turndown, Word → Mammoth". That list came
+from v03, which ran on Node.js. Turndown and Mammoth are JavaScript libraries and v04 has no Node
+runtime, so P2.3 as written cannot be implemented. The extraction stack has never actually been
+chosen. `Extractor.java` converts nothing today — it only expands ZIP archives into child Documents.
+
+**Spike.** [MarkItDown](https://github.com/microsoft/markitdown) (MIT, Python ≥ 3.10) covers PDF,
+DOCX, PPTX, XLSX, HTML, EPub and more through one CLI, and targets Markdown for LLM consumption
+rather than visual fidelity, which is what the Classifier needs. It is Python, so adopting it means
+deciding how the JVM calls it. Six integration options are laid out and compared in
+`documets/design/SPIKE-MARKITDOWN.md`: CLI subprocess per document, a persistent Python worker, a
+local HTTP sidecar, the upstream `markitdown-mcp` server over MCP, embedding Python in the JVM, and
+dropping Python entirely for Apache Tika plus a Markdown step.
+
+Going-in position, to be confirmed or overturned by measurement: subprocess per document behind a
+`MarkdownConverter` interface, with Tika implemented behind the same interface as the comparison arm.
+ZIP handling stays in Java either way — MarkItDown returns one concatenated document per archive,
+which would collapse the one-Document-per-member model from P1.8.
+
+**Acceptance criteria.**
+
+- A fixture corpus of 15–20 documents matching the real inflow, including a scanned PDF and a
+  deliberately corrupt file, with converter output committed next to it.
+- Per-format results for both candidates: output quality against what the Classifier needs, wall time
+  per document, fixed process-start cost, failure behaviour (exit code, stderr, hangs), non-ASCII
+  handling on Windows, install footprint.
+- A written recommendation naming one stack and one integration option, backed by those numbers.
+- The decision recorded as an ADR in `documets/design/ADRS.md`.
+- P2.3 rewritten to name the chosen stack instead of the v03 Node libraries.
+
+**Scope.** Timebox one day. Spike code lives in `spikes/markitdown/` and is throwaway; nothing lands
+in `src/main` under this story. Image description and audio transcription are out of scope, as are
+Azure Document Intelligence and any other paid external call.
+
+**Not blocked by Phase 1.** The spike runs against files on disk and needs neither a booting
+application nor the actuator chain.
 
 ---
 
@@ -350,5 +389,6 @@ From v03 Analysis & .v03/documets/design/:
 - 2026-09-03: Created three-phase delivery plan (Skeleton → Real Logic → Testing). Removed detailed Epic/Story breakdown in favor of pragmatic phasing. Reframed to avoid overengineering.
 - 2026-09-06: Added Story P1.8 (Document Copies) — drop `path` from the document table and entity, add a `document_copy` child table keyed by vault area (`tmp`/`incoming`/`indexing`/`raw`), add `source_url` to document. Decided: several live copies allowed, at most one per area, so each actuator resolves the copy for the area it works on; `DatabaseService.move(Document, String)` replaced by a copy-scoped API. No open decisions remain; ready to implement.
 - 2026-09-06: P1.8 implemented. Schema validated against a real SQLite database. Two pre-existing defects fixed in passing because they blocked verification: a duplicate orphan `com.fourthbrain.repo.DocumentRepository` that broke bean registration, and `Long` id columns that failed Hibernate validation (SQLite needs `INTEGER` for a rowid alias, not `BIGINT`). `Coordinator` annotated `@Component` so it can be injected. Still open, outside this story: actuators are instantiated twice (component scan and `ActuatorThreadConfig`), so `Coordinator.register()` NPEs and startup does not complete. Now tracked as P1.9.
-- 2026-09-06: Added Story P1.9 (Actuator Instantiation & Registration) — `ActuatorThreadConfig` becomes the sole creator, `@Component` dropped from the five actuator classes, registration and thread start move out of the constructor to after injection, and the Coordinator routing map is keyed by class simple name rather than thread name. The run loop's busy-spin NPE is recorded as out of scope and still needs a story of its own.
+- 2026-09-06: Added Story P1.9 (Actuator Instantiation & Registration) — `ActuatorThreadConfig` becomes the sole creator, `@Component` dropped from the five actuator classes, registration and thread start move out of the constructor, and the Coordinator routing map is keyed by class simple name rather than thread name. The run loop's busy-spin NPE is recorded as out of scope and still needs a story of its own.
+- 2026-09-07: Added Story P2.8, a timeboxed spike on MarkItDown as the Extractor's converter, with the integration options written up in `documets/design/SPIKE-MARKITDOWN.md`. Reason it exists: P2.3's stack (Turndown, Mammoth) is JavaScript inherited from v03, so the extraction library choice for v04 was never made. Apache Tika is carried as the comparison arm, since it removes the Python runtime question entirely. P2.3 is now blocked by P2.8.
 - 2026-09-06: Added Stories P1.10–P1.13 from a survey of what still blocks a working Phase 1. P1.10 run loop (busy-spin NPE, no shutdown). P1.11 Coordinator entry point (`startChain` throws and is what the tests call, while production uses `sendMessage`, which builds messages that NPE when logged). P1.12 status endpoint (reads document-status keys from a map of actuator queue depths, so it always returns zeros). P1.13 text and URL ingestion endpoints plus the 23 stale controller tests. Order: P1.9 → P1.10 → P1.11 → P1.12/P1.13. Deliberately not storied: the Search, Chat, Admin and UI controllers are intended Phase 1 stubs and are covered by Phase 2; `SmartConnectionsMonitor` is an empty class, which is the existing P1.5 left unimplemented, not a new gap.
