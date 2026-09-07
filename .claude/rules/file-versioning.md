@@ -16,13 +16,13 @@ Creation, update, and version-control rules for any file in this project carryin
     created-by: ${agent, model, or username}
   ---
   ```
-- Add the new file to the INDEX (see `file-indexing.md`).
+- Add the new file to the INDEX for its scope — the nearest one at or above it (see `file-indexing.md`).
 
 ## File update
 
 - If the target file doesn't exist, fail the update.
 - If the file is read-only, silently ignore the update (no error, no change).
-- Otherwise: update the header's `date` to the current date/time, increment `metadata.version`, and add the file to the INDEX.
+- Otherwise: update the header's `date` to the current date/time, increment `metadata.version`, and add the file to the INDEX for its scope.
 
 ## Version control
 
