@@ -189,8 +189,9 @@ two endpoints, because what they accept depends on what the composer sends.
 
 Done when there is a written recommendation backed by the prototype, and:
 
-- the decision is recorded as an ADR in `documents/design/ADRS.md` (ADR26 is the next free number;
-  ADR25 is the highest used),
+- the decision is recorded as an ADR in `documents/design/ADRS.md` as **ADR27** (ADR26 is reserved
+  by Story P1.11's plan and ADR28 is taken by the P2.8 converter decision, so 27 is this spike's
+  slot rather than simply the next free number),
 - an implementation story is created for the composer itself, blocked by P1.13,
 - and any endpoint gap the spike found is logged in `documents/DESIGN-DEBT.md` or attached to an
   existing story.
