@@ -124,6 +124,7 @@ v04/
 
 - 2026-09-03: Phase 1 skeleton complete. Removed Job class entirely (document status sufficient). Thread configuration via application.yaml (default 1 per actuator). Coordinator updates Document status, no Job records. StatusController returns actual Document counts. All logging via @Slf4j without class names. Created FourthBrainApplication main class, ActuatorThreadConfig, schema.sql (no job table).
 - 2026-09-07: BUG-001 diagnosed — five endpoints returned view names with no template engine installed, so the UI had never rendered. ADR25 settles the view layer on Thymeleaf, with served pages in `templates/`; Story P1.14 carries it out. Repository structure corrected: `chat.html`, `styles.css` and `client.js` were listed here but have never existed, and `templates/` was missing.
+- 2026-09-07: Governance trimmed. Removed `.claude/rules/merge-to-v03.md` (v03 is no longer the branch of record; v04 is), `.claude/rules/md-memory.md` and the `submit-batch` / `got-batch` skills, which drove off a `batch-tool.txt` and a `BATCH_TRACKER.md` that exist nowhere in the repository. Removed the leftover `documets/` directory, whose two design docs had been duplicated into `documents/` without the originals being deleted.
 
 ## Key Decisions
 
