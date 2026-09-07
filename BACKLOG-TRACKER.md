@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 1.1
+  version: 1.2
   created-by: Claude Code
-  date: 2026-09-06
+  date: 2026-09-07
 ---
 
 # BACKLOG-TRACKER — 4thBrain v04
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-24 stories: 1 WIP, 2 READY, 13 NOT-READY, 8 COMPLETED.
+25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
 
 ### WIP
 
@@ -36,6 +36,7 @@ Section meanings:
 |----|-------|------|
 | P1.10 | Actuator Run Loop | Explicitly out of scope for P1.9, so not blocked by it |
 | P1.12 | Status Endpoint Reports Document Counts | No dependency |
+| P2.8 | Spike: MarkItDown as the Extractor's converter | Runs against files on disk; needs no booting application |
 
 ### NOT-READY
 
@@ -45,7 +46,7 @@ Section meanings:
 | P1.13 | Text and URL Ingestion Endpoints | P1.11 |
 | P2.1 | OllamaClient & ConcurrencyGate | Phase 1 does not boot |
 | P2.2 | Ingestor Real Logic | Phase 1 does not boot |
-| P2.3 | TextExtractor Real Logic | Phase 1 does not boot |
+| P2.3 | TextExtractor Real Logic | Phase 1 does not boot; P2.8 |
 | P2.4 | Classifier Real Logic | Phase 1 does not boot |
 | P2.5 | Indexer Real Logic | Phase 1 does not boot |
 | P2.6 | Briefing Real Logic | Phase 1 does not boot |
@@ -110,6 +111,17 @@ two key spaces never intersect. Source the counts from `DocumentRepository.count
 instead, and derive the stage list from the actuators' own gerund/participle values so a new
 actuator shows up without editing the controller.
 
+### P2.8 — Spike: MarkItDown as the Extractor's converter
+
+Timeboxed at one day. P2.3 names Turndown and Mammoth, JavaScript libraries inherited from v03, so
+v04's extraction stack was never actually chosen and `Extractor` converts nothing today. The spike
+measures `microsoft/markitdown` (Python, MIT) against Apache Tika on a real fixture corpus, and
+settles how the JVM would call the Python side. Options and tradeoffs are written up in
+`documets/design/SPIKE-MARKITDOWN.md`.
+
+Not blocked by Phase 1: it runs against files on disk, outside the actuator chain. Output is a
+recommendation, an ADR, and a rewritten P2.3. No production code lands under this story.
+
 ## NOT-READY
 
 ### P1.11 — Coordinator Entry Point & Message Addressing
@@ -135,6 +147,9 @@ end to end.
 
 P2.1 OllamaClient & ConcurrencyGate · P2.2 Ingestor · P2.3 TextExtractor · P2.4 Classifier ·
 P2.5 Indexer · P2.6 Briefing · P2.7 File Watcher.
+
+P2.3 carries a second blocker: its extraction stack is the v03 Node one and has to be re-chosen,
+which is what P2.8 is for.
 
 Worth flagging: the Phase 2 deliverable checkboxes in `PROJECT_4thBrain.md` are ticked, which
 contradicts Phase 1 not booting. Treat those ticks as stale rather than as evidence of
@@ -165,3 +180,5 @@ follow-up story owns the fix.
 - 2026-09-06: Created. Seeded from the 24 stories in `PROJECT_4thBrain.md`.
 - 2026-09-06: Summary split into four tables, one per status. The COMPLETED section's own table
   was dropped as a duplicate of the Summary's.
+- 2026-09-07: Added P2.8 (MarkItDown spike) to READY. P2.3 gains it as a second blocker. Counts now
+  25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
