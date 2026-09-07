@@ -2,8 +2,8 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 2.4
-  created-by: Claude Code
+  version: 2.5
+  created-by: Claude Sonnet 5
   date: 2026-09-07
 ---
 
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-32 stories: 1 WIP, 7 READY, 12 NOT-READY, 12 COMPLETED.
+33 stories: 1 WIP, 7 READY, 13 NOT-READY, 12 COMPLETED.
 2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
@@ -35,7 +35,7 @@ Section meanings:
 
 | ID        | Title                                        | Note                                                                                                  |
 | --------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by [[P1.9]]. Stage 1 of [[P1.11-FIX-PLAN]]                                                  |
+| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by [[P1.9]]. Stage 1 of [[P1.11-FIX-PLAN]]. ADR26 now written                                |
 | [[P1.12]] | Status Endpoint Reports Document Counts      | No dependency                                                                                         |
 | [[P1.15]] | Orderly Shutdown                             | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                  |
 | [[P1.16]] | Crash Recovery                               | Unblocked by [[P1.9]]                                                                                 |
@@ -47,7 +47,8 @@ Section meanings:
 
 | ID        | Title                            | Blocked by                                                                                    |
 | --------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
-| [[P1.13]] | Text and URL Ingestion Endpoints | [[P1.11]], [[P1.17]] — stage 3 of [[P1.11-FIX-PLAN]]                                          |
+| [[P1.13]] | Ingest-by-Value Endpoint (Text and URL)  | [[P1.11]], [[P1.17]] — stage 3 of [[P1.11-FIX-PLAN]]. Now one endpoint, `/api/ingest/capture`, per ADR26 |
+| [[P1.18]] | The Unified Composer                     | [[P1.13]], [[P1.17]] — stage 4 of [[P1.11-FIX-PLAN]]; cannot start until ADR27 is written             |
 | [[P2.1]]  | OllamaClient & ConcurrencyGate   | [[P1.11]] — no working pipeline entry point; [[P2.10]] — nothing answers on port 11434        |
 | [[P2.2]]  | Ingestor Real Logic              | [[P1.11]] — no working pipeline entry point                                                   |
 | [[P2.3]]  | TextExtractor Real Logic         | [[P1.11]] — no working pipeline entry point; [[P2.9]] — the converter it calls does not exist |
@@ -85,7 +86,7 @@ in sync with the per-bug file.
 Detailed descriptions and acceptance criteria are kept in one file per story under
 `documents/story/`. Every ID in the tables above links to its file where one exists:
 
-- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]]
+- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]]
 - Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]], [[P2.10]]
 - Phase 3: [[P3.1]], [[P3.2]], [[P3.3]], [[P3.4]], [[P3.5]]
 
@@ -178,3 +179,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known d
 - 2026-09-07: Every Story and Bug ID in the tables now links to its file, the way P1.11 already did — `[[P2.3]]`, `[[BUG-001]]` and so on, in the ID columns and in the blocked-by and note columns. The Story Detail Files section lists the files instead of describing ranges, and records that P1.1–P1.7 have none. Plans and design artifacts (`P1.9-FIX-PLAN`, `P1.11-FIX-PLAN`, `P3.5-UPGRADE-PLAN`, `ADRS`, the two spike briefs, `STARTUP-SEQUENCE`) are linked from the same place. No status or count changed.
 - 2026-09-07: `P1.11-FIX-PLAN.md` rewritten to plan P1.11, P1.17 and P1.13 as one run to working file, text and URL entry points; the short-lived `UI-ENTRY-POINTS-PLAN.md` is merged into it and gone, so there is one plan file rather than two covering the same stories. The spike is sequenced in parallel with P1.11 rather than after it — it touches nothing under `src/main` — and has to land before P1.13, which it constrains. Two findings changed the shape of the work: P1.13 cannot meet its own acceptance criteria as written, because `Ingestor` and `Clipper` read a submitted URL from `content` while the story specifies `source_url`; and the three stories together stop short of the goal, since P1.17 forbids production code, so the composer needs a fourth story (P1.18) that the spike is to create. Correction to the note this replaces: the earlier plan's Coordinator sketch was said not to compile because it called a `DocumentService` that does not exist. `DocumentService` does exist, with both `getDocumentById` and `setStatus`. The sketch still moves to `DatabaseService`, for the reason that actually holds — it is the synchronized service under ADR17 and the one `IngestionController` already injects — which exposes a genuine inconsistency the plan now logs: two services write `Document.status`, and only one of them is synchronized. No status or count changed.
 - 2026-09-07: Story P2.10 (Deploy Ollama on Windows) added to READY — an environment story with no production code, standing up the service `application.yaml` has pointed at since the skeleton and pinning the model tag so classification behaviour cannot drift under a later pull. P2.1, P2.4, P2.6 and P3.4 gain it as a blocker. Also recorded `plan-11-13-17.md`, a second plan over P1.11, P1.13 and P1.17 that delivers them as one change rather than four stages; it and `P1.11-FIX-PLAN.md` are alternatives and one has to be chosen before work starts. `simple-claude-plan.md` listed alongside them as the governance audit, which is not a story plan. Counts: 32 stories — 1 WIP, 7 READY, 12 NOT-READY, 12 COMPLETED.
+- 2026-09-07: ADR26 written (`documents/design/ADRS.md`), unblocking P1.11 and reshaping P1.13. Settles the entry contract: `startChain` is the sole entry point; a `Message` carries the fully-loaded `Document`, not an id, so no actuator re-fetches one it already holds; `Message.from` is null-safe; the Coordinator registry becomes instance state; a submitted URL lives in `source_url`; `DatabaseService` alone writes `Document.status`. Extends into P1.13: `/api/ingest/text` and `/api/ingest/url` collapse into one `POST /api/ingest/capture`, dispatching on whichever of a `url` or `text` body key is present, so the UI's own type-detection is not duplicated server-side; `/api/ingest/file` is unchanged. P1.13 gains P1.17 as a second dependency and P1.18 as something it now blocks. Added Story P1.18 (The Unified Composer) to NOT-READY, the follow-on P1.17's own acceptance criteria named but did not create; blocked by P1.13 and P1.17, and cannot start until ADR27 is written. Counts: 33 stories — 1 WIP, 7 READY, 13 NOT-READY, 12 COMPLETED.

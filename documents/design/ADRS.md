@@ -2,8 +2,8 @@
 name: ADRS
 description: Architecture Decision Records for 4thBrain v04. ADR1-ADR24 are inherited from v03 and not restated here; v04's own decisions start at ADR25
 metadata:
-  version: 1.1
-  created-by: Claude Code
+  version: 1.2
+  created-by: Claude Sonnet 5
   date: 2026-09-07
 ---
 
@@ -119,6 +119,89 @@ the first time.
 
 ---
 
+## ADR26 — The pipeline's entry contract: one entry point, a document-carrying message, one ingest shape
+
+**Date:** 2026-09-07
+**Status:** Accepted
+**Supersedes:** nothing (`Coordinator.startChain` was an unimplemented stub; `sendMessage` was undocumented)
+**Arises from:** Story P1.11, extended to cover Story P1.13
+
+### Context
+
+Two ways exist to start a pipeline. `Coordinator.startChain(long)` throws `UnsupportedOperationException`;
+`IngestionController` calls `sendMessage(String, Document)` instead, which the tests never exercise.
+`sendMessage` builds `new Message(null, ...)`, and `Message.id()` dereferences `from` unguarded, so
+logging a message built this way throws an NPE the first time someone adds a debug log line. The
+registry backing both is a static field read through an injected `@Component`, which means a second
+`@SpringBootTest` inherits the actuators the first one registered — Spring caches contexts, so clearing
+a static map on context close does not separate them.
+
+Story P1.13 layers a second, unrelated gap on top: `/api/ingest/text` and `/api/ingest/url` are two
+endpoints for one operation (put something in the vault), which duplicates the type-detection work the
+composer (P1.17) already has to do to decide which button to wire a submission to.
+
+### Decision
+
+1. `startChain(long documentId)` is the only entry point. `sendMessage` is deleted.
+2. **The message carries the fully-loaded `Document`, not an id.** `startChain` reads the document
+   from the database exactly once, at the start of the chain. From there, the same `Document` object
+   passes from actuator to actuator inside `Message.document`, and every stage reads and mutates that
+   instance directly. No actuator re-queries `DatabaseService` for a document it is already holding —
+   the database is touched only to load the document at chain start and to persist each status
+   transition. `Message`'s own class comment ("carries only the document ID") has described the wrong
+   design since the field was changed to `Document document`; this decision makes the actual field the
+   documented contract.
+3. `Message.from` is legitimately optional: a message can originate at the REST boundary, outside any
+   actuator. `id()` and `toString()` render a null sender as `external` rather than dereferencing it.
+4. The Coordinator registry becomes instance state on the `@Component`, not static, so each Spring
+   context gets its own actuators and test contexts stop bleeding into each other.
+5. A submitted URL is carried on `Document.sourceUrl`; `content` stays empty until Clipper fetches it.
+   `Ingestor.isUrl` and `Clipper` read `sourceUrl`, not `content` — without this, a URL document matches
+   neither `isUrl` nor `isTextContent` and the chain silently stops at `ingested`.
+6. `DatabaseService` — the synchronized service under ADR17 — is the only writer of `Document.status`.
+   `DocumentService.updateDocumentStatus` is unsynchronized and unused for status going forward.
+7. **`/api/ingest/text` and `/api/ingest/url` collapse into one endpoint**, `POST /api/ingest/capture`,
+   taking a JSON body with either a `url` key or a `text` key set — never both. The controller dispatches
+   on which key is present; it does not re-derive the type from a URL pattern, because the UI has
+   already made that call. `/api/ingest/file` stays separate: a multipart upload shares no shape with a
+   JSON body, and forcing it into the same envelope buys nothing.
+8. One response shape across all three ingest endpoints (`file`, `capture`):
+   `{ "id": 42, "status": "ingesting", "message": "Queued" }`.
+
+### Why, given the above
+
+**Document-in-message removes a race, not just a query.** SQLite writes are already serialized behind
+`DatabaseService`'s synchronized methods (ADR17). A stage that reloaded the document by id would be
+asking "what does the row say right now", a question with no stable answer while another actuator could
+in principle be mid-write. Passing the same in-memory object sidesteps the question entirely: a stage
+sees the document exactly as the previous stage left it, with no re-fetch and no window for it to have
+changed underneath. The cost is symmetrical — no stage can see a write made by something outside the
+chain while the document is in flight — which is the behaviour this pipeline already has today, since
+nothing outside the actuator chain writes to a document mid-pipeline.
+
+**One ingest endpoint keeps the type-detection rule in one place.** The composer's URL-detection rule
+(P1.17) already decides, client-side, whether the user typed a URL or a note. Two endpoints would make
+the UI apply that rule twice — once to pick the request path, once inside the composer's own logic — for
+no benefit, since the second application can only agree with the first or be wrong. One endpoint, keyed
+on which field the UI populates, means the decision is made once.
+
+### Consequences
+
+`IngestionControllerTest`'s `/text` and `/url` assertions move to a single `/capture` test class. Any
+front end — the current two panels or P1.18's composer — posts `{ "url": "..." }` or `{ "text": "..." }`
+to the same path. `api-docs.html` documents one ingest-by-value endpoint instead of two. Actuators
+gain no new obligation: they already receive the document by reference through `Message`, as
+`Actuator.run()`'s loop shows — this decision documents that behaviour rather than changing it.
+
+### Alternatives rejected
+
+| | Why not |
+|---|---|
+| Keep `/text` and `/url` as separate endpoints | Duplicates the type-detection logic the composer already needs; two request shapes for one operation |
+| Message carries a document id, actuators reload from `DatabaseService` per hop | Reintroduces a database read at every stage for an object already held in memory, with no writer outside the chain to reconcile against |
+
+---
+
 ## ADR28 — MarkItDown, invoked as a subprocess, is the Extractor's Markdown converter
 
 **Date:** 2026-09-07
@@ -126,8 +209,8 @@ the first time.
 **Supersedes:** the extraction stack named in Story P2.3 (Turndown, Mammoth, OpenDataLoader)
 **Arises from:** Story P2.8
 
-*Numbered 28, not 26: ADR26 is reserved by Story P1.11's plan and ADR27 by Story P1.17's spike.
-Neither is written yet, so 26 and 27 are gaps until they land.*
+*Numbered 28, not 26 or 27: ADR26 (Story P1.11's entry contract) is written above. ADR27, reserved by
+Story P1.17's spike, is not written yet.*
 
 ### Context
 
