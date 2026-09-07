@@ -5,9 +5,9 @@
 | Property | Value |
 | :---- | :---- |
 | **Document Title** | Project 4thBrain v04 — Three-Phase Delivery Plan |
-| **Version** | 1.3 |
+| **Version** | 1.4 |
 | **Date** | 2026-09-07 |
-| **Status** | Design Phase — Ready to Start Phase 1 |
+| **Status** | Phase 1 in progress — the application boots as of P1.9 |
 
 ---
 
@@ -56,6 +56,8 @@ Delivered in three phases:
 - **P1.12 — Status Endpoint Reports Document Counts:** See `documents/story/P1.12.md`.
 - **P1.13 — Text and URL Ingestion Endpoints:** See `documents/story/P1.13.md`.
 - **P1.14 — View Layer & Template Engine:** See `documents/story/P1.14.md`. Closes BUG-001; design in ADR25.
+- **P1.15 — Orderly Shutdown:** See `documents/story/P1.15.md`.
+- **P1.16 — Crash Recovery:** See `documents/story/P1.16.md`.
 
 ---
 
@@ -139,3 +141,4 @@ From v03 Analysis & .v03/documents/design/:
 - 2026-09-07: Added Story P3.5 (Upgrade to JUnit 5) to Phase 3. Renamed `documets/` directory to `documents/`. Created individual story files (P1.8–P3.5) under `documents/story/`.
 - 2026-09-07: Added Story P1.14 (View Layer & Template Engine), closing BUG-001. Created `documents/design/ADRS.md`, which had been referenced but never written, and recorded ADR25: Thymeleaf is the view layer and served pages live in `templates/`.
 - 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved to COMPLETED — its code had already landed, and the boot confirmed it registers all five actuators. Logged BUG-002: a fresh clone cannot start because nothing creates the `data/` directory SQLite needs.
+- 2026-09-07: P1.9 and P1.10 verified together, since P1.10's changes had landed in the same pass. Three defects found while verifying and fixed — the Coordinator registry was published unsafely, `Actuator.run()` dereferenced a null next-actuator, and the `InterruptedException` handler could busy-spin on an interrupt that did not come from `shutdown()`. `build.gradle`'s `sourceCompatibility` corrected from 17 to 21, which the code had already been relying on. New `ActuatorManagerTest` asserts instance counts, registration, injection and shared queues against the registry. Added Stories P1.15 (Orderly Shutdown) and P1.16 (Crash Recovery); these were drafted as P1.14 and P1.15 on the branch that carried the verification work, and are renumbered here because P1.14 was already taken by View Layer & Template Engine.

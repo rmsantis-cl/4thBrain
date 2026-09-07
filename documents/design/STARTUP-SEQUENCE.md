@@ -1,8 +1,8 @@
 ---
 name: STARTUP-SEQUENCE
-description: Proposed bean initialization order for 4thBrain v04, separating actuator creation from thread start so registration completes before any actuator runs
+description: Bean initialization order for 4thBrain v04, separating actuator creation from thread start so registration completes before any actuator runs
 metadata:
-  version: 1.0
+  version: 2.0
   created-by: Claude Code
   date: 2026-09-06
   story: P1.9
@@ -12,6 +12,10 @@ metadata:
 
 Design behind Story P1.9 (Actuator Instantiation & Registration). Describes the order beans are
 created and the point at which actuator threads begin running.
+
+Built and verified on 2026-09-06. What follows describes the code in `ActuatorManager`,
+`ActuatorThreadConfig`, `Actuator` and `Coordinator` as it now stands; the "Why the earlier
+sequence aborted" section is kept as the record of what it replaced.
 
 ## The constraint
 
@@ -25,9 +29,9 @@ the routing step, with an NPE that the loop's own catch block swallows.
 Creation and starting therefore have to be separate beats. A loop that creates an actuator and
 immediately starts it cannot satisfy this, because the actuator is live before its siblings exist.
 
-## Why the current sequence aborts
+## Why the earlier sequence aborted
 
-Each actuator is built twice. `Ingestor`, `Extractor`, `Classifier`, `Indexer` and `Clipper` all
+Historical; fixed by P1.9. Each actuator was built twice. `Ingestor`, `Extractor`, `Classifier`, `Indexer` and `Clipper` all
 carry `@Component`, so component scan builds one of each. `ActuatorThreadConfig` also declares
 `@Bean @Scope("prototype")` factories for four of them, plus array beans that call
 `factory.getObject()`, so it builds another.
@@ -58,14 +62,15 @@ Three further faults sit in the same path:
   `Actuator.service` carries no annotation at all, so `DocumentService` is never injected and
   `service.setStatus(...)` NPEs on the first message regardless.
 
-## Proposed sequence
+## The sequence
 
 One bean owns actuator lifecycle: **`ActuatorManager`**. It holds the `ObjectFactory` for each
-actuator type, the configured thread counts, and the `Coordinator`.
+actuator type and the configured thread counts; the registry it writes to is static on
+`Coordinator`, so it needs no reference to the bean.
 
-`ActuatorThreadConfig` keeps the prototype `@Bean` factories and loses the four `...Actuators`
-array beans. `@Component` comes off all five actuator classes. `Actuator`'s constructor sets name,
-logger and flags, and does no lifecycle work.
+`ActuatorThreadConfig` keeps five prototype `@Bean` factories, one per actuator type including
+`Clipper`, and has no array beans. `@Component` is off all five actuator classes. `Actuator`'s
+constructor sets name, logger and flags, and does no lifecycle work.
 
 ```mermaid
 sequenceDiagram
@@ -144,7 +149,9 @@ A failure here should abort startup, which it already does. An actuator with a n
 `factory.getObject()` that many times. Going through the `ObjectFactory` rather than `new` is what
 makes Spring populate the instance, so this is where injection happens.
 
-Each instance is then named `<Class>-<index>` (`Ingestor-0`) for readable logs.
+Each instance is then named `<Class>-<index>` (`Ingestor-0`) through `assignName`, which sets both
+Thread's name and the field `Actuator` logs with. `Thread.setName()` is final, so this cannot be
+an override.
 
 No thread is started in this phase.
 
@@ -154,11 +161,18 @@ Every instance registers with the Coordinator, keyed on `a.getClass().getSimpleN
 
 The key is deliberately the class simple name, not the thread name. Thread names carry an index
 suffix (`Ingestor-0`) while routing asks for the bare class name (`Ingestor`), so the two must not
-share a key. Both maps should be seeded with `computeIfAbsent` so neither depends on the other's
-guard, which is the bug that aborts startup today.
+share a key. The single map is seeded with `computeIfAbsent`; the pair of interdependent maps whose
+guards disagreed is gone.
 
-Several instances of one class stay correct because they share a static queue: `Coordinator.get`
-returning the first registered instance still enqueues work any of them can take.
+The registry is a `ConcurrentHashMap` of `CopyOnWriteArrayList`. It is written once, on the main
+thread during Phase B, and read by every actuator thread on every routing hop, which is the case
+copy-on-write is for. It was briefly a plain `HashMap` written under `synchronized` and read
+without it — safe publication that only held on the writing thread.
+
+`Coordinator.instancesOf(name)` exposes every registered instance of one class as an unmodifiable
+list, empty for an unknown name; `get(name)` returns the first, or null. Several instances of one
+class stay correct because they share a static queue, so enqueueing to the first still lets any of
+them take the work.
 
 ### Phase C — start
 
@@ -172,8 +186,13 @@ queue nothing is reading.
 ### Shutdown
 
 `@PreDestroy` calls `shutdown()` on each actuator, which clears `running` and interrupts the
-thread, then joins with a bounded timeout. `running` is currently private with no way to clear it,
-so nothing can stop an actuator deliberately and nothing waits for in-flight work.
+thread, then joins with a 5-second timeout. The run loop treats `InterruptedException` as a stop
+signal: it re-sets the interrupt flag and breaks. Breaking matters even though `shutdown()` clears
+`running` first — on any interrupt that did not come from `shutdown()`, `running` is still true,
+and merely re-setting the flag would send `take()` straight back into throwing it.
+
+A context close logs `Thread exiting.` once per actuator, then `Shut down N actuator thread(s)`.
+There is no way to trigger this against a running server yet; `/api/shutdown` is P1.15.
 
 ## What each phase fixes
 
@@ -184,37 +203,26 @@ so nothing can stop an actuator deliberately and nothing waits for in-flight wor
 | A — inject before start | `service.setStatus()` NPE on the first message |
 | B — register all before starting any | `Coordinator.get("Extractor")` returning null mid-chain |
 | C — start on ApplicationReadyEvent | Threads running against a half-built context |
-| Shutdown | Nothing can currently stop an actuator |
+| Shutdown | Nothing could stop an actuator |
 
-## Configuration changes
+## Configuration
 
-- Add `actuators.threads.clipper: 1`. `Clipper` exists and is scanned, but has no thread-count
-  entry, so it scales differently from its siblings for no stated reason.
-- `actuators.threads.briefing: 1` is configured and nothing reads it — no Briefing class exists in
-  `src/main/java`. Remove it, or keep it with a comment marking it reserved for Phase 2.
+`actuators.threads` carries an entry per actuator type, `clipper: 1` included. `briefing: 1` is
+kept with a comment marking it reserved for Phase 2 — no Briefing class exists in `src/main/java`,
+so nothing reads it, and `ActuatorManager` would default it to 1 anyway.
+
+`ActuatorManager` reads each count with a `${actuators.threads.<name>:1}` default, so a missing
+entry degrades to one instance rather than failing startup.
 
 ## Dependency on P1.10
 
-Phase C must not land before P1.10, or alongside it at the latest.
+Phase C could not land before P1.10: started against the old loop, which polled with `poll()`,
+dereferenced the null from an empty queue and swallowed the NPE in `catch (Throwable)`, this
+sequence would have produced five correctly registered actuators burning five cores. Both stories
+were implemented in the same pass, so the loop blocks on `take()` and an idle actuator costs
+nothing.
 
-`Actuator.run()` currently polls with `poll()`, dereferences the null it gets from an empty queue,
-swallows the NPE in `catch (Throwable)`, and loops again with no back-off. Started as designed
-here, this sequence would produce five correctly registered actuators burning five cores. The loop
-has to block on `take()` first.
-
-## An unrelated defect found while reading
-
-`Actuator.map` and `Actuator.registry` (`Actuator.java:27-28`) are instance fields, not static:
-
-```java
-private final Map<Class<?>, Queue<Message>> map = new HashMap<>();
-private final Map<Class<?>, Actuator> registry = new HashMap<>();
-```
-
-The base `getQueue()` builds a queue inside that per-instance map, so two instances of the same
-class would hold separate queues and horizontal scaling would silently stop working. It is dead
-code today because every subclass overrides `getQueue()` with its own `static` queue. It stays
-dead only until someone adds a sixth actuator and forgets to override.
-
-P1.10 already calls for removing both fields. Recorded here because the reason is stronger than
-"unused": left in place, it is a trap rather than clutter.
+`Actuator.map` and `Actuator.registry`, the per-instance maps whose `getQueue()` would have given
+two instances of one class separate queues, were removed with P1.10. Every subclass overrides
+`getQueue()` with its own static queue; `getQueue()` is now abstract, so a sixth actuator cannot
+inherit a broken default by forgetting to.

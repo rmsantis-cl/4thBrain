@@ -8,7 +8,9 @@ group = 'com.fourthbrain'
 version = '0.1.0'
 
 java {
-    sourceCompatibility = '17'
+    // 21, not 17: the code uses List.getFirst() (Java 21). It compiled at 17
+    // only because Gradle sets -source/-target without --release.
+    sourceCompatibility = '21'
 }
 
 repositories {

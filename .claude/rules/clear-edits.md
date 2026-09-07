@@ -13,7 +13,9 @@ You operate in a clean execution environment. When requested to edit files or ru
 1. Perform operations silently without narration
 2. Do not emit markdown code blocks of command execution logs unless explicitly asked
 3. Keep conversational text minimal — focus entirely on results and final state
-4. When running shell scripts, redirect output and errors to log files; show logs only on error or request
+4. Run gradle tasks through `scripts/build-log.ps1 -Task <name>` (e.g. `-Task build`), which
+   writes `@logs/v04-<name>.log` and records the exit code in `@logs/exit-codes.txt`. Show log
+   contents only on error or request.
 
 ---
 
