@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 2.3
+  version: 2.4
   created-by: Claude Code
   date: 2026-09-07
 ---
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-31 stories: 1 WIP, 6 READY, 12 NOT-READY, 12 COMPLETED.
+32 stories: 1 WIP, 7 READY, 12 NOT-READY, 12 COMPLETED.
 2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
@@ -35,29 +35,30 @@ Section meanings:
 
 | ID        | Title                                        | Note                                                                                                  |
 | --------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by [[P1.9]]. Stage 1 of [[P1.11-FIX-PLAN]]                                            |
+| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by [[P1.9]]. Stage 1 of [[P1.11-FIX-PLAN]]                                                  |
 | [[P1.12]] | Status Endpoint Reports Document Counts      | No dependency                                                                                         |
 | [[P1.15]] | Orderly Shutdown                             | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                  |
 | [[P1.16]] | Crash Recovery                               | Unblocked by [[P1.9]]                                                                                 |
-| [[P1.17]] | Spike: A Unified Composer                    | Stage 2 of [[P1.11-FIX-PLAN]]; runs alongside [[P1.11]], lands before [[P1.13]]                 |
+| [[P1.17]] | Spike: A Unified Composer                    | Stage 2 of [[P1.11-FIX-PLAN]]; runs alongside [[P1.11]], lands before [[P1.13]]                       |
 | [[P2.9]]  | MarkdownConverter Seam & Implementation      | Stack settled by ADR28. Run [[P2.8]]'s format census before starting — it can still reverse the stack |
+| [[P2.10]] | Deploy Ollama on Windows                     | Environment story, no production code. Blocks [[P2.1]], [[P2.4]], [[P2.6]] and [[P3.4]]               |
 
 ### NOT-READY
 
-| ID | Title | Blocked by |
-|----|-------|------------|
-| [[P1.13]] | Text and URL Ingestion Endpoints | [[P1.11]], [[P1.17]] — stage 3 of [[P1.11-FIX-PLAN]] |
-| [[P2.1]] | OllamaClient & ConcurrencyGate | [[P1.11]] — no working pipeline entry point |
-| [[P2.2]] | Ingestor Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.3]] | TextExtractor Real Logic | [[P1.11]] — no working pipeline entry point; [[P2.9]] — the converter it calls does not exist |
-| [[P2.4]] | Classifier Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.5]] | Indexer Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.6]] | Briefing Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.7]] | File Watcher | [[P1.11]] — no working pipeline entry point |
-| [[P3.1]] | Unit Tests | Phase 2 |
-| [[P3.2]] | Integration Tests | Phase 2 |
-| [[P3.3]] | REST API Tests | [[P1.13]] |
-| [[P3.4]] | Smoke Test | Phase 2 |
+| ID        | Title                            | Blocked by                                                                                    |
+| --------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
+| [[P1.13]] | Text and URL Ingestion Endpoints | [[P1.11]], [[P1.17]] — stage 3 of [[P1.11-FIX-PLAN]]                                          |
+| [[P2.1]]  | OllamaClient & ConcurrencyGate   | [[P1.11]] — no working pipeline entry point; [[P2.10]] — nothing answers on port 11434        |
+| [[P2.2]]  | Ingestor Real Logic              | [[P1.11]] — no working pipeline entry point                                                   |
+| [[P2.3]]  | TextExtractor Real Logic         | [[P1.11]] — no working pipeline entry point; [[P2.9]] — the converter it calls does not exist |
+| [[P2.4]]  | Classifier Real Logic            | [[P1.11]] — no working pipeline entry point; [[P2.10]] — no Ollama to call                    |
+| [[P2.5]]  | Indexer Real Logic               | [[P1.11]] — no working pipeline entry point                                                   |
+| [[P2.6]]  | Briefing Real Logic              | [[P1.11]] — no working pipeline entry point; [[P2.10]] — no Ollama to call                    |
+| [[P2.7]]  | File Watcher                     | [[P1.11]] — no working pipeline entry point                                                   |
+| [[P3.1]]  | Unit Tests                       | Phase 2                                                                                       |
+| [[P3.2]]  | Integration Tests                | Phase 2                                                                                       |
+| [[P3.3]]  | REST API Tests                   | [[P1.13]]                                                                                     |
+| [[P3.4]]  | Smoke Test                       | Phase 2; [[P2.10]] — the run it smoke-tests reaches Ollama                                     |
 
 ### COMPLETED
 
@@ -85,16 +86,19 @@ Detailed descriptions and acceptance criteria are kept in one file per story und
 `documents/story/`. Every ID in the tables above links to its file where one exists:
 
 - Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]]
-- Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]]
+- Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]], [[P2.10]]
 - Phase 3: [[P3.1]], [[P3.2]], [[P3.3]], [[P3.4]], [[P3.5]]
 
 P1.1–P1.7 have no story file. They were delivered as Phase 1 skeleton wiring before the
 per-story files existed, and are described in `PROJECT_4thBrain.md` only.
 
 Plans: [[P1.11-FIX-PLAN]] under `documents/` covers P1.11, P1.17, P1.13 and the follow-on P1.18
-together, despite its P1.11-only name. [[P1.9-FIX-PLAN]] and [[P3.5-UPGRADE-PLAN]] cover a story each
-and have moved to `documents/done/`. Design artifacts they depend on are
-in `documents/design/` — [[ADRS]],
+together, despite its P1.11-only name. [[plan-11-13-17]] is a second plan over the same three stories,
+delivering them as one change instead of four stages; the two are alternatives and one has to be
+chosen before work starts (see the note below). [[P1.9-FIX-PLAN]] and [[P3.5-UPGRADE-PLAN]] cover a
+story each and have moved to `documents/done/`. [[simple-claude-plan]] is not a story plan — it audits
+the `.claude/` governance layer and the tracking documents, and its first pass is already committed.
+Design artifacts the story plans depend on are in `documents/design/` — [[ADRS]],
 [[SPIKE-MARKITDOWN]] (P2.8), [[SPIKE-UNIFIED-COMPOSER]] (P1.17) and [[STARTUP-SEQUENCE]] (P1.9).
 
 ## Bugs
@@ -121,9 +125,28 @@ Full details: [[BUG-001]], [[BUG-002]] — one file per bug under `documents/bug
 
 **ADR28 was taken without P2.8's measurements.** The decision rests on the argument that a hard timeout only exists across a process boundary, which is a property of this pipeline rather than of the converters. It does not rest on the corpus, because no corpus was assembled. The research arm's finding is that the choice actually hinges on format mix — on PDF the two candidates are the same flat text extractor, so a PDF-heavy inflow means the Python runtime is bought for nothing. That is a ten-minute count. Run it before P2.9 starts; ADR28 carries it as trigger 1, and trigger 2 (share of scanned PDFs) can turn the whole spike into an OCR decision instead.
 
+**Nothing installs Ollama.** `application.yaml` has pointed at `localhost:11434` since the skeleton,
+and no story owned getting a service to answer there. P2.10 does: a native Windows install, a pinned
+model tag instead of the floating `mistral`, autostart, and a verification that exercises
+`/v1/chat/completions` rather than `/api/tags`, since that is the surface the app actually calls. It
+is READY now and blocks nothing that is not already blocked by P1.11, so it can run at any point
+before P2.1. Its timing measurement also feeds ADR28's trigger 3, which wants an Ollama round trip as
+its comparison point for conversion cost.
+
 **Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 is done.
+P3.4 gains P2.10, because a smoke test of the full pipeline runs through the Classifier.
 
 **The three UI entry-point stories are planned as one run** — [[P1.11-FIX-PLAN]], which now carries all of them despite its P1.11-only name; the separate `UI-ENTRY-POINTS-PLAN.md` was merged into it. P1.11 is stage 1, the P1.17 spike runs alongside it, P1.13 is stage 3. None of them can start before ADR26 is written: P1.11's story leaves two choices open (keep or delete `sendMessage`; static or instance state), and the cheap answer to the second does not work, because Spring caches test contexts so a static registry is never cleared between them. The plan also found that P1.13 cannot meet its own acceptance criteria as written — `Ingestor` and `Clipper` both read a submitted URL from `content`, not `source_url`, so a document built the way P1.13 describes stops at the first hop with no error.
+
+**Two plans now cover P1.11, P1.13 and P1.17, and they are alternatives.** `P1.11-FIX-PLAN.md` stages
+them, plus P1.18, as four deliveries. `plan-11-13-17.md` argues the first three are one change: the
+only code-ordering constraint is that `startChain` compiles before the controller calls it, which
+inside a single pass is a step order rather than a delivery order, and the spike's ordering constraint
+is a design one that step 0 satisfies by writing the two ADRs up front. What the merge buys is that
+`IngestionControllerTest` is rewritten once against the final contract, so no commit is green because
+eleven assertions were switched off with `@Disabled`. What it costs is a wider blast radius per merge
+and a spike timebox running inside a multi-day change. Both plans carry the same findings and neither
+touches P1.18. Pick one before starting; running both would rewrite the same files twice.
 
 **P1.11, P1.13 and P1.17 do not finish the UI on their own.** They deliver three working endpoints behind the existing three panels. The single composer is the spike's follow-on story, P1.18, which does not exist yet — P1.17's scope forbids production code. The plan carries it as stage 4.
 
@@ -154,3 +177,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known d
 - 2026-09-07: P2.8's decision taken — ADR28, MarkItDown invoked as a subprocess behind a `MarkdownConverter` interface. Numbered 28 because ADR26 is reserved by P1.11's plan and ADR27 by P1.17's spike. P2.3 rewritten against it and reblocked on P2.9 rather than P2.8. Story P2.9 (MarkdownConverter Seam & Implementation) added to READY. P2.8 stays WIP: three of its five acceptance criteria are met and the fixture corpus and every measurement are still outstanding. Counts: 31 stories — 1 WIP, 6 READY, 12 NOT-READY, 12 COMPLETED.
 - 2026-09-07: Every Story and Bug ID in the tables now links to its file, the way P1.11 already did — `[[P2.3]]`, `[[BUG-001]]` and so on, in the ID columns and in the blocked-by and note columns. The Story Detail Files section lists the files instead of describing ranges, and records that P1.1–P1.7 have none. Plans and design artifacts (`P1.9-FIX-PLAN`, `P1.11-FIX-PLAN`, `P3.5-UPGRADE-PLAN`, `ADRS`, the two spike briefs, `STARTUP-SEQUENCE`) are linked from the same place. No status or count changed.
 - 2026-09-07: `P1.11-FIX-PLAN.md` rewritten to plan P1.11, P1.17 and P1.13 as one run to working file, text and URL entry points; the short-lived `UI-ENTRY-POINTS-PLAN.md` is merged into it and gone, so there is one plan file rather than two covering the same stories. The spike is sequenced in parallel with P1.11 rather than after it — it touches nothing under `src/main` — and has to land before P1.13, which it constrains. Two findings changed the shape of the work: P1.13 cannot meet its own acceptance criteria as written, because `Ingestor` and `Clipper` read a submitted URL from `content` while the story specifies `source_url`; and the three stories together stop short of the goal, since P1.17 forbids production code, so the composer needs a fourth story (P1.18) that the spike is to create. Correction to the note this replaces: the earlier plan's Coordinator sketch was said not to compile because it called a `DocumentService` that does not exist. `DocumentService` does exist, with both `getDocumentById` and `setStatus`. The sketch still moves to `DatabaseService`, for the reason that actually holds — it is the synchronized service under ADR17 and the one `IngestionController` already injects — which exposes a genuine inconsistency the plan now logs: two services write `Document.status`, and only one of them is synchronized. No status or count changed.
+- 2026-09-07: Story P2.10 (Deploy Ollama on Windows) added to READY — an environment story with no production code, standing up the service `application.yaml` has pointed at since the skeleton and pinning the model tag so classification behaviour cannot drift under a later pull. P2.1, P2.4, P2.6 and P3.4 gain it as a blocker. Also recorded `plan-11-13-17.md`, a second plan over P1.11, P1.13 and P1.17 that delivers them as one change rather than four stages; it and `P1.11-FIX-PLAN.md` are alternatives and one has to be chosen before work starts. `simple-claude-plan.md` listed alongside them as the governance audit, which is not a story plan. Counts: 32 stories — 1 WIP, 7 READY, 12 NOT-READY, 12 COMPLETED.
