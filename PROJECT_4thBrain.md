@@ -138,3 +138,4 @@ From v03 Analysis & .v03/documents/design/:
 - 2026-09-07: Added Story P2.8 (MarkItDown spike) with options detailed in `documents/design/SPIKE-MARKITDOWN.md`.
 - 2026-09-07: Added Story P3.5 (Upgrade to JUnit 5) to Phase 3. Renamed `documets/` directory to `documents/`. Created individual story files (P1.8–P3.5) under `documents/story/`.
 - 2026-09-07: Added Story P1.14 (View Layer & Template Engine), closing BUG-001. Created `documents/design/ADRS.md`, which had been referenced but never written, and recorded ADR25: Thymeleaf is the view layer and served pages live in `templates/`.
+- 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved to COMPLETED — its code had already landed, and the boot confirmed it registers all five actuators. Logged BUG-002: a fresh clone cannot start because nothing creates the `data/` directory SQLite needs.

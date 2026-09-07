@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 1.5
+  version: 1.6
   created-by: Claude Code
   date: 2026-09-07
 ---
@@ -22,14 +22,12 @@ Section meanings:
 
 ## Summary
 
-27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.
-1 bug: 1 READY.
+27 stories: 0 WIP, 4 READY, 13 NOT-READY, 10 COMPLETED.
+2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
 
-| ID | Title | Note |
-|----|-------|------|
-| P1.9 | Actuator Instantiation & Registration | Blocks application startup |
+Nothing in progress.
 
 ### READY
 
@@ -39,7 +37,6 @@ Section meanings:
 | P1.12 | Status Endpoint Reports Document Counts | No dependency |
 | P2.8 | Spike: MarkItDown as the Extractor's converter | Runs against files on disk; needs no booting application |
 | P3.5 | Upgrade to JUnit 5 | No dependency; testing infrastructure modernization |
-| P1.14 | View Layer & Template Engine | Closes BUG-001; design settled as ADR25. Implementable now, verifiable only once P1.9 lets the app boot |
 
 ### NOT-READY
 
@@ -71,6 +68,8 @@ Section meanings:
 | P1.6 | REST API Skeleton | Phase 1 skeleton | text/url endpoints stubbed, see P1.13 |
 | P1.7 | Web UI Wiring | Phase 1 skeleton | |
 | P1.8 | Document Copies | 2026-09-06 | Verified against a fresh database |
+| P1.9 | Actuator Instantiation & Registration | 2026-09-07 | Was recorded WIP. Verified against a running app: boots in 4.7s and logs "Registered 5 actuator instance(s)". The code had already landed |
+| P1.14 | View Layer & Template Engine | 2026-09-07 | Closes BUG-001. All six endpoints return 200; the inline script's `${...}` literals survive rendering intact |
 
 Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
 in sync with the per-bug file.
@@ -90,15 +89,21 @@ Bug tracking follows the same process as stories. Detailed descriptions for each
 
 ### READY
 
-| ID | Title | Fixed by | Note |
-|----|-------|----------|------|
-| BUG-001 | UI Is Not Showing Up | P1.14 | Controllers return view names with no template engine on the classpath; the same defect breaks AdminController's three pages. Fix decided as ADR25. Blocks P1.13, P3.4 |
+| ID | Title | Note |
+|----|-------|------|
+| BUG-002 | A fresh clone will not start | SQLite will not create the `data/` directory holding its database file, and `data/` is untracked. Every clone fails on first run. Found during P1.14 verification |
+
+### COMPLETED
+
+| ID | Title | Resolved | Fixed by |
+|----|-------|----------|----------|
+| BUG-001 | UI Is Not Showing Up | 2026-09-07 | P1.14 |
 
 See `documents/bug/BUG-XXX.md` for full details on any bug.
 
 ## Notes
 
-**Phase 2 blocking:** All Phase 2 stories (P2.1–P2.7) are blocked by Phase 1 not booting. P2.3 has a second blocker: its extraction stack is inherited from v03 Node.js (Turndown, Mammoth) and must be re-chosen via P2.8 spike.
+**Phase 2 blocking — needs re-triage.** P2.1–P2.7 are all recorded as blocked by "Phase 1 does not boot". That is no longer true: the application booted cleanly on 2026-09-07 and served every endpoint. The seven stories have been left in NOT-READY rather than moved wholesale, because clearing a blocker is not the same as confirming each one's design is settled — that judgement belongs to whoever picks them up. P2.3 keeps a genuine second blocker: its extraction stack is inherited from v03 Node.js (Turndown, Mammoth) and must be re-chosen via the P2.8 spike.
 
 **Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 (JUnit 5 upgrade) has no dependencies and can proceed independently.
 
@@ -113,3 +118,4 @@ See `documents/bug/BUG-XXX.md` for full details on any bug.
 - 2026-09-07: Added BUG-001 (UI Is Not Showing Up) to NOT-READY. Created Bugs section and per-bug documentation structure matching story files. Summary updated: 26 stories, 1 bug NOT-READY.
 - 2026-09-07: BUG-001 diagnosed. Cause is view resolution, not static resources: the controllers return view names and no template engine is on the classpath. Its blocker is now the choice of fix, not P1.7.
 - 2026-09-07: BUG-001's fix decided (ADR25, Thymeleaf) and moved to READY. Added Story P1.14 (View Layer & Template Engine) to carry it out. Counts now 27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.
+- 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved from WIP to COMPLETED — its code had already landed and the boot proved it works. Added BUG-002 (a fresh clone cannot start, because nothing creates the `data/` directory). The "Phase 1 does not boot" blocker on P2.1–P2.7 is now false and those seven need re-triage. Counts: 0 WIP, 4 READY, 13 NOT-READY, 10 COMPLETED; 2 bugs.
