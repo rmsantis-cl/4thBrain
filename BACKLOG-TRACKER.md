@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 1.7
+  version: 1.8
   created-by: Claude Code
   date: 2026-09-07
 ---
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-29 stories: 0 WIP, 6 READY, 12 NOT-READY, 11 COMPLETED.
+30 stories: 0 WIP, 7 READY, 12 NOT-READY, 11 COMPLETED.
 2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
@@ -37,6 +37,7 @@ Nothing in progress.
 | P1.12 | Status Endpoint Reports Document Counts | No dependency |
 | P1.15 | Orderly Shutdown | Unblocked by P1.9 and P1.10; `/api/shutdown` is what remains |
 | P1.16 | Crash Recovery | Unblocked by P1.9 |
+| P1.17 | Spike: A Unified Composer | Prototypes against stubs; deliberately runs before P1.13, which it constrains |
 | P2.8 | Spike: MarkItDown as the Extractor's converter | Runs against files on disk; needs no booting application |
 | P3.5 | Upgrade to JUnit 5 | No dependency; testing infrastructure modernization |
 
@@ -79,7 +80,7 @@ in sync with the per-bug file.
 ## Story Detail Files
 
 Detailed descriptions and acceptance criteria for each story are maintained in individual files under `documents/story/`:
-- P1.8 through P1.16 (Phase 1)
+- P1.8 through P1.17 (Phase 1)
 - P2.1 through P2.8 (Phase 2)
 - P3.1 through P3.5 (Phase 3)
 
@@ -128,3 +129,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known d
 - 2026-09-07: BUG-001's fix decided (ADR25, Thymeleaf) and moved to READY. Added Story P1.14 (View Layer & Template Engine) to carry it out. Counts now 27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.
 - 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved from WIP to COMPLETED — its code had already landed and the boot proved it works. Added BUG-002 (a fresh clone cannot start, because nothing creates the `data/` directory). The "Phase 1 does not boot" blocker on P2.1–P2.7 is now false and those seven need re-triage. Counts: 0 WIP, 4 READY, 13 NOT-READY, 10 COMPLETED; 2 bugs.
 - 2026-09-07: P1.10 moved to COMPLETED — it landed in the same pass as P1.9 and was verified with it. P1.11 unblocked into READY. P2.1–P2.7's blocker restated as P1.11 rather than "Phase 1 does not boot", closing the re-triage note. Added Stories P1.15 (Orderly Shutdown) and P1.16 (Crash Recovery), both READY; they were drafted as P1.14 and P1.15 on the branch carrying the P1.9/P1.10 verification and are renumbered because P1.14 was already taken. Counts: 29 stories — 0 WIP, 6 READY, 12 NOT-READY, 11 COMPLETED.
+- 2026-09-07: Added Story P1.17 (Spike: A Unified Composer) to READY, with its brief in `documents/design/SPIKE-UNIFIED-COMPOSER.md`. It collapses the Add File, Add Text, Add URL and Chat panels into one composer, and exists mainly to settle how one input tells capture from conversation — auto-detection can spot a URL but cannot tell a note from a question. Sequenced before P1.13 deliberately: what the text and URL endpoints should accept depends on what the composer sends. Counts: 30 stories — 0 WIP, 7 READY, 12 NOT-READY, 11 COMPLETED.
