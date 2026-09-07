@@ -88,6 +88,12 @@ public abstract class Actuator extends Thread {
                 log.info("completed doc={} {}->{}", d.id(), getGerund(), getParticiple());
                 if (n != null) {
                     Actuator follow = Coordinator.get(n);
+                    if (follow == null) {
+                        // Unregistered name: stop the document here rather than
+                        // taking the whole loop down with an NPE.
+                        log.error("No actuator registered as '{}'; doc={} stops here", n, d.id());
+                        continue;
+                    }
                     Message next = Message.builder()
                             .document(d)
                             .from(this)
@@ -101,7 +107,10 @@ public abstract class Actuator extends Thread {
 
             } catch (InterruptedException e) {
                 // shutdown() interrupts us to stop the loop; not a processing failure.
+                // Leaving the loop running on a spurious interrupt would busy-spin:
+                // take() would see the flag and throw again immediately.
                 Thread.currentThread().interrupt();
+                break;
             } catch (Exception e) {
                 log.error("Main loop error", e);
             }

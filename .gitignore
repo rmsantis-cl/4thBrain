@@ -4,6 +4,7 @@ build/
 data/
 @logs/
 @batch/
+log/
 *.class
 **/*.class
 .classpath
