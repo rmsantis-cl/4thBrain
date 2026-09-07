@@ -5,6 +5,7 @@ data/
 @logs/
 @batch/
 log/
+tmp/
 *.class
 **/*.class
 .classpath
