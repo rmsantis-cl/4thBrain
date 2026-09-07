@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 1.8
+  version: 2.0
   created-by: Claude Code
   date: 2026-09-07
 ---
@@ -22,24 +22,24 @@ Section meanings:
 
 ## Summary
 
-30 stories: 0 WIP, 7 READY, 12 NOT-READY, 11 COMPLETED.
+30 stories: 1 WIP, 5 READY, 12 NOT-READY, 12 COMPLETED.
 2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
 
-Nothing in progress.
+| ID    | Title                                          | Note                                                                                                                                     |
+| ----- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| P2.8  | Spike: MarkItDown as the Extractor's converter | Research submitted to the Anthropic Batch API 2026-09-07, batch `msgbatch_01DPrdauF54ZbbpLzMruGeQb`. Three requests: analysis, ADR, implementation story. Fetch with `scripts/batch-fetch.ps1`. The corpus measurements are still to run locally |
 
 ### READY
 
-| ID | Title | Note |
-|----|-------|------|
-| P1.11 | Coordinator Entry Point & Message Addressing | Unblocked by P1.9 |
-| P1.12 | Status Endpoint Reports Document Counts | No dependency |
-| P1.15 | Orderly Shutdown | Unblocked by P1.9 and P1.10; `/api/shutdown` is what remains |
-| P1.16 | Crash Recovery | Unblocked by P1.9 |
-| P1.17 | Spike: A Unified Composer | Prototypes against stubs; deliberately runs before P1.13, which it constrains |
-| P2.8 | Spike: MarkItDown as the Extractor's converter | Runs against files on disk; needs no booting application |
-| P3.5 | Upgrade to JUnit 5 | No dependency; testing infrastructure modernization |
+| ID        | Title                                        | Note                                                                     |
+| --------- | -------------------------------------------- | ------------------------------------------------------------------------ |
+| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by P1.9. Planned — `documents/P1.11-FIX-PLAN.md`               |
+| P1.12     | Status Endpoint Reports Document Counts      | No dependency                                                            |
+| P1.15     | Orderly Shutdown                             | Unblocked by P1.9 and P1.10; `/api/shutdown` is what remains             |
+| P1.16     | Crash Recovery                               | Unblocked by P1.9                                                        |
+| P1.17     | Spike: A Unified Composer                    | Prototypes against stubs; deliberately runs before P1.13, which it constrains |
 
 ### NOT-READY
 
@@ -73,6 +73,7 @@ Nothing in progress.
 | P1.9 | Actuator Instantiation & Registration | 2026-09-06 | Verified by boot log and `ActuatorManagerTest`; three defects found and fixed in the pass. Re-confirmed 2026-09-07 against a running app |
 | P1.10 | Actuator Run Loop | 2026-09-06 | Landed with P1.9; idle actuators cost no CPU |
 | P1.14 | View Layer & Template Engine | 2026-09-07 | Closes BUG-001. All six endpoints return 200; the inline script's `${...}` literals survive rendering intact |
+| P3.5 | Upgrade to JUnit 5 | 2026-09-07 | Not the migration the story described — that had already happened. Removed the dangling `junit:junit` from the test classpath, which had no vintage engine behind it, so a JUnit 4 test compiled and then silently did not run. Test count identical before and after; the trap was verified closed with a throwaway probe |
 
 Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
 in sync with the per-bug file.
@@ -108,7 +109,11 @@ See `documents/bug/BUG-XXX.md` for full details on any bug.
 
 **Phase 2 blocking.** P2.1–P2.7 were recorded as blocked by "Phase 1 does not boot". That is no longer true — the application boots as of P1.9 and serves every endpoint — so their blocker is restated as P1.11: nothing yet starts a chain, `startChain()` is a stub that throws, and `IngestionController` calls `sendMessage()` instead, which builds messages that NPE when logged. The seven stories stay in NOT-READY. P2.3 keeps a genuine second blocker: its extraction stack is inherited from v03 Node.js (Turndown, Mammoth) and must be re-chosen via the P2.8 spike.
 
-**Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 (JUnit 5 upgrade) has no dependencies and can proceed independently.
+**Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 is done.
+
+**P1.11 is planned but not started** — `documents/P1.11-FIX-PLAN.md`. It cannot be implemented as written without a design decision first. Its story leaves two choices open (keep or delete `sendMessage`; static or instance state), and the cheap answer to the second one does not work: clearing a static registry on context close gives no test isolation, because Spring caches test contexts and the first one is never closed. The plan calls for ADR26 before any code.
+
+**`gradlew test` exits non-zero, and that is expected.** 28 tests execute; the 23 failures are all `IngestionControllerTest` asserting P1.13's endpoint contract — `jobId` where the controller returns `id`, and `/text` and `/url` still stubbed. P1.11's plan marks those methods `@Disabled("Story P1.13")` so the suite goes green with the gap still visible, and P1.13 removes the annotations. `ActuatorManagerTest` passes 5 for 5.
 
 **Completed stories.** P1.8, P1.9 and P1.10 have recorded verification.
 
@@ -129,4 +134,6 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known d
 - 2026-09-07: BUG-001's fix decided (ADR25, Thymeleaf) and moved to READY. Added Story P1.14 (View Layer & Template Engine) to carry it out. Counts now 27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.
 - 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved from WIP to COMPLETED — its code had already landed and the boot proved it works. Added BUG-002 (a fresh clone cannot start, because nothing creates the `data/` directory). The "Phase 1 does not boot" blocker on P2.1–P2.7 is now false and those seven need re-triage. Counts: 0 WIP, 4 READY, 13 NOT-READY, 10 COMPLETED; 2 bugs.
 - 2026-09-07: P1.10 moved to COMPLETED — it landed in the same pass as P1.9 and was verified with it. P1.11 unblocked into READY. P2.1–P2.7's blocker restated as P1.11 rather than "Phase 1 does not boot", closing the re-triage note. Added Stories P1.15 (Orderly Shutdown) and P1.16 (Crash Recovery), both READY; they were drafted as P1.14 and P1.15 on the branch carrying the P1.9/P1.10 verification and are renumbered because P1.14 was already taken. Counts: 29 stories — 0 WIP, 6 READY, 12 NOT-READY, 11 COMPLETED.
-- 2026-09-07: Added Story P1.17 (Spike: A Unified Composer) to READY, with its brief in `documents/design/SPIKE-UNIFIED-COMPOSER.md`. It collapses the Add File, Add Text, Add URL and Chat panels into one composer, and exists mainly to settle how one input tells capture from conversation — auto-detection can spot a URL but cannot tell a note from a question. Sequenced before P1.13 deliberately: what the text and URL endpoints should accept depends on what the composer sends. Counts: 30 stories — 0 WIP, 7 READY, 12 NOT-READY, 11 COMPLETED.
+- 2026-09-07: P1.11 and P3.5 planned; plans recorded under `documents/`. P2.8 moved to WIP — its research went to the Anthropic Batch API as three requests (analysis, ADR, implementation story) under batch `msgbatch_01DPrdauF54ZbbpLzMruGeQb` (a first submission at a 16k output cap truncated two of the three answers and was rerun at 64k); the local corpus measurements it also needs are not covered by that and still have to be run. Counts: 29 stories — 1 WIP, 5 READY, 12 NOT-READY, 11 COMPLETED. P1.9 needed no change: it was already recorded as COMPLETED and verified on 2026-09-06, re-confirmed 2026-09-07.
+- 2026-09-07: P3.5 implemented and verified; moved to COMPLETED. It was not the migration its story described — the test code had been Jupiter all along, and what remained was `junit:junit:4.13.2` sitting on the test classpath with no vintage engine, so a JUnit 4 test would compile and then silently not run. Deprecated `@MockBean` replaced with `@MockitoBean` in the same pass. Test counts identical before and after (28 executed, 23 failing on P1.13's contract, 0 skipped). Counts: 29 stories — 1 WIP, 4 READY, 12 NOT-READY, 12 COMPLETED.
+- 2026-09-07: Added Story P1.17 (Spike: A Unified Composer) to READY, with its brief in `documents/design/SPIKE-UNIFIED-COMPOSER.md`. It collapses the Add File, Add Text, Add URL and Chat panels into one composer, and exists mainly to settle how one input tells capture from conversation — auto-detection can spot a URL but cannot tell a note from a question. Sequenced before P1.13 deliberately: what the text and URL endpoints should accept depends on what the composer sends. The spike's ADR is numbered 27, since P1.11's plan already claims ADR26. Counts: 30 stories — 1 WIP, 5 READY, 12 NOT-READY, 12 COMPLETED.

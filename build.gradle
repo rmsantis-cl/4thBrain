@@ -41,9 +41,10 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.42'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
 
-    // Testing
+    // Testing. spring-boot-starter-test brings JUnit 5 (Jupiter), Mockito, AssertJ and spring-test.
+    // No junit:junit here on purpose (P3.5): there is no vintage engine on the classpath, so a
+    // JUnit 4 API would let a JUnit 4 test compile and then never run, reported as zero tests.
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'junit:junit:4.13.2'
 }
 
 tasks.named('test') {
