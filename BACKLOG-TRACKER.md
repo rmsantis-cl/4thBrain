@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 1.4
+  version: 1.5
   created-by: Claude Code
   date: 2026-09-07
 ---
@@ -22,8 +22,8 @@ Section meanings:
 
 ## Summary
 
-26 stories: 1 WIP, 4 READY, 13 NOT-READY, 8 COMPLETED.
-1 bug: 1 NOT-READY.
+27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.
+1 bug: 1 READY.
 
 ### WIP
 
@@ -39,6 +39,7 @@ Section meanings:
 | P1.12 | Status Endpoint Reports Document Counts | No dependency |
 | P2.8 | Spike: MarkItDown as the Extractor's converter | Runs against files on disk; needs no booting application |
 | P3.5 | Upgrade to JUnit 5 | No dependency; testing infrastructure modernization |
+| P1.14 | View Layer & Template Engine | Closes BUG-001; design settled as ADR25. Implementable now, verifiable only once P1.9 lets the app boot |
 
 ### NOT-READY
 
@@ -77,7 +78,7 @@ in sync with the per-bug file.
 ## Story Detail Files
 
 Detailed descriptions and acceptance criteria for each story are maintained in individual files under `documents/story/`:
-- P1.8 through P1.13 (Phase 1)
+- P1.8 through P1.14 (Phase 1)
 - P2.1 through P2.8 (Phase 2)
 - P3.1 through P3.5 (Phase 3)
 
@@ -87,11 +88,11 @@ See `documents/story/PXXX.md` for full details on any story.
 
 Bug tracking follows the same process as stories. Detailed descriptions for each bug are maintained in individual files under `documents/bug/`.
 
-### NOT-READY
+### READY
 
-| ID | Title | Blocked by | Note |
-|----|-------|-----------|------|
-| BUG-001 | UI Is Not Showing Up | Fix approach undecided | Diagnosed: controllers return view names with no template engine on the classpath. Same defect breaks AdminController's three pages. Blocks P1.13, P3.4 |
+| ID | Title | Fixed by | Note |
+|----|-------|----------|------|
+| BUG-001 | UI Is Not Showing Up | P1.14 | Controllers return view names with no template engine on the classpath; the same defect breaks AdminController's three pages. Fix decided as ADR25. Blocks P1.13, P3.4 |
 
 See `documents/bug/BUG-XXX.md` for full details on any bug.
 
@@ -111,3 +112,4 @@ See `documents/bug/BUG-XXX.md` for full details on any bug.
 - 2026-09-07: Created individual story files under `documents/story/`. Added P3.5 (JUnit 5 upgrade) to READY. Renamed `documets/` directory to `documents/`. Updated summary to 26 stories: 1 WIP, 4 READY, 13 NOT-READY, 8 COMPLETED.
 - 2026-09-07: Added BUG-001 (UI Is Not Showing Up) to NOT-READY. Created Bugs section and per-bug documentation structure matching story files. Summary updated: 26 stories, 1 bug NOT-READY.
 - 2026-09-07: BUG-001 diagnosed. Cause is view resolution, not static resources: the controllers return view names and no template engine is on the classpath. Its blocker is now the choice of fix, not P1.7.
+- 2026-09-07: BUG-001's fix decided (ADR25, Thymeleaf) and moved to READY. Added Story P1.14 (View Layer & Template Engine) to carry it out. Counts now 27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.

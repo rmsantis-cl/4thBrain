@@ -5,7 +5,7 @@
 | Property | Value |
 | :---- | :---- |
 | **Document Title** | Project 4thBrain v04 — Three-Phase Delivery Plan |
-| **Version** | 1.2 |
+| **Version** | 1.3 |
 | **Date** | 2026-09-07 |
 | **Status** | Design Phase — Ready to Start Phase 1 |
 
@@ -55,6 +55,7 @@ Delivered in three phases:
 - **P1.11 — Coordinator Entry Point & Message Addressing:** See `documents/story/P1.11.md`.
 - **P1.12 — Status Endpoint Reports Document Counts:** See `documents/story/P1.12.md`.
 - **P1.13 — Text and URL Ingestion Endpoints:** See `documents/story/P1.13.md`.
+- **P1.14 — View Layer & Template Engine:** See `documents/story/P1.14.md`. Closes BUG-001; design in ADR25.
 
 ---
 
@@ -136,3 +137,4 @@ From v03 Analysis & .v03/documents/design/:
 - 2026-09-06: Added Story P1.9 (Actuator Instantiation & Registration); added Stories P1.10–P1.13.
 - 2026-09-07: Added Story P2.8 (MarkItDown spike) with options detailed in `documents/design/SPIKE-MARKITDOWN.md`.
 - 2026-09-07: Added Story P3.5 (Upgrade to JUnit 5) to Phase 3. Renamed `documets/` directory to `documents/`. Created individual story files (P1.8–P3.5) under `documents/story/`.
+- 2026-09-07: Added Story P1.14 (View Layer & Template Engine), closing BUG-001. Created `documents/design/ADRS.md`, which had been referenced but never written, and recorded ADR25: Thymeleaf is the view layer and served pages live in `templates/`.
