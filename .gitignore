@@ -5,7 +5,10 @@ data/
 @logs/
 @batch/
 log/
+# Runtime working trees. Nothing here is source, and none of it survives a fresh
+# clone — BUG-002 covers the fact that nothing creates them either.
 tmp/
+vault/
 *.class
 **/*.class
 .classpath
