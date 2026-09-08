@@ -14,6 +14,14 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.time.LocalDateTime;
 
+// Named one by one rather than by wildcard: org.hamcrest.Matchers and
+// org.mockito.ArgumentMatchers both declare any(), startsWith() and endsWith(),
+// and a wildcard import of both makes every one of those ambiguous. A single
+// static import outranks a static-import-on-demand, so these win where they clash.
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -169,6 +177,126 @@ class IngestionControllerTest {
 
         verify(databaseService, times(1)).create(any(Document.class));
         verify(coordinator, times(1)).startChain(1L);
+    }
+
+    // ========== MIME type resolution ==========
+    //
+    // A browser posting a plain multipart upload usually declares
+    // application/octet-stream. That is not blank, so the old code accepted it,
+    // derived the extension *from* it, and got nothing back — the file lost its
+    // extension on disk and on the Document, and Ingestor could then match neither
+    // its mime type nor its extension, so the chain stopped at "ingested".
+
+    @Test
+    @DisplayName("octet-stream falls back to the extension, and the extension survives")
+    void octetStreamResolvesFromExtension() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "meeting-notes.txt", "application/octet-stream", "notes".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileName").value("meeting-notes.txt"))
+                .andExpect(jsonPath("$.mimeType").value("text/plain"));
+
+        verify(databaseService).create(argThat(d ->
+                "text/plain".equals(d.getMimeType()) && ".txt".equals(d.getExtension())));
+    }
+
+    @Test
+    @DisplayName("octet-stream on a .pdf resolves to application/pdf")
+    void octetStreamResolvesPdf() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "paper.pdf", "application/octet-stream", "%PDF-1.4".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mimeType").value("application/pdf"));
+
+        verify(databaseService).create(argThat(d -> ".pdf".equals(d.getExtension())));
+    }
+
+    @Test
+    @DisplayName("An extension is matched case-insensitively and stored lowercase")
+    void extensionIsCaseInsensitive() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "SCAN.PDF", "application/octet-stream", "%PDF-1.4".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileName").value("SCAN.pdf"))
+                .andExpect(jsonPath("$.mimeType").value("application/pdf"));
+    }
+
+    @Test
+    @DisplayName("A declared type that is not generic is believed over the extension")
+    void declaredTypeWinsWhenSpecific() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "export.csv", "application/vnd.ms-excel", "a,b".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mimeType").value("application/vnd.ms-excel"))
+                .andExpect(jsonPath("$.fileName").value("export.csv"));
+    }
+
+    @Test
+    @DisplayName("Charset parameters are stripped from a declared type")
+    void charsetParameterIsStripped() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "readme.md", "text/markdown; charset=UTF-8", "# hi".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mimeType").value("text/markdown"));
+    }
+
+    @Test
+    @DisplayName("An unknown extension keeps the extension and stays octet-stream")
+    void unknownExtensionKeepsItsSuffix() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "archive.qqq", "application/octet-stream", "x".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        // The name is asserted by suffix, not exactly: newName() de-duplicates against
+        // whatever is already in the tmp directory, so an exact match would depend on
+        // the machine's leftovers rather than on the code under test.
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileName").value(endsWith(".qqq")))
+                .andExpect(jsonPath("$.mimeType").value("application/octet-stream"));
+
+        verify(databaseService).create(argThat(d -> ".qqq".equals(d.getExtension())));
+    }
+
+    @Test
+    @DisplayName("A name with no extension and no usable type is left as octet-stream")
+    void noExtensionNoType() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "LICENSE", "application/octet-stream", "x".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileName").value(startsWith("LICENSE")))
+                .andExpect(jsonPath("$.fileName").value(not(containsString("."))))
+                .andExpect(jsonPath("$.mimeType").value("application/octet-stream"));
+    }
+
+    @Test
+    @DisplayName("A zip arrives typed so Ingestor can route it to the Extractor")
+    void zipIsTypedForRouting() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "bundle.zip", "application/octet-stream", "PK".getBytes());
+        when(databaseService.create(any(Document.class))).thenReturn(testDocument);
+
+        mockMvc.perform(multipart("/api/ingest/file").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mimeType").value("application/zip"));
     }
 
     @Test

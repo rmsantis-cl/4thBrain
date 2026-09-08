@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -73,27 +74,34 @@ public class IngestionController {
             originalName = "document";
         }
 
-        // Extract base name without extension
+        // The extension comes from the uploaded name, which is the only clue that
+        // survives a browser sending application/octet-stream. Deriving it from the
+        // MIME type instead dropped it entirely on every such upload, so the file
+        // landed on disk as "notes" rather than "notes.txt" and Ingestor could match
+        // neither its type nor its extension.
         String baseName = originalName;
+        String extension = "";
         int dotIndex = originalName.lastIndexOf('.');
         if (dotIndex > 0) {
             baseName = originalName.substring(0, dotIndex);
+            // A trailing dot is not an extension.
+            if (dotIndex < originalName.length() - 1) {
+                extension = originalName.substring(dotIndex).toLowerCase();
+            }
         }
+
+        String mimeType = resolveMimeType(file.getContentType(), extension, originalName);
+
+        // A name with no extension can still take one from a type we trust.
+        if (StringUtils.isBlank(extension)) {
+            extension = getExtensionFromMimeType(mimeType);
+        }
+
+        log.debug("MIME resolution: name={} declared={} extension={} resolved={}",
+            originalName, file.getContentType(), extension, mimeType);
 
         // Generate unique filename
         String fileName = newName(tmp, baseName);
-
-        // Detect MIME type
-        String mimeType = file.getContentType();
-        if (StringUtils.isBlank(mimeType)) {
-            mimeType = Files.probeContentType(Paths.get(originalName));
-        }
-        if (StringUtils.isBlank(mimeType)) {
-            mimeType = "application/octet-stream";
-        }
-
-        // Get file extension from MIME type
-        String extension = getExtensionFromMimeType(mimeType);
         if (StringUtils.isNotBlank(extension)) {
             fileName = fileName + extension;
         }
@@ -141,6 +149,101 @@ public class IngestionController {
             "fileName", doc.getName(),
             "mimeType", doc.getMimeType()
         );
+    }
+
+    /**
+     * The MIME type to record for an upload.
+     * <p>
+     * Order matters. A browser that names a real type is believed first, because it
+     * may know something the extension cannot say. When it says nothing useful — which
+     * for a plain multipart upload is most of the time — the extension decides, and a
+     * filesystem probe is the last hint before giving up.
+     */
+    static String resolveMimeType(String declaredType, String extension, String originalName) {
+        String declared = bareType(declaredType);
+        if (!isGenericType(declared)) {
+            return declared;
+        }
+
+        String fromExtension = getMimeTypeFromExtension(extension);
+        if (StringUtils.isNotBlank(fromExtension)) {
+            return fromExtension;
+        }
+
+        try {
+            String probed = bareType(Files.probeContentType(Paths.get(originalName)));
+            if (!isGenericType(probed)) {
+                return probed;
+            }
+        } catch (IOException | InvalidPathException e) {
+            // probeContentType consults the OS registry and can reject an odd name
+            // outright on Windows. It is a hint, so a failure falls through.
+            log.debug("Could not probe content type for {}: {}", originalName, e.toString());
+        }
+
+        return "application/octet-stream";
+    }
+
+    /** A content type without its parameters: "text/plain; charset=utf-8" becomes "text/plain". */
+    private static String bareType(String mimeType) {
+        if (StringUtils.isBlank(mimeType)) {
+            return "";
+        }
+        String type = mimeType.trim();
+        int semicolon = type.indexOf(';');
+        if (semicolon >= 0) {
+            type = type.substring(0, semicolon).trim();
+        }
+        return type.toLowerCase();
+    }
+
+    /** True for the types that carry no information — a client saying "I don't know". */
+    private static boolean isGenericType(String bareType) {
+        return StringUtils.isBlank(bareType)
+            || bareType.equals("application/octet-stream")
+            || bareType.equals("binary/octet-stream")
+            || bareType.equals("application/unknown")
+            || bareType.equals("*/*");
+    }
+
+    /**
+     * Extension to MIME type. The inverse of {@link #getExtensionFromMimeType(String)},
+     * and deliberately wider: it covers the formats ADR28's converter accepts and the
+     * archives Ingestor routes to the Extractor, so a document's next stage can be
+     * chosen from a file that arrived as octet-stream.
+     */
+    static String getMimeTypeFromExtension(String extension) {
+        if (StringUtils.isBlank(extension)) {
+            return "";
+        }
+        return switch (extension.toLowerCase()) {
+            case ".txt", ".log" -> "text/plain";
+            case ".md", ".markdown" -> "text/markdown";
+            case ".html", ".htm" -> "text/html";
+            case ".csv" -> "text/csv";
+            case ".json" -> "application/json";
+            case ".xml" -> "application/xml";
+            case ".pdf" -> "application/pdf";
+            case ".doc" -> "application/msword";
+            case ".docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case ".xls" -> "application/vnd.ms-excel";
+            case ".xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case ".ppt" -> "application/vnd.ms-powerpoint";
+            case ".pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            case ".epub" -> "application/epub+zip";
+            case ".rtf" -> "application/rtf";
+            case ".odt" -> "application/vnd.oasis.opendocument.text";
+            case ".jpg", ".jpeg" -> "image/jpeg";
+            case ".png" -> "image/png";
+            case ".gif" -> "image/gif";
+            case ".webp" -> "image/webp";
+            case ".svg" -> "image/svg+xml";
+            case ".zip" -> "application/zip";
+            case ".gz" -> "application/gzip";
+            case ".rar" -> "application/x-rar-compressed";
+            case ".7z" -> "application/x-7z-compressed";
+            default -> "";
+        };
     }
 
     private static String getExtensionFromMimeType(String mimeType) {
