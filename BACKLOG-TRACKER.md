@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 3.2
+  version: 3.3
   created-by: Claude Sonnet 5
   date: 2026-09-08
 ---
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-35 stories: 1 WIP, 10 READY, 8 NOT-READY, 16 COMPLETED.
+36 stories: 1 WIP, 11 READY, 8 NOT-READY, 16 COMPLETED.
 3 bugs: 2 READY, 1 COMPLETED.
 
 ### WIP
@@ -37,6 +37,7 @@ Section meanings:
 | --------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [[P1.12]] | Status Endpoint Reports Document Counts | No dependency                                                                                                                                           |
 | [[P1.19]] | Template Cache Off                      | One line in the `spring:` block of `application.yaml`, which no parallel plan owns. Found during [[P1.18]], where a running app served the old page after the change had built |
+| [[P1.21]] | Spike: Generated Tracking Documents     | Design an agent and a record format so **this file** and [[INDEX]] are generated rather than hand-edited by every agent. Reserves **ADR33**. One-day timebox; produces a decision, a prototype and a follow-on story, no production code |
 | [[P1.15]] | Orderly Shutdown                        | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                                                                    |
 | [[P1.16]] | Crash Recovery                          | Unblocked by [[P1.9]]                                                                                                                                   |
 | [[P2.1]]  | OllamaClient & ConcurrencyGate |                                                       |
@@ -88,7 +89,7 @@ in sync with the per-bug file.
 Detailed descriptions and acceptance criteria are kept in one file per story under
 `documents/story/`. Every ID in the tables above links to its file where one exists:
 
-- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]], [[P1.19]], [[P1.20]]
+- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]], [[P1.19]], [[P1.20]], [[P1.21]]
 - Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]], [[P2.10]]
 - Phase 3: [[P3.1]], [[P3.2]], [[P3.3]], [[P3.4]], [[P3.5]]
 
@@ -192,6 +193,10 @@ conflict that cannot be resolved textually: **ADR29** is P2.2's (the Ingestor's 
 routing table), **ADR30** is P2.5's (how Java talks to MCP), **ADR31** is P2.4's (the classification
 output contract, which closes DD-3). P1.18 and P2.1 claim no number.
 
+Reserved outside this set: **ADR32** by [[P1.20]] (per-document status delivery) and **ADR33** by
+[[P1.21]] (generated tracking documents). Next free number is 34. P1.21 asks whether this reservation
+list should stay a human convention or become something a generator checks.
+
 *Two plans have a design gate and cannot start with code.* P2.2 waits on ADR29, which strikes the
 story's `$RAW_DIR` scan — ADR26 makes `startChain` the only entry point and P2.7 already owns
 directory watching — and changes the routing table so text reaches the Classifier, which is registered,
@@ -244,3 +249,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each had known d
 - 2026-09-07: P1.18 implemented and moved to COMPLETED; counts 33 stories — 1 WIP, 9 READY, 7 NOT-READY, 16 COMPLETED. One file changed, `index.html`, +376/−189. Verified against a running app on port 8081, since a pre-existing instance held 8080 and was left alone: the page renders, the four superseded panels and every handler that only served them are gone, the nav is four items, no `th:inline` was added and every `${...}` template literal survives rendering. All four endpoints the composer calls answer with the shapes the feed reads, including the 400-with-`{message}`-and-no-`id` path. A URL capture produced `source_url` set with no `document_copy` row and the Clipper fetched it into a child document; a text capture produced `content` set with `source_url` null, so ADR27's `SEND`-on-a-bare-URL override behaves as specified; non-ASCII text round-tripped into the database unchanged. Two gaps surfaced and were recorded rather than fixed, both belonging elsewhere: a captured text document has no file and no copy row so it never reaches the vault (P2.2 and P2.5 both carry a fix), and `Clipper` leaves its child at status `New`, which no story owns. ADR27's reopening question stays open — it needs a person using the screen.
 - 2026-09-08: Added Story P1.19 (Template Cache Off) and BUG-003 (The left panel disappears on mobile), both READY, both found while using P1.18's composer. P1.19 is one line — `spring.thymeleaf.cache: false` — in the `spring:` block, which none of the four parallel Phase 2 plans owns; the story records why it is set unconditionally rather than behind a `dev` profile, and what would reverse that. BUG-003 has two independent causes and either is fatal on its own: the hamburger carries an inline `display:none` that outranks the media query meant to reveal it below 768px, and no JavaScript has ever toggled `.sidebar.open`, so the `.sidebar.open` rule has never had a way to match. Both predate P1.18 — they are P1.7 skeleton markup that P1.18 kept byte-identical — and P1.18 made the symptom less severe rather than more, since the composer is now the panel active on load. Counts: 34 stories — 1 WIP, 10 READY, 7 NOT-READY, 16 COMPLETED; 3 bugs — 2 READY, 1 COMPLETED.
 - 2026-09-08: Added Story P1.20 (Live Document Status in the Receipt Feed) to NOT-READY, reserving **ADR32**. It grows P1.18's receipt box from one line written at submission into a strip showing the states the document moves through, and it is what closes DD-2. NOT-READY rather than READY because the design is genuinely undecided, and writing it surfaced why that matters: `document.status` holds only where a document is now and no transition history exists anywhere, so a polled endpoint cannot show the states a document *went through* — `ingesting` → `ingested` on a text note can complete in under a millisecond and would simply never be seen. The ADR turns on that, not on poll-versus-push preference. Two further collisions recorded in the story: any publish hook needs one place that knows a status changed, and DD-1 means the first write of a chain and every write after it go through different services, so a hook on either fires for some transitions and not others; and DD-4 means a failed stage still stamps its participle, which a live strip promotes from a wrong value in an unread column to a green tick in front of the user. Both live in the same three lines of `Actuator.run()`, frozen while the four parallel Phase 2 plans are in flight, so this story sequences after they merge. Counts: 35 stories — 1 WIP, 10 READY, 8 NOT-READY, 16 COMPLETED; 3 bugs unchanged.
+- 2026-09-08: Added Story P1.21 (Spike: Generated Tracking Documents) to READY, reserving **ADR33**. It designs an agent and a per-entity record format so this file and `documents/INDEX.md` are generated rather than hand-edited, on the observation that almost every collision between agents is on adjacent rows describing unrelated things — the unit of change is a file holding thirty-five independent facts, so git is asked to merge edits that never semantically overlapped. Evidence is already on file: `.claude/rules/batch-document-updates.md` exists because closing P1.17 took 21 writes across 7 files, six of them passes over this one; `.claude/rules/file-indexing.md` records 61 INDEX rows that had drifted badly from the code; and this session alone edited this file about a dozen times, hand-recomputed the summary counts four times and put a changelog entry in the wrong position twice. Six questions for the spike, of which two are load-bearing: whether the generator is a deterministic script or an LLM writing prose (the latter destroys the property that makes the idea work, since regenerated prose churns the whole file every run), and what happens to the dozen paragraphs of genuine argument in this file that no record can derive. Also asks whether story-file YAML headers can serve as the records outright, since they already carry `status`, `depends-on` and `blocks` — which would mean no new metadata directory at all. Notes that the spike has no Epic to trace to, because it is tooling and every phase in `PROJECT_4thBrain.md` is product. Counts: 36 stories — 1 WIP, 11 READY, 8 NOT-READY, 16 COMPLETED.
