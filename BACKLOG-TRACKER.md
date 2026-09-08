@@ -2,9 +2,9 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 3.0
+  version: 3.1
   created-by: Claude Sonnet 5
-  date: 2026-09-07
+  date: 2026-09-08
 ---
 
 # BACKLOG-TRACKER — 4thBrain v04
@@ -22,8 +22,8 @@ Section meanings:
 
 ## Summary
 
-33 stories: 1 WIP, 9 READY, 7 NOT-READY, 16 COMPLETED.
-2 bugs: 1 READY, 1 COMPLETED.
+34 stories: 1 WIP, 10 READY, 7 NOT-READY, 16 COMPLETED.
+3 bugs: 2 READY, 1 COMPLETED.
 
 ### WIP
 
@@ -36,6 +36,7 @@ Section meanings:
 | ID        | Title                                   | Note                                                                                                                                                    |
 | --------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [[P1.12]] | Status Endpoint Reports Document Counts | No dependency                                                                                                                                           |
+| [[P1.19]] | Template Cache Off                      | One line in the `spring:` block of `application.yaml`, which no parallel plan owns. Found during [[P1.18]], where a running app served the old page after the change had built |
 | [[P1.15]] | Orderly Shutdown                        | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                                                                    |
 | [[P1.16]] | Crash Recovery                          | Unblocked by [[P1.9]]                                                                                                                                   |
 | [[P2.1]]  | OllamaClient & ConcurrencyGate |                                                       |
@@ -86,7 +87,7 @@ in sync with the per-bug file.
 Detailed descriptions and acceptance criteria are kept in one file per story under
 `documents/story/`. Every ID in the tables above links to its file where one exists:
 
-- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]]
+- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]], [[P1.19]]
 - Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]], [[P2.10]]
 - Phase 3: [[P3.1]], [[P3.2]], [[P3.3]], [[P3.4]], [[P3.5]]
 
@@ -113,6 +114,7 @@ Bug tracking follows the same process as stories. Detailed descriptions for each
 | ID | Title | Note |
 |----|-------|------|
 | [[BUG-002]] | A fresh clone will not start | SQLite will not create the `data/` directory holding its database file, and `data/` is untracked. Every clone fails on first run. Found during P1.14 verification |
+| [[BUG-003]] | The left panel disappears on mobile | Below 768px the sidebar hides and nothing brings it back. Two independent causes, either fatal on its own: the hamburger's inline `display:none` outranks the media query that would reveal it, and no JavaScript has ever toggled `.sidebar.open`. Predates [[P1.18]] — it has been there since the P1.7 skeleton |
 
 ### COMPLETED
 
@@ -120,7 +122,7 @@ Bug tracking follows the same process as stories. Detailed descriptions for each
 |----|-------|----------|----------|
 | [[BUG-001]] | UI Is Not Showing Up | 2026-09-07 | [[P1.14]] |
 
-Full details: [[BUG-001]], [[BUG-002]] — one file per bug under `documents/bug/`.
+Full details: [[BUG-001]], [[BUG-002]], [[BUG-003]] — one file per bug under `documents/bug/`.
 
 ## Notes
 
@@ -239,3 +241,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each had known d
 - 2026-09-07: Five execution plans added under `documents/`, one each for P1.18, P2.1, P2.2, P2.4 and P2.5, written to run as five parallel branches — file ownership, frozen shared files, per-plan `application.yaml` blocks, reserved ADR numbers 29/30/31 and a suggested merge order are recorded in the note above. Three of the five re-map at least one acceptance criterion, and each re-mapping is gated behind an ADR rather than taken in a commit: P2.2 loses its `$RAW_DIR` scan to ADR26 and P2.7 and routes text to the Classifier instead of the Indexer (ADR29); P2.4 drops the `classification` table for `document.topic` plus `document_tag` rows and settles that the Classifier produces tags (ADR31, closing DD-3); P2.5 splits, with the vault write unblocked and Smart Connections held behind ADR30. P2.1 does not inject into `Classifier` or `Briefing` — the first belongs to P2.4's branch and the second does not exist. Two new design-debt items logged: DD-4, an actuator cannot record a failure because `Actuator.run()` stamps the participle unconditionally; DD-5, `/api/chat/llama` is still the echo stub and no story owns wiring it, so ADR27's `ASK` returns the stub even after P1.18 and P2.1 both land. Also noted: P2.10 is COMPLETED here and `status: READY` in its own story header, and the four Phase 2 story headers in this set all still read `NOT-READY` against a tracker that lists them READY. No status or count changed.
 - 2026-09-07: `plan-P1.18.md` revised to v1.1 against `documents/review-plan-p1.18.md`. Six of the review's findings taken and one rejected. Three were real defects in the plan: it said attachments upload on attach and also that they stage, which contradict, and the version where `SEND` guards on text alone makes a file-only submission impossible; re-enabling the buttons in a request's `finally` would have lit `URL` while the box held plain text, breaking ADR27's rule in the one direction the ADR says must not happen; and blanket-clearing after a send destroyed the user's note when one of several uploads failed. Rejected: the claim that `/api/ingest/file` omits `status` — it returns it at `IngestionController.java:139`, and the review quoted a four-key map that does not match the file. The plan also gained an `ASK` prompt bubble, labelled receipts, `white-space: pre-wrap`, a drag counter, textarea auto-grow, and an optional `Ctrl+Enter` accelerator flagged as going past ADR27. No status or count changed.
 - 2026-09-07: P1.18 implemented and moved to COMPLETED; counts 33 stories — 1 WIP, 9 READY, 7 NOT-READY, 16 COMPLETED. One file changed, `index.html`, +376/−189. Verified against a running app on port 8081, since a pre-existing instance held 8080 and was left alone: the page renders, the four superseded panels and every handler that only served them are gone, the nav is four items, no `th:inline` was added and every `${...}` template literal survives rendering. All four endpoints the composer calls answer with the shapes the feed reads, including the 400-with-`{message}`-and-no-`id` path. A URL capture produced `source_url` set with no `document_copy` row and the Clipper fetched it into a child document; a text capture produced `content` set with `source_url` null, so ADR27's `SEND`-on-a-bare-URL override behaves as specified; non-ASCII text round-tripped into the database unchanged. Two gaps surfaced and were recorded rather than fixed, both belonging elsewhere: a captured text document has no file and no copy row so it never reaches the vault (P2.2 and P2.5 both carry a fix), and `Clipper` leaves its child at status `New`, which no story owns. ADR27's reopening question stays open — it needs a person using the screen.
+- 2026-09-08: Added Story P1.19 (Template Cache Off) and BUG-003 (The left panel disappears on mobile), both READY, both found while using P1.18's composer. P1.19 is one line — `spring.thymeleaf.cache: false` — in the `spring:` block, which none of the four parallel Phase 2 plans owns; the story records why it is set unconditionally rather than behind a `dev` profile, and what would reverse that. BUG-003 has two independent causes and either is fatal on its own: the hamburger carries an inline `display:none` that outranks the media query meant to reveal it below 768px, and no JavaScript has ever toggled `.sidebar.open`, so the `.sidebar.open` rule has never had a way to match. Both predate P1.18 — they are P1.7 skeleton markup that P1.18 kept byte-identical — and P1.18 made the symptom less severe rather than more, since the composer is now the panel active on load. Counts: 34 stories — 1 WIP, 10 READY, 7 NOT-READY, 16 COMPLETED; 3 bugs — 2 READY, 1 COMPLETED.
