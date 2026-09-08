@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 3.3
+  version: 3.4
   created-by: Claude Sonnet 5
   date: 2026-09-08
 ---
@@ -37,7 +37,7 @@ Section meanings:
 | --------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [[P1.12]] | Status Endpoint Reports Document Counts | No dependency                                                                                                                                           |
 | [[P1.19]] | Template Cache Off                      | One line in the `spring:` block of `application.yaml`, which no parallel plan owns. Found during [[P1.18]], where a running app served the old page after the change had built |
-| [[P1.21]] | Spike: Generated Tracking Documents     | Design an agent and a record format so **this file** and [[INDEX]] are generated rather than hand-edited by every agent. Reserves **ADR33**. One-day timebox; produces a decision, a prototype and a follow-on story, no production code |
+| [[P1.21]] | Spike: Generated Tracking Documents     | Design an agent and a record store so **this file** and [[INDEX]] are generated rather than hand-edited by every agent. **Q1 settled: one shared SQLite database across all projects**, superseding v1.0's file-per-entity-in-repo recommendation, which could not hold another repository's records. Reserves **ADR33**. One-day timebox; produces a decision, a prototype and a follow-on story, no production code |
 | [[P1.15]] | Orderly Shutdown                        | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                                                                    |
 | [[P1.16]] | Crash Recovery                          | Unblocked by [[P1.9]]                                                                                                                                   |
 | [[P2.1]]  | OllamaClient & ConcurrencyGate |                                                       |
