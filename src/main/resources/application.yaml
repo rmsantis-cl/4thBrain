@@ -41,6 +41,18 @@ ollama:
   read-timeout-ms: 120000
   acquire-timeout-ms: 120000
 
+classifier:
+  # Story P2.4 / ADR31. Every key carries a default in its @Value, so an older
+  # config with no classifier block still starts.
+  max-chars: 8000
+  max-tags: 8
+  max-tag-length: 64
+  system-prompt: |
+    You classify documents for a personal knowledge vault.
+    Answer with a single JSON object and nothing else:
+    {"topic": "<one short noun phrase>", "tags": ["<lowercase-hyphenated>", ...]}
+    Use at most 8 tags. Do not explain. Do not use code fences.
+
 vault:
   path: ./vault
   incoming : ${vault.path}/incoming
