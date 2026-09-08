@@ -71,7 +71,18 @@ is invisible between two polls. P1.20 carries that as the question its ADR turns
 on [[DD-1]] and [[DD-4]], both of which live in the three lines of `Actuator.run()` that a status
 publish hook would have to attach to.
 
-### DD-3 — Tags have no owner
+### DD-3 — Tags have no owner — **CLEARED 2026-09-08**
+
+**Cleared by ADR31** (`documents/design/ADR31-classification-contract.md`, pending fold into
+`ADRS.md`), written as Story P2.4's design gate and merged into `v04` with it. Decision D1: the
+Classifier produces tags. Manual tagging stays possible and unbuilt, with the `tags` parameter the
+ingest endpoints already accept as its seam. The Markdown-heading trap this entry named does not fire,
+because tags arrive as JSON array elements rather than inline `#tokens` — ADR31 records that
+explicitly so a later inline-tagging story knows it inherits the trap intact.
+
+The original entry follows, unchanged.
+
+
 
 **Found:** deciding ADR27 (Story P1.17).
 
