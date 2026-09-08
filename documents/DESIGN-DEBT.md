@@ -2,9 +2,9 @@
 name: DESIGN-DEBT
 description: Open design gaps found mid-plan that were logged rather than resolved in the same pass, per .claude/rules/design-before-implementation.md
 metadata:
-  version: 1.2
+  version: 1.3
   created-by: Claude Sonnet 5
-  date: 2026-09-07
+  date: 2026-09-08
 ---
 
 # Design Debt
@@ -62,6 +62,15 @@ from the outside makes it a different story than the one that was reviewed.
 own. Until then P1.18's feed is a submission log rather than a live one, which is also the first thing
 to revisit if the single screen feels flat in use.
 
+**2026-09-08:** Story P1.20 (Live Document Status in the Receipt Feed) is written to close this, on
+its own rather than as an addition to P1.12, for the reason recorded above. Mark Cleared when ADR32
+lands, not before. Designing it surfaced something this entry did not anticipate: `document.status`
+holds only where a document is now, and no transition history is recorded anywhere, so a polled
+endpoint cannot show the states a document *went through* — a stage completing in under a millisecond
+is invisible between two polls. P1.20 carries that as the question its ADR turns on. It also depends
+on [[DD-1]] and [[DD-4]], both of which live in the three lines of `Actuator.run()` that a status
+publish hook would have to attach to.
+
 ### DD-3 — Tags have no owner
 
 **Found:** deciding ADR27 (Story P1.17).
@@ -111,6 +120,12 @@ with DD-1, which lives in the same three lines.
 **Closes when:** a story or ADR decides how a stage signals failure and what status it produces, and
 changes `Actuator.run()` accordingly. Best taken together with DD-1, after the five parallel plans
 merge.
+
+**2026-09-08:** Story P1.20 raises the stakes on this. A live status strip in the composer's receipt
+puts the pipeline's own account of a document in front of the user, so a stage that failed but stamped
+its participle stops being a wrong value in an unread column and becomes a green tick on screen.
+P1.20's ADR32 has to close this or state in writing that the strip shows apparent progress and cannot
+show failure.
 
 ### DD-5 — `/api/chat/llama` has no owner
 

@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 3.1
+  version: 3.2
   created-by: Claude Sonnet 5
   date: 2026-09-08
 ---
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-34 stories: 1 WIP, 10 READY, 7 NOT-READY, 16 COMPLETED.
+35 stories: 1 WIP, 10 READY, 8 NOT-READY, 16 COMPLETED.
 3 bugs: 2 READY, 1 COMPLETED.
 
 ### WIP
@@ -52,6 +52,7 @@ Section meanings:
 
 | ID        | Title                          | Blocked by                                                                                        |
 | --------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| [[P1.20]] | Live Document Status in the Receipt Feed | **ADR32**, which it reserves — the design is not decided. In practice also DD-1 and DD-4, both in the three lines of `Actuator.run()` that are frozen while the four parallel Phase 2 plans are in flight. Closes DD-2 |
 | [[P2.3]]  | TextExtractor Real Logic       | [[P2.9]] — the converter it calls does not exist                                                  |
 | [[P3.1]]  | Unit Tests                     | Phase 2                                                                                           |
 | [[P3.2]]  | Integration Tests              | Phase 2                                                                                           |
@@ -87,7 +88,7 @@ in sync with the per-bug file.
 Detailed descriptions and acceptance criteria are kept in one file per story under
 `documents/story/`. Every ID in the tables above links to its file where one exists:
 
-- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]], [[P1.19]]
+- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]], [[P1.18]], [[P1.19]], [[P1.20]]
 - Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]], [[P2.10]]
 - Phase 3: [[P3.1]], [[P3.2]], [[P3.3]], [[P3.4]], [[P3.5]]
 
@@ -242,3 +243,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each had known d
 - 2026-09-07: `plan-P1.18.md` revised to v1.1 against `documents/review-plan-p1.18.md`. Six of the review's findings taken and one rejected. Three were real defects in the plan: it said attachments upload on attach and also that they stage, which contradict, and the version where `SEND` guards on text alone makes a file-only submission impossible; re-enabling the buttons in a request's `finally` would have lit `URL` while the box held plain text, breaking ADR27's rule in the one direction the ADR says must not happen; and blanket-clearing after a send destroyed the user's note when one of several uploads failed. Rejected: the claim that `/api/ingest/file` omits `status` — it returns it at `IngestionController.java:139`, and the review quoted a four-key map that does not match the file. The plan also gained an `ASK` prompt bubble, labelled receipts, `white-space: pre-wrap`, a drag counter, textarea auto-grow, and an optional `Ctrl+Enter` accelerator flagged as going past ADR27. No status or count changed.
 - 2026-09-07: P1.18 implemented and moved to COMPLETED; counts 33 stories — 1 WIP, 9 READY, 7 NOT-READY, 16 COMPLETED. One file changed, `index.html`, +376/−189. Verified against a running app on port 8081, since a pre-existing instance held 8080 and was left alone: the page renders, the four superseded panels and every handler that only served them are gone, the nav is four items, no `th:inline` was added and every `${...}` template literal survives rendering. All four endpoints the composer calls answer with the shapes the feed reads, including the 400-with-`{message}`-and-no-`id` path. A URL capture produced `source_url` set with no `document_copy` row and the Clipper fetched it into a child document; a text capture produced `content` set with `source_url` null, so ADR27's `SEND`-on-a-bare-URL override behaves as specified; non-ASCII text round-tripped into the database unchanged. Two gaps surfaced and were recorded rather than fixed, both belonging elsewhere: a captured text document has no file and no copy row so it never reaches the vault (P2.2 and P2.5 both carry a fix), and `Clipper` leaves its child at status `New`, which no story owns. ADR27's reopening question stays open — it needs a person using the screen.
 - 2026-09-08: Added Story P1.19 (Template Cache Off) and BUG-003 (The left panel disappears on mobile), both READY, both found while using P1.18's composer. P1.19 is one line — `spring.thymeleaf.cache: false` — in the `spring:` block, which none of the four parallel Phase 2 plans owns; the story records why it is set unconditionally rather than behind a `dev` profile, and what would reverse that. BUG-003 has two independent causes and either is fatal on its own: the hamburger carries an inline `display:none` that outranks the media query meant to reveal it below 768px, and no JavaScript has ever toggled `.sidebar.open`, so the `.sidebar.open` rule has never had a way to match. Both predate P1.18 — they are P1.7 skeleton markup that P1.18 kept byte-identical — and P1.18 made the symptom less severe rather than more, since the composer is now the panel active on load. Counts: 34 stories — 1 WIP, 10 READY, 7 NOT-READY, 16 COMPLETED; 3 bugs — 2 READY, 1 COMPLETED.
+- 2026-09-08: Added Story P1.20 (Live Document Status in the Receipt Feed) to NOT-READY, reserving **ADR32**. It grows P1.18's receipt box from one line written at submission into a strip showing the states the document moves through, and it is what closes DD-2. NOT-READY rather than READY because the design is genuinely undecided, and writing it surfaced why that matters: `document.status` holds only where a document is now and no transition history exists anywhere, so a polled endpoint cannot show the states a document *went through* — `ingesting` → `ingested` on a text note can complete in under a millisecond and would simply never be seen. The ADR turns on that, not on poll-versus-push preference. Two further collisions recorded in the story: any publish hook needs one place that knows a status changed, and DD-1 means the first write of a chain and every write after it go through different services, so a hook on either fires for some transitions and not others; and DD-4 means a failed stage still stamps its participle, which a live strip promotes from a wrong value in an unread column to a green tick in front of the user. Both live in the same three lines of `Actuator.run()`, frozen while the four parallel Phase 2 plans are in flight, so this story sequences after they merge. Counts: 35 stories — 1 WIP, 10 READY, 8 NOT-READY, 16 COMPLETED; 3 bugs unchanged.
