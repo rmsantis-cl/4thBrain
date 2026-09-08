@@ -193,20 +193,6 @@
       color: var(--accent);
     }
 
-    .result-msg {
-      display: none;
-      padding: 10px;
-      background: var(--status-done);
-      color: var(--bg);
-      border-radius: 4px;
-      margin-top: 8px;
-      font-size: 13px;
-    }
-
-    .result-msg.visible {
-      display: block;
-    }
-
     .stat-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -234,49 +220,137 @@
       margin-top: 4px;
     }
 
-    .chat-window {
+    /* Composer (Story P1.18, ADR27) */
+
+    .composer {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .composer:focus-within { border-color: var(--accent); }
+
+    .composer.dragover {
+      border-color: var(--accent);
+      background: var(--surface-hover);
+    }
+
+    .composer textarea {
+      border: none;
+      background: transparent;
+      color: var(--text-primary);
+      resize: none;
+      min-height: 72px;
+      max-height: 240px;
+      overflow-y: auto;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      outline: none;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .composer textarea:focus { background: transparent; }
+
+    .composer-attachments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+
+    .attachment-chip {
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
-      height: 300px;
-      overflow-y: auto;
-      margin-bottom: 12px;
+      border-radius: 14px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: 6px;
     }
 
-    .chat-message {
-      margin-bottom: 8px;
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 13px;
+    .attachment-chip.error {
+      border-color: var(--status-failed);
+      color: var(--status-failed);
     }
 
-    .chat-message.user {
-      background: var(--accent);
-      color: var(--bg);
-      text-align: right;
+    .attachment-chip .remove-btn {
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      font-weight: bold;
+      font-size: 14px;
+      line-height: 1;
     }
 
-    .chat-message.assistant {
-      background: var(--surface);
+    .composer-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .composer-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .composer-attach {
+      width: 32px;
+      padding: 6px 0;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--surface-hover);
       color: var(--text-primary);
     }
 
-    .chat-input-row {
+    .btn:disabled,
+    .btn-ghost:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn:disabled:hover { background: var(--accent); }
+    .btn-ghost:disabled:hover { background: transparent; color: var(--text-secondary); }
+
+    .feed {
       display: flex;
+      flex-direction: column;
       gap: 8px;
+      margin-top: 16px;
     }
 
-    .chat-input-row input {
-      flex: 1;
-      margin-bottom: 0;
+    .feed-entry {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid var(--border);
+      background: var(--surface);
     }
 
-    .chat-input-row .btn {
-      white-space: nowrap;
-    }
+    .feed-entry.receipt    { border-left: 3px solid var(--status-active); }
+    .feed-entry.user-query { border-left: 3px solid var(--accent); color: var(--text-primary); }
+    .feed-entry.reply      { border-left: 3px solid var(--status-done); }
+    .feed-entry.error      { border-left: 3px solid var(--status-failed); color: var(--status-failed); }
 
     @media (max-width: 768px) {
       .sidebar {
@@ -330,14 +404,12 @@
   </div>
 
   <script>
-    // Phase 1 Stub: Just render the UI structure, wire form submissions to stub API
+    // Nav is four items (ADR27 decision 8): Add File, Add Text, Add URL and Chat
+    // with Llama all fold into the composer.
     const NAV_ITEMS = [
-      { id: "add-file", icon: "📎", label: "Add file" },
-      { id: "add-text", icon: "Aa", label: "Add text" },
-      { id: "add-url", icon: "🔗", label: "Add url" },
+      { id: "composer", icon: "✎", label: "Composer" },
       { id: "search", icon: "🔍", label: "Search" },
       { id: "ingest-status", icon: "▤", label: "Ingest status" },
-      { id: "chat-llama", icon: "◎", label: "Chat with Llama" },
       { id: "admin", icon: "⚙", label: "Admin", href: "/admin" },
     ];
 
@@ -363,41 +435,21 @@
     function renderPanels() {
       const container = document.getElementById("panels-container");
       container.innerHTML = `
-        <section class="panel active" id="panel-add-file">
-          <h1>Add file</h1>
-          <p class="subtitle">Drop a file or browse.</p>
-          <div class="card">
-            <div class="dropzone" id="dropzone">Drag a file here, or click to browse</div>
-            <input type="file" id="file-input" style="display:none">
-            <input type="text" id="file-tags-input" class="form-group" placeholder="Tags (comma-separated)">
-            <div class="result-msg" id="file-result"></div>
+        <section class="panel active" id="panel-composer">
+          <div class="composer" id="composer">
+            <textarea id="composer-input" placeholder="Type a note, paste a link, or ask…"></textarea>
+            <div class="composer-attachments" id="composer-attachments"></div>
+            <div class="composer-controls">
+              <button type="button" class="btn btn-ghost composer-attach" id="composer-attach" title="Attach a file">+</button>
+              <div class="composer-actions">
+                <button type="button" class="btn btn-ghost" id="btn-ask">ASK</button>
+                <button type="button" class="btn btn-ghost" id="btn-url" disabled>URL</button>
+                <button type="button" class="btn" id="btn-send">SEND</button>
+              </div>
+            </div>
           </div>
-        </section>
-
-        <section class="panel" id="panel-add-text">
-          <h1>Add text</h1>
-          <p class="subtitle">Paste or type freeform text.</p>
-          <div class="card">
-            <form id="text-form">
-              <textarea id="text-input" placeholder="Paste or type a note…"></textarea>
-              <input type="text" id="text-tags-input" placeholder="Tags (comma-separated)">
-              <button type="submit" class="btn">Submit</button>
-            </form>
-            <div class="result-msg" id="text-result"></div>
-          </div>
-        </section>
-
-        <section class="panel" id="panel-add-url">
-          <h1>Add url</h1>
-          <p class="subtitle">Submit a link to be clipped.</p>
-          <div class="card">
-            <form id="url-form">
-              <input type="url" id="url-input" placeholder="https://…">
-              <input type="text" id="url-tags-input" placeholder="Tags (comma-separated)">
-              <button type="submit" class="btn">Submit</button>
-            </form>
-            <div class="result-msg" id="url-result"></div>
-          </div>
+          <input type="file" id="composer-file" multiple style="display:none">
+          <div class="feed" id="feed"></div>
         </section>
 
         <section class="panel" id="panel-search">
@@ -420,98 +472,265 @@
           <div class="stat-grid" id="jobs-grid"></div>
           <div id="jobs-failed"></div>
         </section>
-
-        <section class="panel" id="panel-chat-llama">
-          <h1>Chat with Llama</h1>
-          <p class="subtitle">Local LLM conversation</p>
-          <div class="card">
-            <div class="chat-window" id="llama-window"></div>
-            <form id="llama-form" class="chat-input-row">
-              <input type="text" id="llama-input" placeholder="Ask something…" autocomplete="off">
-              <button type="submit" class="btn">Send</button>
-            </form>
-          </div>
-        </section>
       `;
 
-      // Wire up file upload
-      const dropzone = document.getElementById("dropzone");
-      const fileInput = document.getElementById("file-input");
-      const fileResult = document.getElementById("file-result");
-      dropzone.addEventListener("click", () => fileInput.click());
-      dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
-      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
-      dropzone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        dropzone.classList.remove("dragover");
-        if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
-      });
-      fileInput.addEventListener("change", () => {
-        if (fileInput.files.length) uploadFile(fileInput.files[0]);
-      });
+      // ---- Composer (Story P1.18, ADR27) ----
 
-      function uploadFile(file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("tags", document.getElementById("file-tags-input").value);
-        fileResult.textContent = "Uploading…";
-        fileResult.classList.add("visible");
-        fetch("/api/ingest/file", { method: "POST", body: formData })
-          .then(res => res.json())
-          .then(data => {
-            fileResult.textContent = (data.message || "File uploaded") + " (id: " + data.id + ")";
-            document.getElementById("file-tags-input").value = "";
-          })
-          .catch(() => { fileResult.textContent = "Upload failed."; });
+      const composer = document.getElementById("composer");
+      const input = document.getElementById("composer-input");
+      const attachments = document.getElementById("composer-attachments");
+      const fileInput = document.getElementById("composer-file");
+      const btnAttach = document.getElementById("composer-attach");
+      const btnAsk = document.getElementById("btn-ask");
+      const btnUrl = document.getElementById("btn-url");
+      const btnSend = document.getElementById("btn-send");
+      const feed = document.getElementById("feed");
+      const panels = document.getElementById("panels-container");
+
+      let stagedFiles = [];
+      let chatHistory = [];
+      let dragCounter = 0;
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
       }
 
-      // Wire up text submission
-      const textForm = document.getElementById("text-form");
-      const textResult = document.getElementById("text-result");
-      textForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const text = document.getElementById("text-input").value;
-        if (!text.trim()) return;
-        textResult.textContent = "Submitting…";
-        textResult.classList.add("visible");
-        fetch("/api/ingest/capture", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, tags: document.getElementById("text-tags-input").value })
-        })
-          .then(res => res.json())
-          .then(data => {
-            textResult.textContent = (data.message || "Text submitted") + " (id: " + data.id + ")";
-            document.getElementById("text-input").value = "";
-            document.getElementById("text-tags-input").value = "";
-          })
-          .catch(() => { textResult.textContent = "Submit failed."; });
+      // ADR27 decision 3: the whole trimmed input is one http/https URL and
+      // nothing else. Detection only enables the button; it routes nothing.
+      function isBareUrl(value) {
+        const s = value.trim();
+        if (s.length === 0 || /\s/.test(s)) return false;
+        try {
+          const u = new URL(s);
+          return u.protocol === "http:" || u.protocol === "https:";
+        } catch {
+          return false;
+        }
+      }
+
+      // The only writer of btnUrl.disabled. Re-enabling the buttons after a
+      // request without re-deriving the rule would light URL on plain text,
+      // which is the one direction ADR27 says must not happen.
+      function updateComposerState(isBusy = false) {
+        btnSend.disabled = isBusy;
+        btnAsk.disabled = isBusy;
+        btnAttach.disabled = isBusy;
+        btnUrl.disabled = isBusy || !isBareUrl(input.value);
+      }
+
+      function autoGrow(el) {
+        el.style.height = "auto";
+        el.style.height = Math.min(Math.max(el.scrollHeight, 72), 240) + "px";
+      }
+
+      function feedAppend(kind, text) {
+        const entry = document.createElement("div");
+        entry.className = "feed-entry " + kind;
+        entry.innerHTML = escapeHtml(text);
+        feed.appendChild(entry);
+        panels.scrollTop = panels.scrollHeight;
+      }
+
+      // The receipt shows what the server returned at submission and never
+      // updates: nothing reports per-document status (DD-2). The label is what
+      // makes five receipts in a row tell the user which is which.
+      function receiptLine(data, label) {
+        return `Doc #${data.id} [${label}] — ${data.status} — ${data.message}`;
+      }
+
+      function preview(text) {
+        const flat = text.replace(/\s+/g, " ").trim();
+        return flat.length > 30 ? flat.slice(0, 30) + "…" : flat;
+      }
+
+      async function readJson(res) {
+        try {
+          return await res.json();
+        } catch {
+          return {};
+        }
+      }
+
+      function renderAttachments() {
+        attachments.innerHTML = stagedFiles.map((f, i) =>
+          `<span class="attachment-chip" data-chip="${i}">${escapeHtml(f.name)}` +
+          `<button type="button" class="remove-btn" data-index="${i}" title="Remove">×</button></span>`
+        ).join("");
+      }
+
+      function markChipError(index) {
+        const chip = attachments.querySelector(`[data-chip="${index}"]`);
+        if (chip) chip.classList.add("error");
+      }
+
+      function stageFiles(fileList) {
+        for (const f of fileList) stagedFiles.push(f);
+        renderAttachments();
+      }
+
+      // SEND fires on text OR staged files. A guard on text alone would make a
+      // file-only submission impossible. Nothing is cleared until the request
+      // that owned it returned 2xx.
+      async function handleSend() {
+        const text = input.value.trim();
+        if (!text && stagedFiles.length === 0) return;
+
+        updateComposerState(true);
+        try {
+          while (stagedFiles.length > 0) {
+            const file = stagedFiles[0];
+            const formData = new FormData();
+            formData.append("file", file);
+            try {
+              const res = await fetch("/api/ingest/file", { method: "POST", body: formData });
+              const data = await readJson(res);
+              if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+              feedAppend("receipt", receiptLine(data, file.name));
+              stagedFiles.shift();
+              renderAttachments();
+            } catch (err) {
+              feedAppend("error", `Upload failed [${file.name}]: ${err.message}`);
+              markChipError(0);
+              break;
+            }
+          }
+
+          if (text) {
+            const res = await fetch("/api/ingest/capture", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text })
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+            feedAppend("receipt", receiptLine(data, preview(text)));
+            input.value = "";
+            autoGrow(input);
+          }
+        } catch (err) {
+          feedAppend("error", `Submission failed: ${err.message}`);
+        } finally {
+          updateComposerState(false);
+        }
+      }
+
+      async function handleUrl() {
+        const url = input.value.trim();
+        if (!isBareUrl(url)) return;
+
+        updateComposerState(true);
+        try {
+          const res = await fetch("/api/ingest/capture", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+          });
+          const data = await readJson(res);
+          if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+          feedAppend("receipt", receiptLine(data, url));
+          input.value = "";
+          autoGrow(input);
+        } catch (err) {
+          feedAppend("error", `Clip failed: ${err.message}`);
+        } finally {
+          updateComposerState(false);
+        }
+      }
+
+      async function handleAsk() {
+        const question = input.value.trim();
+        if (!question) return;
+
+        feedAppend("user-query", question);
+        input.value = "";
+        autoGrow(input);
+        updateComposerState(true);
+        try {
+          const res = await fetch("/api/chat/llama", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: question, history: chatHistory })
+          });
+          const data = await readJson(res);
+          if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+          feedAppend("reply", data.reply || "(no response)");
+          chatHistory.push({ role: "user", content: question });
+          chatHistory.push({ role: "assistant", content: data.reply || "" });
+        } catch (err) {
+          feedAppend("error", `Ask failed: ${err.message}`);
+        } finally {
+          updateComposerState(false);
+        }
+      }
+
+      input.addEventListener("input", () => {
+        updateComposerState(false);
+        autoGrow(input);
       });
 
-      // Wire up URL submission
-      const urlForm = document.getElementById("url-form");
-      const urlResult = document.getElementById("url-result");
-      urlForm.addEventListener("submit", (e) => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        if (e.ctrlKey || e.metaKey) {
+          // Accelerator beyond ADR27, and only ever active when the URL rule
+          // already holds, so it carries none of the ambiguity the ADR rejects.
+          e.preventDefault();
+          if (!btnUrl.disabled) handleUrl();
+          return;
+        }
+        if (e.shiftKey) return;
         e.preventDefault();
-        const url = document.getElementById("url-input").value;
-        if (!url.trim()) return;
-        urlResult.textContent = "Submitting…";
-        urlResult.classList.add("visible");
-        fetch("/api/ingest/capture", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, tags: document.getElementById("url-tags-input").value })
-        })
-          .then(res => res.json())
-          .then(data => {
-            urlResult.textContent = (data.message || "URL submitted") + " (id: " + data.id + ")";
-            document.getElementById("url-input").value = "";
-            document.getElementById("url-tags-input").value = "";
-          })
-          .catch(() => { urlResult.textContent = "Submit failed."; });
+        handleSend();
       });
 
-      // Wire up status refresh
+      input.addEventListener("paste", (e) => {
+        const files = e.clipboardData && e.clipboardData.files;
+        if (files && files.length) {
+          e.preventDefault();
+          stageFiles(files);
+        }
+      });
+
+      btnSend.addEventListener("click", handleSend);
+      btnUrl.addEventListener("click", handleUrl);
+      btnAsk.addEventListener("click", handleAsk);
+      btnAttach.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length) stageFiles(fileInput.files);
+        // Without this, picking the same file twice fires no change event.
+        fileInput.value = "";
+      });
+
+      attachments.addEventListener("click", (e) => {
+        const btn = e.target.closest(".remove-btn");
+        if (!btn) return;
+        stagedFiles.splice(Number(btn.getAttribute("data-index")), 1);
+        renderAttachments();
+      });
+
+      // Drag counter: dragleave fires on the container every time the pointer
+      // crosses a child boundary, so a naive add/remove pair strobes the border.
+      composer.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        if (++dragCounter === 1) composer.classList.add("dragover");
+      });
+      composer.addEventListener("dragover", (e) => e.preventDefault());
+      composer.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        if (--dragCounter === 0) composer.classList.remove("dragover");
+      });
+      composer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        composer.classList.remove("dragover");
+        if (e.dataTransfer.files.length) stageFiles(e.dataTransfer.files);
+      });
+
+      autoGrow(input);
+      updateComposerState(false);
+
+      // ---- Status refresh ----
       document.getElementById("status-refresh").addEventListener("click", () => {
         fetch("/api/status")
           .then(res => res.json())
@@ -526,7 +745,7 @@
           });
       });
 
-      // Wire up search
+      // ---- Search ----
       const searchForm = document.getElementById("search-form");
       searchForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -537,38 +756,6 @@
           .then(data => {
             const results = document.getElementById("search-results");
             results.innerHTML = (data.results || []).map(r => `<div style="padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px;"><strong>${r.title || r.path}</strong><br><em>${r.snippet || ""}</em></div>`).join("");
-          });
-      });
-
-      // Wire up chat
-      const llamaForm = document.getElementById("llama-form");
-      const llamaInput = document.getElementById("llama-input");
-      const llamaWindow = document.getElementById("llama-window");
-      let llamaHistory = [];
-
-      llamaForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const message = llamaInput.value;
-        if (!message.trim()) return;
-
-        llamaWindow.innerHTML += `<div class="chat-message user">${message}</div>`;
-        llamaInput.value = "";
-
-        fetch("/api/chat/llama", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, history: llamaHistory })
-        })
-          .then(res => res.json())
-          .then(data => {
-            llamaWindow.innerHTML += `<div class="chat-message assistant">${data.reply || "(no response)"}</div>`;
-            llamaWindow.scrollTop = llamaWindow.scrollHeight;
-            llamaHistory.push({ role: "user", content: message });
-            llamaHistory.push({ role: "assistant", content: data.reply || "" });
-          })
-          .catch(() => {
-            llamaWindow.innerHTML += `<div class="chat-message assistant" style="background: var(--status-failed);">Error reaching chat endpoint.</div>`;
-            llamaWindow.scrollTop = llamaWindow.scrollHeight;
           });
       });
     }

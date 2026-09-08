@@ -2,7 +2,7 @@
 name: DESIGN-DEBT
 description: Open design gaps found mid-plan that were logged rather than resolved in the same pass, per .claude/rules/design-before-implementation.md
 metadata:
-  version: 1.1
+  version: 1.2
   created-by: Claude Sonnet 5
   date: 2026-09-07
 ---
@@ -37,6 +37,10 @@ in a change that was not otherwise touching that test.
 `DatabaseService.updateDocumentStatus`, not `DocumentService`'s, and (b) whether the actuator also
 calls `d.setStatus(...)` on its own in-memory copy so a stage downstream sees the current status
 without a reload — consistent with ADR26 decision 2 (the document travels in the message).
+
+**2026-09-07:** the five parallel plans (`plan-P1.18.md`, `plan-P2.1.md`, `plan-P2.2.md`,
+`plan-P2.4.md`, `plan-P2.5.md`) all freeze `Actuator.java` for the length of their run, so none of
+them can close this and none of them can make it worse. It needs a pass of its own, after they merge.
 
 ### DD-2 — No endpoint reports the status of one document
 
@@ -76,3 +80,59 @@ tokens need a stripping rule exact enough not to eat headings.
 **Closes when:** P2.4's design says where tags come from, or a story adds manual tagging back to the
 composer. Note that the `tags` parameter the ingest endpoints already accept is unaffected either
 way — this is about who fills it.
+
+**2026-09-07:** `plan-P2.4.md`'s step 0 (decision D1, to be recorded as ADR31) is written to close
+this — the Classifier produces tags, manual tagging stays possible and unbuilt. Mark Cleared when
+ADR31 lands, not before.
+
+### DD-4 — An actuator cannot record a failure
+
+**Found:** planning P2.2, P2.4 and P2.5 (`plan-P2.2.md`, `plan-P2.4.md`, `plan-P2.5.md`).
+
+**What's missing:** `Actuator.run()` stamps the participle unconditionally once `doTheThing` returns
+(`Actuator.java:90`), so a stage that failed leaves the document reading exactly as if it had
+succeeded. An Indexer that could not write to the vault, a Classifier whose model call threw, an
+Ingestor whose source file was gone — all three return null, and all three produce a document at
+`indexed`, `classified` or `ingested` with nothing in the database to say otherwise. The only trace is
+a log line.
+
+This matters more here than it would in a pipeline with a job table. 4thBrain is driven by
+`Document.status`, so a document whose status lies is a document nothing will ever sweep up — the same
+invisibility ADR28 argues against for stalled conversions, arriving by a different route. ADR28's own
+failure semantics assume the opposite: "a conversion failure records a terminal status and a reason on
+the Document". Nothing in the run loop allows that today.
+
+**Why it wasn't fixed in this pass:** the fix is in `Actuator.java`, which all five parallel plans
+freeze so they cannot collide in it. It is also a design decision rather than a patch — `doTheThing`
+returns the next actuator's name, and giving it a way to say "I failed" means either a sentinel return,
+an exception contract, or a result type, and each of those changes every actuator at once. Tangled
+with DD-1, which lives in the same three lines.
+
+**Closes when:** a story or ADR decides how a stage signals failure and what status it produces, and
+changes `Actuator.run()` accordingly. Best taken together with DD-1, after the five parallel plans
+merge.
+
+### DD-5 — `/api/chat/llama` has no owner
+
+**Found:** planning P1.18 and P2.1 (`plan-P1.18.md`, `plan-P2.1.md`).
+
+**What's missing:** ADR27 makes `ASK` one of the composer's four controls, and P1.18 wires it to
+`/api/chat/llama`. That endpoint is a Phase 1 stub that echoes its input back
+(`ChatController.java:11-23`). P2.1 builds `OllamaClient` and its concurrency gate, but its
+implementation requirements name `Classifier` and `Briefing` as the injection sites and not the
+controller — so after both P1.18 and P2.1 land, the composer's `ASK` button still returns
+"(Phase 1 Stub) I received your message: …".
+
+P1.18's acceptance criterion is met either way, since it asks only that the reply reach the feed. The
+gap is between two stories rather than inside one, which is why neither of them catches it.
+
+**Why it wasn't fixed in this pass:** `plan-P1.18.md` touches no Java by design, and `plan-P2.1.md`
+deliberately injects into nothing so it can run in parallel with `plan-P2.4.md`. Wiring the controller
+also needs a decision P2.1's interface does not carry — whether a chat turn sends conversation history
+to the model, and whether an interactive question shares the single Ollama permit with the Classifier
+or waits behind it. ADR27 already rejected option D partly because "using a model call to route a
+model call also consumes the one Ollama concurrency slot the Classifier needs"; the same tension
+applies to a real `ASK`.
+
+**Closes when:** a story owns `ChatController`, deciding the multi-turn shape and how an interactive
+call shares the gate with pipeline work.

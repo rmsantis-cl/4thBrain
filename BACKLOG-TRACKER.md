@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 2.8
+  version: 3.0
   created-by: Claude Sonnet 5
   date: 2026-09-07
 ---
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-33 stories: 1 WIP, 10 READY, 7 NOT-READY, 15 COMPLETED.
+33 stories: 1 WIP, 9 READY, 7 NOT-READY, 16 COMPLETED.
 2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
@@ -38,7 +38,6 @@ Section meanings:
 | [[P1.12]] | Status Endpoint Reports Document Counts | No dependency                                                                                                                                           |
 | [[P1.15]] | Orderly Shutdown                        | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                                                                    |
 | [[P1.16]] | Crash Recovery                          | Unblocked by [[P1.9]]                                                                                                                                   |
-| [[P1.18]] | The Unified Composer                    | Unblocked by [[P1.17]] — ADR27 is written. First use of a design taken without a prototype                                                              |
 | [[P2.1]]  | OllamaClient & ConcurrencyGate |                                                       |
 | [[P2.4]]  | Classifier Real Logic          |                                                                    |
 | [[P2.6]]  | Briefing Real Logic            |                                                                     |
@@ -76,6 +75,7 @@ Section meanings:
 | [[P1.13]] | Ingest-by-Value Endpoint (Text and URL)      | 2026-09-07       | Implemented via `plan-11-13-17.md`. `/text` and `/url` replaced by one `POST /api/ingest/capture`; `Ingestor`/`Clipper` read `source_url`. Landed ahead of [[P1.17]]'s spike on the plan's argument that ADR26 alone gated this story's contract. Verified: `gradle build`/`gradle test` green, `IngestionControllerTest` rewritten                         |
 | [[P3.5]]  | Upgrade to JUnit 5                           | 2026-09-07       | Not the migration the story described — that had already happened. Removed the dangling `junit:junit` from the test classpath, which had no vintage engine behind it, so a JUnit 4 test compiled and then silently did not run. Test count identical before and after; the trap was verified closed with a throwaway probe. Planned — [[P3.5-UPGRADE-PLAN]] |
 | [[P2.10]] | Deploy Ollama on Windows                | 2026-09-07 | Completed                                                                                                                                                                                                                                                                                                                                                   |
+| [[P1.18]] | The Unified Composer                         | 2026-09-07       | Implemented from [[plan-P1.18]] v1.1, one file (`index.html`, +376/−189). Four panels and their JavaScript gone, nav down to four items, ADR25 held (no `th:inline`, every `${...}` literal intact). Verified on port 8081 against a running app: all four endpoints answer with the shapes the feed reads, a URL capture has `source_url` and no copy row, a text capture has neither. **Outstanding:** ADR27's own reopening question needs a person using the screen, and the optional `Ctrl+Enter` accelerator added past ADR27 is part of what gets evaluated |
 | [[P1.17]] | Spike: A Unified Composer                    | 2026-09-07       | Closed as a decision, **not as a spike** — no prototype built, so its first acceptance criterion is waived rather than met. Decision is **ADR27**: one composer, buttons `[+]` `ASK` `URL` `SEND`, the user routes and detection only enables `URL`. Unblocks [[P1.18]]. Gaps found: DD-2 (no per-document status) and DD-3 (tags have no owner)             |
 
 Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
@@ -97,7 +97,9 @@ Plans: [[P1.11-FIX-PLAN]] under `documents/` covers P1.11, P1.17, P1.13 and the 
 together, despite its P1.11-only name. [[plan-11-13-17]] is a second plan over the same three stories,
 delivering them as one change instead of four stages; the two are alternatives and one has to be
 chosen before work starts (see the note below). [[P1.9-FIX-PLAN]] and [[P3.5-UPGRADE-PLAN]] cover a
-story each and have moved to `documents/done/`. [[simple-claude-plan]] is not a story plan — it audits
+story each and have moved to `documents/done/`. [[plan-P1.18]], [[plan-P2.1]], [[plan-P2.2]],
+[[plan-P2.4]] and [[plan-P2.5]] are a set of five written to run in parallel, one story each; see the
+note below. [[simple-claude-plan]] is not a story plan — it audits
 the `.claude/` governance layer and the tracking documents, and its first pass is already committed.
 Design artifacts the story plans depend on are in `documents/design/` — [[ADRS]],
 [[SPIKE-MARKITDOWN]] (P2.8), [[SPIKE-UNIFIED-COMPOSER]] (P1.17) and [[STARTUP-SEQUENCE]] (P1.9).
@@ -145,12 +147,12 @@ than staged behind `@Disabled` annotations that a later story would remove. `P1.
 kept in sync with ADR26 as the changes were designed (see its own changelog) but was not the plan
 executed.
 
-**P1.11, P1.13 and P1.17 are done; P1.18 is what remains.** The entry point and the ingest-by-value
-endpoint both work end to end, verified by `gradle build`/`gradle test`, and ADR27 now settles the
-screen: one composer with `[+]` `ASK` `URL` `SEND`, the user naming the action and detection only
-enabling the `URL` button. The four panels in `index.html` still exist — the three ingest ones now
-point at `/api/ingest/capture` instead of the retired `/text`/`/url` endpoints — and collapsing them,
-Chat included, into one composer is P1.18's job alone.
+**P1.11, P1.13, P1.17 and P1.18 are all done.** The entry point, the ingest-by-value endpoint and the
+screen in front of them work end to end. `index.html` now holds one composer with `[+]` `ASK` `URL`
+`SEND`; the Add File, Add Text, Add URL and Chat with Llama panels and their JavaScript are gone, and
+the nav is four items. What ADR27 still owes is the evaluation it skipped by not building a
+prototype — whether the four-control row feels dense, and whether `ASK` gets pressed by mistake —
+which needs someone using the screen rather than another pass over the code.
 
 **ADR27 was taken without a prototype.** P1.17 asked for options A and B built against stubs and
 compared; neither was built, and the decision was made on argument plus a layout copied from a composer
@@ -167,6 +169,43 @@ context cache after the class finished, so its live actuator threads kept consum
 static, per-class queues later tests enqueued to — `@DirtiesContext(AFTER_CLASS)` now closes it. A
 related, unrelated-cause hang (a test blocking forever on an uncontended `BlockingQueue.take()`) is why
 `build.gradle`'s `test` task now carries a 15s-per-test / 3-minute-total timeout.
+
+**Five plans written to run in parallel.** [[P1.18]], [[P2.1]], [[P2.2]], [[P2.4]] and [[P2.5]] each
+have their own plan under `documents/`, written so five branches can run at once. Three things make
+that safe and all three have to hold.
+
+*File ownership.* Each plan names the files it owns and the files it must not open. `Actuator.java`
+and `DatabaseService.java` are **frozen across all five** — every method the four Java plans need
+already exists on `DatabaseService`, and `Actuator.java` holds both DD-1 and DD-4, so a branch editing
+it would collide with three others at once. `application.yaml` is shared by four plans, each owning
+one top-level block (`ollama:`, `ingestor:`, `classifier:`, `indexer:`/`smartconnections:`); nobody
+reorders the file. Two small files are created byte-identically by two plans each —
+`com.fourthbrain.llm.OllamaClient` (P2.1 authoritative, P2.4 copies) and
+`com.fourthbrain.persistence.VaultNaming` (P2.2 authoritative, P2.5 copies) — which git merges without
+a conflict as long as they stay identical.
+
+*ADR numbers are reserved up front*, because two branches independently writing "ADR29" is the one
+conflict that cannot be resolved textually: **ADR29** is P2.2's (the Ingestor's boundary and its
+routing table), **ADR30** is P2.5's (how Java talks to MCP), **ADR31** is P2.4's (the classification
+output contract, which closes DD-3). P1.18 and P2.1 claim no number.
+
+*Two plans have a design gate and cannot start with code.* P2.2 waits on ADR29, which strikes the
+story's `$RAW_DIR` scan — ADR26 makes `startChain` the only entry point and P2.7 already owns
+directory watching — and changes the routing table so text reaches the Classifier, which is registered,
+threaded and unreachable today. P2.5's Part B waits on ADR30; its Part A is unblocked and worth a merge
+on its own. P2.4 needs P2.1's client and can be developed against the published interface before it
+merges.
+
+Suggested merge order where there is a choice: P2.1, then P1.18 and P2.2 and P2.5 Part A in any order,
+then P2.4. **P1.18 is done**, so four remain.
+
+**Two gaps the P1.18 implementation surfaced.** Neither is P1.18's and neither is new work invented
+here. A captured text document has no file on disk and no `document_copy` row, so the Indexer has
+nothing to move and the note never reaches the vault — `plan-P2.2.md` fixes it upstream by
+materialising content, and `plan-P2.5.md` carries a fallback at the Indexer, deliberately in both so
+neither waits on the other. Separately, `Clipper` leaves its child document at status `New` when it
+hands it back to the Ingestor, so a clipped page can sit unprocessed; that one is owned by no story
+yet.
 
 **Completed stories.** P1.8, P1.9 and P1.10 have recorded verification.
 
@@ -197,3 +236,6 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each had known d
 - 2026-09-07: ADR26 written (`documents/design/ADRS.md`), unblocking P1.11 and reshaping P1.13. Settles the entry contract: `startChain` is the sole entry point; a `Message` carries the fully-loaded `Document`, not an id, so no actuator re-fetches one it already holds; `Message.from` is null-safe; the Coordinator registry becomes instance state; a submitted URL lives in `source_url`; `DatabaseService` alone writes `Document.status`. Extends into P1.13: `/api/ingest/text` and `/api/ingest/url` collapse into one `POST /api/ingest/capture`, dispatching on whichever of a `url` or `text` body key is present, so the UI's own type-detection is not duplicated server-side; `/api/ingest/file` is unchanged. P1.13 gains P1.17 as a second dependency and P1.18 as something it now blocks. Added Story P1.18 (The Unified Composer) to NOT-READY, the follow-on P1.17's own acceptance criteria named but did not create; blocked by P1.13 and P1.17, and cannot start until ADR27 is written. Counts: 33 stories — 1 WIP, 7 READY, 13 NOT-READY, 12 COMPLETED.
 - 2026-09-07: P1.17 closed and moved to COMPLETED, and P1.18 unblocked into READY. ADR27 written: one composer shaped like a chat box, with `[+]` `ASK` `URL` `SEND` inside the container; the user names the action and detection only enables the `URL` button, which lights only when the whole trimmed input is a single `http`/`https` URL. Pressing `SEND` on a bare URL stores it as text, which is the override. Text plus an attached file is two submissions and two Documents; several files are one Document each; Chat folds into the composer, so the nav drops from six items to four. It was closed as a decision rather than as a spike — no prototype was built, so the "build A and B against stubs" criterion is waived, not met, and both the story file and the ADR say so. Two gaps logged in `documents/DESIGN-DEBT.md`: DD-2, nothing reports per-document status so a receipt cannot show progress (P1.12 was left alone rather than silently widened); DD-3, tags have no owner once the panels are gone, and the question belongs with P2.4's classification design. Counts: 33 stories — 1 WIP, 10 READY, 7 NOT-READY, 15 COMPLETED.
 - 2026-09-07: `plan-11-13-17.md`, the alternative one-change plan, updated to match ADR26 — its step 5/6 and acceptance-criteria mapping now describe the single `/api/ingest/capture` endpoint instead of separate `/text` and `/url`, and its own step-0 ADR26 draft is marked satisfied by the ADR now on file (only ADR27 remains open). Both plans over P1.11/P1.13/P1.17 are current; which one runs is still an open choice. No status or count changed.
+- 2026-09-07: Five execution plans added under `documents/`, one each for P1.18, P2.1, P2.2, P2.4 and P2.5, written to run as five parallel branches — file ownership, frozen shared files, per-plan `application.yaml` blocks, reserved ADR numbers 29/30/31 and a suggested merge order are recorded in the note above. Three of the five re-map at least one acceptance criterion, and each re-mapping is gated behind an ADR rather than taken in a commit: P2.2 loses its `$RAW_DIR` scan to ADR26 and P2.7 and routes text to the Classifier instead of the Indexer (ADR29); P2.4 drops the `classification` table for `document.topic` plus `document_tag` rows and settles that the Classifier produces tags (ADR31, closing DD-3); P2.5 splits, with the vault write unblocked and Smart Connections held behind ADR30. P2.1 does not inject into `Classifier` or `Briefing` — the first belongs to P2.4's branch and the second does not exist. Two new design-debt items logged: DD-4, an actuator cannot record a failure because `Actuator.run()` stamps the participle unconditionally; DD-5, `/api/chat/llama` is still the echo stub and no story owns wiring it, so ADR27's `ASK` returns the stub even after P1.18 and P2.1 both land. Also noted: P2.10 is COMPLETED here and `status: READY` in its own story header, and the four Phase 2 story headers in this set all still read `NOT-READY` against a tracker that lists them READY. No status or count changed.
+- 2026-09-07: `plan-P1.18.md` revised to v1.1 against `documents/review-plan-p1.18.md`. Six of the review's findings taken and one rejected. Three were real defects in the plan: it said attachments upload on attach and also that they stage, which contradict, and the version where `SEND` guards on text alone makes a file-only submission impossible; re-enabling the buttons in a request's `finally` would have lit `URL` while the box held plain text, breaking ADR27's rule in the one direction the ADR says must not happen; and blanket-clearing after a send destroyed the user's note when one of several uploads failed. Rejected: the claim that `/api/ingest/file` omits `status` — it returns it at `IngestionController.java:139`, and the review quoted a four-key map that does not match the file. The plan also gained an `ASK` prompt bubble, labelled receipts, `white-space: pre-wrap`, a drag counter, textarea auto-grow, and an optional `Ctrl+Enter` accelerator flagged as going past ADR27. No status or count changed.
+- 2026-09-07: P1.18 implemented and moved to COMPLETED; counts 33 stories — 1 WIP, 9 READY, 7 NOT-READY, 16 COMPLETED. One file changed, `index.html`, +376/−189. Verified against a running app on port 8081, since a pre-existing instance held 8080 and was left alone: the page renders, the four superseded panels and every handler that only served them are gone, the nav is four items, no `th:inline` was added and every `${...}` template literal survives rendering. All four endpoints the composer calls answer with the shapes the feed reads, including the 400-with-`{message}`-and-no-`id` path. A URL capture produced `source_url` set with no `document_copy` row and the Clipper fetched it into a child document; a text capture produced `content` set with `source_url` null, so ADR27's `SEND`-on-a-bare-URL override behaves as specified; non-ASCII text round-tripped into the database unchanged. Two gaps surfaced and were recorded rather than fixed, both belonging elsewhere: a captured text document has no file and no copy row so it never reaches the vault (P2.2 and P2.5 both carry a fix), and `Clipper` leaves its child at status `New`, which no story owns. ADR27's reopening question stays open — it needs a person using the screen.
