@@ -33,9 +33,13 @@ actuators:
     briefing: 1
 
 ollama:
+  # Already ends in /v1: OllamaHttpClient appends /chat/completions and nothing else.
   url: http://localhost:11434/v1
   model: mistral
   concurrency: 1
+  connect-timeout-ms: 5000
+  read-timeout-ms: 120000
+  acquire-timeout-ms: 120000
 
 vault:
   path: ./vault
