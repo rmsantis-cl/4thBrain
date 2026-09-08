@@ -48,6 +48,14 @@ vault:
     # once Extractor writes sanitized output there (P2.3).
     source-area: tmp
 
+indexer:
+  # A document that carries its text but no file — a note typed into the
+  # composer — is written into the indexing area rather than dropped.
+  materialise-content: true
+
+smartconnections:
+  enabled: false          # flipped by ADR30, Part B
+  vault-path: ""          # absolute path to the Obsidian vault; empty means "not configured"
 
 logging:
   file:
