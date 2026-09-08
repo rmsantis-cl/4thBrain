@@ -2,7 +2,7 @@
 name: ADRS
 description: Architecture Decision Records for 4thBrain v04. ADR1-ADR24 are inherited from v03 and not restated here; v04's own decisions start at ADR25
 metadata:
-  version: 1.2
+  version: 1.3
   created-by: Claude Sonnet 5
   date: 2026-09-07
 ---
@@ -202,6 +202,134 @@ gain no new obligation: they already receive the document by reference through `
 
 ---
 
+## ADR27 — One composer with a button row; the user routes, detection only offers
+
+**Date:** 2026-09-07
+**Status:** Accepted
+**Supersedes:** nothing
+**Arises from:** Story P1.17
+
+*Taken without the prototype Story P1.17 called for. See "How this was decided" below.*
+
+### Context
+
+`index.html` has six panels behind a nav: Add File, Add Text, Add URL, Search, Ingest status, Chat
+with Llama. Three of the six are one act — put something in the vault — split apart because the
+transport differs, so the user picks a panel before knowing which one applies.
+
+Collapsing them into one box raises a question the panels never had to answer. Form separates a file
+from a URL from prose. Nothing in the characters separates *save this note* from *answer this
+question*: both are prose in the same box. The failure is asymmetric. A question stored as a note
+becomes vault content that gets classified, indexed and surfaced in search months later. A note sent
+to the model is simply lost — the user typed something they wanted kept and got a reply instead.
+
+ADR26 already removed the other half of this problem. `/api/ingest/capture` dispatches on whichever of
+`url` or `text` the client populates, so the server never re-derives the type. What was left is how
+the screen decides which one to send.
+
+### Decision
+
+**One composer, shaped like a chat box, with a row of buttons that name the action.** No mode, no
+inference.
+
+```
++--------------------------------------------------+
+|  Type a note, paste a link, or ask...            |
+|                                                  |
+|  [+]                   [ ASK ] [ URL ] [ SEND ]  |
++--------------------------------------------------+
+
+ --- feed -----------------------------------------
+ [receipt] document 42 accepted — ingesting
+ [reply]   the model's answer appears here
+```
+
+1. **Layout.** One rounded container holding the text area and its controls, `[+]` bottom-left and the
+   actions bottom-right — the arrangement Claude Desktop uses — rather than a form with buttons
+   underneath it.
+2. **`SEND`** posts the box as `{ "text": ... }` to `/api/ingest/capture`. It is the primary action and
+   binds to Enter.
+3. **`URL`** posts `{ "url": ... }` to the same endpoint. It is disabled unless the whole trimmed input
+   is a single syntactically valid URL and nothing else, with an `http` or `https` scheme — a scheme is
+   required, and no other scheme is supported. Detection only enables the button; **pressing `SEND` on
+   a bare URL stores that URL as text**, which is a legitimate thing to want.
+4. **`ASK`** posts to `/api/chat/llama` and renders the reply in the feed below, in the same stream as
+   capture receipts.
+5. **`+`** attaches a file, posted multipart to `/api/ingest/file`. Drag-onto-the-composer and paste
+   work the same way; the existing dropzone already handles the first.
+6. **Text plus an attached file is two submissions and two Documents** — the file to
+   `/api/ingest/file`, the text to `/api/ingest/capture`. Several files are one Document each, which is
+   what P1.8 already established for ZIP members.
+7. **No tags field.** Deferred deliberately — see the consequences below.
+8. **Nav goes from six items to four:** Composer, Search, Ingest status, Admin. Add File, Add Text, Add
+   URL and Chat with Llama all fold into the composer. Search stays its own panel; folding it in would
+   give Enter a fourth meaning.
+
+### Why, given the above
+
+**A button row has no state to get stuck in.** The alternative that survived longest was a
+Capture/Ask toggle beside the box, which costs one click only when you want the non-default. Its
+failure mode is a mode left switched: ask a question, read the answer, type a note, press Enter, and
+the note goes to the model. Buttons move the choice to the moment of sending, which is the moment the
+user actually knows what they meant. That removes the failure rather than reducing it.
+
+**Detection that offers is safe; detection that routes is not.** The `URL` button is lit by a rule, but
+nothing is submitted until a button is pressed, so a wrong rule costs a dark button rather than a
+misrouted document. This is why the rule can afford to be narrow.
+
+**Narrow is the right width for that rule.** A note that quotes a link is a note. If detection fired on
+any input containing a URL, every note with a citation would offer to go fetch a page.
+
+| Input | `URL` button |
+|---|---|
+| `https://example.com/article` | enabled |
+| `see https://example.com/article — worth reading` | disabled |
+| `example.com/article` | disabled (no scheme) |
+| two URLs on two lines | disabled |
+| `ftp://example.com/file` | disabled (scheme not supported) |
+
+Implementable as: trimmed input contains no whitespace, parses under `new URL()`, and its protocol is
+`http:` or `https:`.
+
+### How this was decided
+
+By judgement, in conversation. **No prototype was built and no A-versus-B comparison was run**, so
+P1.17's first acceptance criterion is waived rather than met. The layout is copied from a composer
+that is already in daily use, which is weaker evidence than a prototype but not none.
+
+What would reopen it: the four-control row proving too dense in practice, or `ASK` being pressed by
+mistake — or missed — often enough to matter. Both are visible from use, and P1.18 is the first time
+anyone uses this.
+
+### Consequences
+
+**P1.18 implements this without further interpretation**, and is the first use of the design.
+
+**Tags lose their home.** Each of the three panels has its own tags input today, and the composer has
+none. Whether tags are typed by the user or produced by the Classifier (P2.4) is genuinely undecided,
+and folding a tags field into the composer would settle it by accident. Logged as DD-3.
+
+**The receipt cannot show progress.** `/api/status` returns five aggregate counts and cannot say where
+one document is (`StatusController`), so a receipt shows ADR26's `{ id, status, message }` once and
+does not update. No story owns a per-document endpoint; logged as DD-2. The shared feed is what makes
+one screen worth more than smaller panels, so this is the first thing to revisit if the composer feels
+flat.
+
+**ADR25's constraints carry over unchanged:** the page stays in `src/main/resources/templates/`,
+self-contained, no bundler and no framework, and no `th:inline="javascript"` on any script using
+template literals.
+
+### Alternatives rejected
+
+| | Why not |
+|---|---|
+| A — a Capture/Ask mode toggle | A mode can be left switched, and the failure it produces is the asymmetric one. It also has nowhere to put a conditionally-enabled `URL` button, since it has a single relabelling Send |
+| C — a `?` or `/ask` sigil | Collides with real content: a note starting with `?`, a pasted snippet starting with `/`. Fine later as an accelerator on top of the buttons, insufficient alone |
+| D — infer capture-versus-ask from the text | Right most of the time, and wrong silently. "How does the Coordinator dispatch messages?" is both a note title and a question. Using a model call to route a model call also consumes the one Ollama concurrency slot the Classifier needs |
+| E — unify the three ingest panels, leave Chat where it is | The honest fallback if the single box had collapsed under its own generality. Not needed: the button row removes the ambiguity that made E attractive |
+
+---
+
 ## ADR28 — MarkItDown, invoked as a subprocess, is the Extractor's Markdown converter
 
 **Date:** 2026-09-07
@@ -209,8 +337,8 @@ gain no new obligation: they already receive the document by reference through `
 **Supersedes:** the extraction stack named in Story P2.3 (Turndown, Mammoth, OpenDataLoader)
 **Arises from:** Story P2.8
 
-*Numbered 28, not 26 or 27: ADR26 (Story P1.11's entry contract) is written above. ADR27, reserved by
-Story P1.17's spike, is not written yet.*
+*Numbered 28, not 26 or 27: ADR26 (Story P1.11's entry contract) and ADR27 (Story P1.17's composer)
+are both written above.*
 
 ### Context
 

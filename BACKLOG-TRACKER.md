@@ -2,7 +2,7 @@
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 2.6
+  version: 2.8
   created-by: Claude Sonnet 5
   date: 2026-09-07
 ---
@@ -22,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-33 stories: 1 WIP, 7 READY, 13 NOT-READY, 12 COMPLETED.
+33 stories: 1 WIP, 10 READY, 7 NOT-READY, 15 COMPLETED.
 2 bugs: 1 READY, 1 COMPLETED.
 
 ### WIP
@@ -33,50 +33,50 @@ Section meanings:
 
 ### READY
 
-| ID        | Title                                        | Note                                                                                                  |
-| --------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by [[P1.9]]. Stage 1 of [[P1.11-FIX-PLAN]]. ADR26 now written                                |
-| [[P1.12]] | Status Endpoint Reports Document Counts      | No dependency                                                                                         |
-| [[P1.15]] | Orderly Shutdown                             | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                  |
-| [[P1.16]] | Crash Recovery                               | Unblocked by [[P1.9]]                                                                                 |
-| [[P1.17]] | Spike: A Unified Composer                    | Stage 2 of [[P1.11-FIX-PLAN]]; runs alongside [[P1.11]], lands before [[P1.13]]                       |
-| [[P2.9]]  | MarkdownConverter Seam & Implementation      | Stack settled by ADR28. Run [[P2.8]]'s format census before starting — it can still reverse the stack |
-| [[P2.10]] | Deploy Ollama on Windows                     | Environment story, no production code. Blocks [[P2.1]], [[P2.4]], [[P2.6]] and [[P3.4]]               |
+| ID        | Title                                   | Note                                                                                                                                                    |
+| --------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [[P1.12]] | Status Endpoint Reports Document Counts | No dependency                                                                                                                                           |
+| [[P1.15]] | Orderly Shutdown                        | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                                                                    |
+| [[P1.16]] | Crash Recovery                          | Unblocked by [[P1.9]]                                                                                                                                   |
+| [[P1.18]] | The Unified Composer                    | Unblocked by [[P1.17]] — ADR27 is written. First use of a design taken without a prototype                                                              |
+| [[P2.1]]  | OllamaClient & ConcurrencyGate |                                                       |
+| [[P2.4]]  | Classifier Real Logic          |                                                                    |
+| [[P2.6]]  | Briefing Real Logic            |                                                                     |
+| [[P2.2]]  | Ingestor Real Logic                     | Unblocked by [[P1.11]] — the pipeline now has a working entry point                                                                                     |
+| [[P2.5]]  | Indexer Real Logic                      | Unblocked by [[P1.11]]                                                                                                                                  |
+| [[P2.7]]  | File Watcher                            | Unblocked by [[P1.11]]                                                                                                                                  |
+| [[P2.9]]  | MarkdownConverter Seam & Implementation | Stack settled by ADR28. Run [[P2.8]]'s format census before starting — it can still reverse the stack                                                   |
+| [[P3.3]]  | REST API Tests                          | Unblocked by [[P1.13]]                                                                                                                                  |
 
 ### NOT-READY
 
-| ID        | Title                            | Blocked by                                                                                    |
-| --------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
-| [[P1.13]] | Ingest-by-Value Endpoint (Text and URL)  | [[P1.11]], [[P1.17]] — stage 3 of [[P1.11-FIX-PLAN]]. Now one endpoint, `/api/ingest/capture`, per ADR26 |
-| [[P1.18]] | The Unified Composer                     | [[P1.13]], [[P1.17]] — stage 4 of [[P1.11-FIX-PLAN]]; cannot start until ADR27 is written             |
-| [[P2.1]]  | OllamaClient & ConcurrencyGate   | [[P1.11]] — no working pipeline entry point; [[P2.10]] — nothing answers on port 11434        |
-| [[P2.2]]  | Ingestor Real Logic              | [[P1.11]] — no working pipeline entry point                                                   |
-| [[P2.3]]  | TextExtractor Real Logic         | [[P1.11]] — no working pipeline entry point; [[P2.9]] — the converter it calls does not exist |
-| [[P2.4]]  | Classifier Real Logic            | [[P1.11]] — no working pipeline entry point; [[P2.10]] — no Ollama to call                    |
-| [[P2.5]]  | Indexer Real Logic               | [[P1.11]] — no working pipeline entry point                                                   |
-| [[P2.6]]  | Briefing Real Logic              | [[P1.11]] — no working pipeline entry point; [[P2.10]] — no Ollama to call                    |
-| [[P2.7]]  | File Watcher                     | [[P1.11]] — no working pipeline entry point                                                   |
-| [[P3.1]]  | Unit Tests                       | Phase 2                                                                                       |
-| [[P3.2]]  | Integration Tests                | Phase 2                                                                                       |
-| [[P3.3]]  | REST API Tests                   | [[P1.13]]                                                                                     |
-| [[P3.4]]  | Smoke Test                       | Phase 2; [[P2.10]] — the run it smoke-tests reaches Ollama                                     |
+| ID        | Title                          | Blocked by                                                                                        |
+| --------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| [[P2.3]]  | TextExtractor Real Logic       | [[P2.9]] — the converter it calls does not exist                                                  |
+| [[P3.1]]  | Unit Tests                     | Phase 2                                                                                           |
+| [[P3.2]]  | Integration Tests              | Phase 2                                                                                           |
+| [[P3.4]]  | Smoke Test                     | Phase 2                                       |
 
 ### COMPLETED
 
-| ID | Title | Completed | Note |
-|----|-------|-----------|------|
-| P1.1 | Spring Boot Skeleton | Phase 1 skeleton | |
-| P1.2 | Database Setup | Phase 1 skeleton | |
-| P1.3 | Actuator Framework | Phase 1 skeleton | Run loop superseded by [[P1.10]] |
-| P1.4 | Coordinator & Messaging | Phase 1 skeleton | Defects tracked as [[P1.11]] |
-| P1.5 | Monitor Component | Phase 1 skeleton | |
-| P1.6 | REST API Skeleton | Phase 1 skeleton | text/url endpoints stubbed, see [[P1.13]] |
-| P1.7 | Web UI Wiring | Phase 1 skeleton | |
-| [[P1.8]] | Document Copies | 2026-09-06 | Verified against a fresh database |
-| [[P1.9]] | Actuator Instantiation & Registration | 2026-09-06 | Verified by boot log and `ActuatorManagerTest`; three defects found and fixed in the pass. Re-confirmed 2026-09-07 against a running app. Planned — [[P1.9-FIX-PLAN]] |
-| [[P1.10]] | Actuator Run Loop | 2026-09-06 | Landed with [[P1.9]]; idle actuators cost no CPU |
-| [[P1.14]] | View Layer & Template Engine | 2026-09-07 | Closes [[BUG-001]]. All six endpoints return 200; the inline script's `${...}` literals survive rendering intact |
-| [[P3.5]] | Upgrade to JUnit 5 | 2026-09-07 | Not the migration the story described — that had already happened. Removed the dangling `junit:junit` from the test classpath, which had no vintage engine behind it, so a JUnit 4 test compiled and then silently did not run. Test count identical before and after; the trap was verified closed with a throwaway probe. Planned — [[P3.5-UPGRADE-PLAN]] |
+| ID        | Title                                        | Completed        | Note                                                                                                                                                                                                                                                                                                                                                        |
+| --------- | -------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1.1      | Spring Boot Skeleton                         | Phase 1 skeleton |                                                                                                                                                                                                                                                                                                                                                             |
+| P1.2      | Database Setup                               | Phase 1 skeleton |                                                                                                                                                                                                                                                                                                                                                             |
+| P1.3      | Actuator Framework                           | Phase 1 skeleton | Run loop superseded by [[P1.10]]                                                                                                                                                                                                                                                                                                                            |
+| P1.4      | Coordinator & Messaging                      | Phase 1 skeleton | Defects tracked as [[P1.11]]                                                                                                                                                                                                                                                                                                                                |
+| P1.5      | Monitor Component                            | Phase 1 skeleton |                                                                                                                                                                                                                                                                                                                                                             |
+| P1.6      | REST API Skeleton                            | Phase 1 skeleton | text/url endpoints stubbed, see [[P1.13]]                                                                                                                                                                                                                                                                                                                   |
+| P1.7      | Web UI Wiring                                | Phase 1 skeleton |                                                                                                                                                                                                                                                                                                                                                             |
+| [[P1.8]]  | Document Copies                              | 2026-09-06       | Verified against a fresh database                                                                                                                                                                                                                                                                                                                           |
+| [[P1.9]]  | Actuator Instantiation & Registration        | 2026-09-06       | Verified by boot log and `ActuatorManagerTest`; three defects found and fixed in the pass. Re-confirmed 2026-09-07 against a running app. Planned — [[P1.9-FIX-PLAN]]                                                                                                                                                                                       |
+| [[P1.10]] | Actuator Run Loop                            | 2026-09-06       | Landed with [[P1.9]]; idle actuators cost no CPU                                                                                                                                                                                                                                                                                                            |
+| [[P1.14]] | View Layer & Template Engine                 | 2026-09-07       | Closes [[BUG-001]]. All six endpoints return 200; the inline script's `${...}` literals survive rendering intact                                                                                                                                                                                                                                            |
+| [[P1.11]] | Coordinator Entry Point & Message Addressing | 2026-09-07       | Implemented via `plan-11-13-17.md` per ADR26. `startChain` is the sole entry point, loads the Document once and passes it by reference through `Message`; registry is instance state. Verified: `gradle build`/`gradle test` green, new `CoordinatorTest`                                                                                                   |
+| [[P1.13]] | Ingest-by-Value Endpoint (Text and URL)      | 2026-09-07       | Implemented via `plan-11-13-17.md`. `/text` and `/url` replaced by one `POST /api/ingest/capture`; `Ingestor`/`Clipper` read `source_url`. Landed ahead of [[P1.17]]'s spike on the plan's argument that ADR26 alone gated this story's contract. Verified: `gradle build`/`gradle test` green, `IngestionControllerTest` rewritten                         |
+| [[P3.5]]  | Upgrade to JUnit 5                           | 2026-09-07       | Not the migration the story described — that had already happened. Removed the dangling `junit:junit` from the test classpath, which had no vintage engine behind it, so a JUnit 4 test compiled and then silently did not run. Test count identical before and after; the trap was verified closed with a throwaway probe. Planned — [[P3.5-UPGRADE-PLAN]] |
+| [[P2.10]] | Deploy Ollama on Windows                | 2026-09-07 | Completed                                                                                                                                                                                                                                                                                                                                                   |
+| [[P1.17]] | Spike: A Unified Composer                    | 2026-09-07       | Closed as a decision, **not as a spike** — no prototype built, so its first acceptance criterion is waived rather than met. Decision is **ADR27**: one composer, buttons `[+]` `ASK` `URL` `SEND`, the user routes and detection only enables `URL`. Unblocks [[P1.18]]. Gaps found: DD-2 (no per-document status) and DD-3 (tags have no owner)             |
 
 Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
 in sync with the per-bug file.
@@ -122,7 +122,7 @@ Full details: [[BUG-001]], [[BUG-002]] — one file per bug under `documents/bug
 
 ## Notes
 
-**Phase 2 blocking.** P2.1–P2.7 were recorded as blocked by "Phase 1 does not boot". That is no longer true — the application boots as of P1.9 and serves every endpoint — so their blocker is restated as P1.11: nothing yet starts a chain, `startChain()` is a stub that throws, and `IngestionController` calls `sendMessage()` instead, which builds messages that NPE when logged. The seven stories stay in NOT-READY. P2.3's second blocker has changed rather than cleared: its v03 Node stack was replaced by ADR28 (MarkItDown as a subprocess) and the story rewritten, so it is no longer blocked on a decision — it is blocked on P2.9, which builds the converter it calls.
+**Phase 2 blocking, resolved for P1.11's part.** P2.1–P2.7 were blocked by P1.11 — no working `startChain`. P1.11 is now COMPLETED, so P2.2, P2.5 and P2.7 (which had no other blocker) move to READY. P2.1, P2.4 and P2.6 stay NOT-READY on P2.10 alone (nothing answers on port 11434 yet). P2.3 stays NOT-READY on P2.9 alone (the converter it calls does not exist yet); its blocker had already changed once, from the v03 Node stack (struck by ADR28) to P2.9, which builds the replacement.
 
 **ADR28 was taken without P2.8's measurements.** The decision rests on the argument that a hard timeout only exists across a process boundary, which is a property of this pipeline rather than of the converters. It does not rest on the corpus, because no corpus was assembled. The research arm's finding is that the choice actually hinges on format mix — on PDF the two candidates are the same flat text extractor, so a PDF-heavy inflow means the Python runtime is bought for nothing. That is a ten-minute count. Run it before P2.9 starts; ADR28 carries it as trigger 1, and trigger 2 (share of scanned PDFs) can turn the whole spike into an OCR decision instead.
 
@@ -134,24 +134,39 @@ is READY now and blocks nothing that is not already blocked by P1.11, so it can 
 before P2.1. Its timing measurement also feeds ADR28's trigger 3, which wants an Ollama round trip as
 its comparison point for conversion cost.
 
-**Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 is done.
-P3.4 gains P2.10, because a smoke test of the full pipeline runs through the Classifier.
+**Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 unblocked into READY now that P1.13 is
+COMPLETED. P3.5 is done. P3.4 gains P2.10, because a smoke test of the full pipeline runs through the
+Classifier.
 
-**The three UI entry-point stories are planned as one run** — [[P1.11-FIX-PLAN]], which now carries all of them despite its P1.11-only name; the separate `UI-ENTRY-POINTS-PLAN.md` was merged into it. P1.11 is stage 1, the P1.17 spike runs alongside it, P1.13 is stage 3. None of them can start before ADR26 is written: P1.11's story leaves two choices open (keep or delete `sendMessage`; static or instance state), and the cheap answer to the second does not work, because Spring caches test contexts so a static registry is never cleared between them. The plan also found that P1.13 cannot meet its own acceptance criteria as written — `Ingestor` and `Clipper` both read a submitted URL from `content`, not `source_url`, so a document built the way P1.13 describes stops at the first hop with no error.
+**`plan-11-13-17.md` was the plan actually run**, not `P1.11-FIX-PLAN.md`. Both covered the same ground
+and were recorded as alternatives; `plan-11-13-17.md`'s one-change approach was chosen, so
+`IngestionControllerTest` was rewritten once against the final `/api/ingest/capture` contract rather
+than staged behind `@Disabled` annotations that a later story would remove. `P1.11-FIX-PLAN.md` was
+kept in sync with ADR26 as the changes were designed (see its own changelog) but was not the plan
+executed.
 
-**Two plans now cover P1.11, P1.13 and P1.17, and they are alternatives.** `P1.11-FIX-PLAN.md` stages
-them, plus P1.18, as four deliveries. `plan-11-13-17.md` argues the first three are one change: the
-only code-ordering constraint is that `startChain` compiles before the controller calls it, which
-inside a single pass is a step order rather than a delivery order, and the spike's ordering constraint
-is a design one that step 0 satisfies by writing the two ADRs up front. What the merge buys is that
-`IngestionControllerTest` is rewritten once against the final contract, so no commit is green because
-eleven assertions were switched off with `@Disabled`. What it costs is a wider blast radius per merge
-and a spike timebox running inside a multi-day change. Both plans carry the same findings and neither
-touches P1.18. Pick one before starting; running both would rewrite the same files twice.
+**P1.11, P1.13 and P1.17 are done; P1.18 is what remains.** The entry point and the ingest-by-value
+endpoint both work end to end, verified by `gradle build`/`gradle test`, and ADR27 now settles the
+screen: one composer with `[+]` `ASK` `URL` `SEND`, the user naming the action and detection only
+enabling the `URL` button. The four panels in `index.html` still exist — the three ingest ones now
+point at `/api/ingest/capture` instead of the retired `/text`/`/url` endpoints — and collapsing them,
+Chat included, into one composer is P1.18's job alone.
 
-**P1.11, P1.13 and P1.17 do not finish the UI on their own.** They deliver three working endpoints behind the existing three panels. The single composer is the spike's follow-on story, P1.18, which does not exist yet — P1.17's scope forbids production code. The plan carries it as stage 4.
+**ADR27 was taken without a prototype.** P1.17 asked for options A and B built against stubs and
+compared; neither was built, and the decision was made on argument plus a layout copied from a composer
+already in daily use. Its first acceptance criterion is recorded as waived rather than met, in both the
+story file and the ADR. The practical consequence: P1.18 is the first time anyone uses this design, so
+its first run is the evaluation the spike skipped. ADR27 names what would reopen the choice — a control
+row that feels too dense, or `ASK` pressed by mistake often enough to matter.
 
-**`gradlew test` exits non-zero, and that is expected.** 28 tests execute; the 23 failures are all `IngestionControllerTest` asserting P1.13's endpoint contract — `jobId` where the controller returns `id`, and `/text` and `/url` still stubbed. P1.11's plan marks those methods `@Disabled("Story P1.13")` so the suite goes green with the gap still visible, and P1.13 removes the annotations. `ActuatorManagerTest` passes 5 for 5.
+**`gradlew test` is green.** `BUILD SUCCESSFUL` — `ActuatorManagerTest`, the rewritten
+`IngestionControllerTest`, the new `CoordinatorTest` and the new `IngestorRoutingTest` (real objects,
+no mocks, assertions on captured Logback output) all pass. Getting there also fixed a live bug in the
+test suite itself: `ActuatorManagerTest`'s `@SpringBootTest` context was left running by Spring's test
+context cache after the class finished, so its live actuator threads kept consuming from the same
+static, per-class queues later tests enqueued to — `@DirtiesContext(AFTER_CLASS)` now closes it. A
+related, unrelated-cause hang (a test blocking forever on an uncontended `BlockingQueue.take()`) is why
+`build.gradle`'s `test` task now carries a 15s-per-test / 3-minute-total timeout.
 
 **Completed stories.** P1.8, P1.9 and P1.10 have recorded verification.
 
@@ -159,7 +174,7 @@ P1.8: the application was booted against a fresh SQLite database with `ddl-auto:
 
 P1.9 and P1.10 were verified together on 2026-09-06, since P1.10's changes landed in the same pass. `gradlew bootRun` against a fresh database logs `Created 1 <Type> instance(s)` for all five types, `Registered 5 actuator instance(s)`, `Started 5 actuator thread(s)` and `Started FourthBrainApplication`, with no `IllegalThreadStateException` and no `Main loop error`. Actuator threads consume no measurable CPU while idle. `ActuatorManagerTest` asserts instance counts, injection and shared queues against the registry rather than the log, and its context close logs `Thread exiting.` exactly once per actuator followed by `Shut down N actuator thread(s)`.
 
-P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known defects now carried by a later story — P1.10 (now closed), P1.11 and P1.13 respectively. They are not re-opened; the follow-up story owns the fix.
+P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each had known defects carried by a later story — P1.10, P1.11 and P1.13 respectively, all three now closed. They are not re-opened; the follow-up story owned the fix.
 
 ## Changelog
 
@@ -180,4 +195,5 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known d
 - 2026-09-07: `P1.11-FIX-PLAN.md` rewritten to plan P1.11, P1.17 and P1.13 as one run to working file, text and URL entry points; the short-lived `UI-ENTRY-POINTS-PLAN.md` is merged into it and gone, so there is one plan file rather than two covering the same stories. The spike is sequenced in parallel with P1.11 rather than after it — it touches nothing under `src/main` — and has to land before P1.13, which it constrains. Two findings changed the shape of the work: P1.13 cannot meet its own acceptance criteria as written, because `Ingestor` and `Clipper` read a submitted URL from `content` while the story specifies `source_url`; and the three stories together stop short of the goal, since P1.17 forbids production code, so the composer needs a fourth story (P1.18) that the spike is to create. Correction to the note this replaces: the earlier plan's Coordinator sketch was said not to compile because it called a `DocumentService` that does not exist. `DocumentService` does exist, with both `getDocumentById` and `setStatus`. The sketch still moves to `DatabaseService`, for the reason that actually holds — it is the synchronized service under ADR17 and the one `IngestionController` already injects — which exposes a genuine inconsistency the plan now logs: two services write `Document.status`, and only one of them is synchronized. No status or count changed.
 - 2026-09-07: Story P2.10 (Deploy Ollama on Windows) added to READY — an environment story with no production code, standing up the service `application.yaml` has pointed at since the skeleton and pinning the model tag so classification behaviour cannot drift under a later pull. P2.1, P2.4, P2.6 and P3.4 gain it as a blocker. Also recorded `plan-11-13-17.md`, a second plan over P1.11, P1.13 and P1.17 that delivers them as one change rather than four stages; it and `P1.11-FIX-PLAN.md` are alternatives and one has to be chosen before work starts. `simple-claude-plan.md` listed alongside them as the governance audit, which is not a story plan. Counts: 32 stories — 1 WIP, 7 READY, 12 NOT-READY, 12 COMPLETED.
 - 2026-09-07: ADR26 written (`documents/design/ADRS.md`), unblocking P1.11 and reshaping P1.13. Settles the entry contract: `startChain` is the sole entry point; a `Message` carries the fully-loaded `Document`, not an id, so no actuator re-fetches one it already holds; `Message.from` is null-safe; the Coordinator registry becomes instance state; a submitted URL lives in `source_url`; `DatabaseService` alone writes `Document.status`. Extends into P1.13: `/api/ingest/text` and `/api/ingest/url` collapse into one `POST /api/ingest/capture`, dispatching on whichever of a `url` or `text` body key is present, so the UI's own type-detection is not duplicated server-side; `/api/ingest/file` is unchanged. P1.13 gains P1.17 as a second dependency and P1.18 as something it now blocks. Added Story P1.18 (The Unified Composer) to NOT-READY, the follow-on P1.17's own acceptance criteria named but did not create; blocked by P1.13 and P1.17, and cannot start until ADR27 is written. Counts: 33 stories — 1 WIP, 7 READY, 13 NOT-READY, 12 COMPLETED.
+- 2026-09-07: P1.17 closed and moved to COMPLETED, and P1.18 unblocked into READY. ADR27 written: one composer shaped like a chat box, with `[+]` `ASK` `URL` `SEND` inside the container; the user names the action and detection only enables the `URL` button, which lights only when the whole trimmed input is a single `http`/`https` URL. Pressing `SEND` on a bare URL stores it as text, which is the override. Text plus an attached file is two submissions and two Documents; several files are one Document each; Chat folds into the composer, so the nav drops from six items to four. It was closed as a decision rather than as a spike — no prototype was built, so the "build A and B against stubs" criterion is waived, not met, and both the story file and the ADR say so. Two gaps logged in `documents/DESIGN-DEBT.md`: DD-2, nothing reports per-document status so a receipt cannot show progress (P1.12 was left alone rather than silently widened); DD-3, tags have no owner once the panels are gone, and the question belongs with P2.4's classification design. Counts: 33 stories — 1 WIP, 10 READY, 7 NOT-READY, 15 COMPLETED.
 - 2026-09-07: `plan-11-13-17.md`, the alternative one-change plan, updated to match ADR26 — its step 5/6 and acceptance-criteria mapping now describe the single `/api/ingest/capture` endpoint instead of separate `/text` and `/url`, and its own step-0 ADR26 draft is marked satisfied by the ADR now on file (only ADR27 remains open). Both plans over P1.11/P1.13/P1.17 are current; which one runs is still an open choice. No status or count changed.
