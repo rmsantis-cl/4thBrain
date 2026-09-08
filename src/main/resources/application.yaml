@@ -53,6 +53,17 @@ vault:
     source-area: tmp
 
 
+# Story P2.2 / ADR29. The Ingestor writes captured notes into vault.tmp and
+# copies every original into vault.raw; both paths are configured above.
+ingestor:
+  # ADR28's failure semantics assume the original survives, so this is on by
+  # default. Turning it off halves the disk use and gives that assumption up.
+  archive-original: true
+  # Upper bound on a file name derived from a note's first line.
+  max-name-length: 60
+  # Extension given to a captured note that arrived without one.
+  default-extension: .md
+
 logging:
   file:
     name: 'log/application.log'
