@@ -310,8 +310,10 @@ public class Ingestor extends Actuator {
             return "Clipper";
         }
         if (isTextContent(doc)) {
-            log.info("Document is text - routing to Classifier: id={}", doc.getId());
-            return "Classifier";
+            // Indexer first, Classifier after it (BUG-005): the file is published
+            // to the vault before it is given a topic and tags.
+            log.info("Document is text - routing to Indexer: id={}", doc.getId());
+            return "Indexer";
         }
         if (needsConversion(doc)) {
             log.warn("Document needs converting to Markdown and no converter is built yet "

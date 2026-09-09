@@ -20,7 +20,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Final stage: puts the document into the indexing area of the vault.
+ * Publishing stage: puts the document into the indexing area of the vault, then
+ * hands it to the Classifier, which is the last stage (BUG-005). The file is in
+ * the vault before it carries a topic or tags; an external indexer watching the
+ * directory can therefore see a document briefly unclassified.
  * <p>
  * Story P2.5, Part A. The indexing directory is watched by something outside
  * this application, so the file has to appear complete or not at all: the
@@ -49,7 +52,7 @@ public class Indexer extends Actuator {
     /**
      * Whether a document that has content but no file is written out here.
      * A note typed into the composer has no copy row of its own, so without
-     * this it would reach the last stage of the pipeline and stop.
+     * this it would reach the publishing stage and stop.
      */
     @Value("${indexer.materialise-content:true}")
     private boolean materialiseContent;
@@ -143,7 +146,7 @@ public class Indexer extends Actuator {
         databaseService.retire(source);
 
         logIndexed(doc, dest, "moved from " + sourceArea);
-        return null;
+        return "Classifier";
     }
 
     /**
@@ -174,7 +177,7 @@ public class Indexer extends Actuator {
 
         databaseService.addCopy(doc, VaultArea.INDEXING, dest.toString());
         logIndexed(doc, dest, "materialised from content");
-        return null;
+        return "Classifier";
     }
 
     /**
@@ -219,6 +222,10 @@ public class Indexer extends Actuator {
      * The one line anyone debugging this stage reads. No indexing timestamp is
      * written to the document: {@code document_copy.created_at} on the indexing
      * row already records when it arrived, which is what P1.8 built it for.
+     *
+     * <p>No topic here. The Classifier runs after this stage (BUG-005), so
+     * {@code doc.getTopic()} is null on the full path and reporting it only
+     * looked like information.
      */
     private void logIndexed(Document doc, Path dest, String how) {
         long bytes = -1;
@@ -227,7 +234,6 @@ public class Indexer extends Actuator {
         } catch (IOException e) {
             log.debug("Could not size {}", dest, e);
         }
-        log.info("Indexed doc={} topic={} {} -> {} bytes={}",
-                doc.getId(), doc.getTopic(), how, dest, bytes);
+        log.info("Indexed doc={} {} -> {} bytes={}", doc.getId(), how, dest, bytes);
     }
 }

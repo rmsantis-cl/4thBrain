@@ -37,6 +37,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * asked to do, temporary directories for the source area and the indexing area,
  * and the Indexer's own Logback output for the error cases. Nothing here starts
  * a thread or a Spring context.
+ *
+ * <p>A successful index hands the document to the Classifier, which runs after
+ * this stage (BUG-005). The paths that stop — nothing to index, a source file
+ * that is gone — still return null.
  */
 @DisplayName("Indexer Tests")
 class IndexerTest {
@@ -99,7 +103,8 @@ class IndexerTest {
         Document doc = new Document("standup", "- shipped the indexer\n");
         doc.setId(7L);
 
-        assertNull(indexer.doTheThing(doc));
+        assertEquals("Classifier", indexer.doTheThing(doc),
+                "a published document is handed on to be classified (BUG-005)");
 
         Path dest = Path.of(db.pathAdded(7L));
         assertTrue(Files.exists(dest));
@@ -128,7 +133,8 @@ class IndexerTest {
     void addsDestinationBeforeRetiringSource() throws IOException {
         Document doc = documentWithFile(3L, "report.txt", "body");
 
-        indexer.doTheThing(doc);
+        assertEquals("Classifier", indexer.doTheThing(doc),
+                "the file path also hands on to the Classifier (BUG-005)");
 
         assertEquals(List.of("addCopy", "retire"), db.calls,
                 "addCopy must come first: a crash between the two should leave two live copies, "

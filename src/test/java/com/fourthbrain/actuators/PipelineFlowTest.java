@@ -7,7 +7,6 @@ import com.fourthbrain.persistence.entity.DocumentCopy;
 import com.fourthbrain.service.DocumentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,20 +31,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p><b>Required order:</b> {@code Ingestor → Indexer → Classifier}, with the
  * file present in the destination directory once the Indexer has run.
  *
- * <p>This asserts the intended flow, not the flow that is built. The merged
- * implementation routes {@code Ingestor → Classifier → Indexer} under ADR29 and
- * ADR31, so these tests fail today and are disabled against <b>BUG-005</b>.
- * Re-enable them when the routing is settled; they are the specification, and
- * nothing else in the suite states the chain as a whole — every existing test
- * asserts one actuator's own decision in isolation, which is exactly how the two
- * halves came to disagree.
+ * <p>Written against the merged implementation's {@code Ingestor → Classifier →
+ * Indexer}, which is <b>BUG-005</b>; it was disabled until that was reversed and
+ * is enabled now. Nothing else in the suite states the chain as a whole — every
+ * other test asserts one actuator's own decision in isolation, which is exactly
+ * how the two halves came to disagree.
  *
  * <p>Real objects throughout, matching {@code IndexerTest} and
  * {@code IngestorRoutingTest}: stand-in services that record what they were
  * asked to do, temporary directories for the vault areas, no Spring context and
  * no threads.
  */
-@Disabled("BUG-005 — built routing is Ingestor → Classifier → Indexer; this asserts the required order")
 @DisplayName("Pipeline flow (full path, no short circuit)")
 class PipelineFlowTest {
 

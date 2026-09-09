@@ -23,10 +23,14 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Asks the local model what a document is about and records the answer (Story P2.4, ADR31).
  *
  * The contract is ADR31's: the model answers with a JSON object carrying a topic and a
- * tag array; the result is stored as document.topic plus document_tag rows, with no
- * classification table; and nothing here stops the chain. A blank document, an absent
- * client, a failed call and an unparseable reply all route on to the Indexer, because a
- * document without labels is worth more than a document that never reaches the vault.
+ * tag array, and the result is stored as document.topic plus document_tag rows, with no
+ * classification table.
+ *
+ * <p>This is the last stage. The Indexer publishes first and hands the document here
+ * afterwards (BUG-005), so every path returns null — a blank document, an absent client,
+ * a failed call and an unparseable reply included. ADR31 decision D4, that a failed
+ * classification must not strand a document, holds trivially now: the file is already in
+ * the vault before this stage is reached.
  */
 @Slf4j
 public class Classifier extends Actuator {
@@ -112,12 +116,12 @@ public class Classifier extends Actuator {
             // Never spend the single Ollama permit on an empty string: the Briefing
             // and every other document queue behind it.
             log.info("Nothing to classify, document has no content: id={}", doc.getId());
-            return "Indexer";
+            return null;
         }
 
         if (ollamaClient == null) {
-            log.warn("No OllamaClient available; document goes on unclassified: id={}", doc.getId());
-            return "Indexer";
+            log.warn("No OllamaClient available; document stays unclassified: id={}", doc.getId());
+            return null;
         }
 
         String reply;
@@ -131,26 +135,26 @@ public class Classifier extends Actuator {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for the model", e);
         } catch (OllamaException e) {
-            log.error("Model call failed; document goes on unclassified: id={}", doc.getId(), e);
-            return "Indexer";
+            log.error("Model call failed; document stays unclassified: id={}", doc.getId(), e);
+            return null;
         }
         log.info("Model answered in {} ms: id={}", System.currentTimeMillis() - startedAt, doc.getId());
         log.debug("Raw model reply: id={}, reply={}", doc.getId(), reply);
 
         Classification classification = parse(reply, maxTags, maxTagLength);
         if (classification == null) {
-            log.warn("No JSON object in the model reply; document goes on unclassified: id={}, reply={}",
+            log.warn("No JSON object in the model reply; document stays unclassified: id={}, reply={}",
                     doc.getId(), reply);
-            return "Indexer";
+            return null;
         }
 
         try {
             persist(doc, classification);
         } catch (Exception e) {
-            log.error("Could not store the classification; document goes on: id={}", doc.getId(), e);
+            log.error("Could not store the classification: id={}", doc.getId(), e);
         }
 
-        return "Indexer";
+        return null;
     }
 
     // ---- prompts ----

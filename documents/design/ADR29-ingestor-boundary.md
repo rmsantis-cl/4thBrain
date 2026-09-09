@@ -1,19 +1,20 @@
 ---
 name: ADR29-ingestor-boundary
-description: ADR29 — what the Ingestor is responsible for; it consumes a queue rather than scanning a directory, materialises captured text, archives the original, and routes text to the Classifier
+description: ADR29 — what the Ingestor is responsible for; it consumes a queue rather than scanning a directory, materialises captured text, archives the original, and routes text to the Indexer
 date: 2026-09-08
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Opus 5
   adr: 29
   arises-from: Story P2.2
+  amended-by: BUG-005
 ---
 
 # ADR29 — The Ingestor's boundary: a queue consumer that materialises, archives and routes
 
 **Date:** 2026-09-08
-**Status:** Accepted
-**Supersedes:** the first implementation requirement of Story P2.2 ("Read files from configured RAW_DIR directory") and the routing line that sent text straight to the Indexer
+**Status:** Accepted, decision 4 amended by BUG-005
+**Supersedes:** the first implementation requirement of Story P2.2 ("Read files from configured RAW_DIR directory")
 **Arises from:** Story P2.2, `documents/plan-P2.2.md` step 0
 
 *Written as its own file rather than appended to `ADRS.md`: ADR29, ADR30 and ADR31 were drafted on
@@ -104,7 +105,13 @@ defaults to on, because ADR28 depends on it.
 `vault.indexer.source-area` stays `tmp`. Moving it to `incoming` belongs to P2.3, when something
 finally writes there.
 
-### 4. Text routes to the Classifier, not the Indexer
+### 4. Text routes to the Indexer, and the Classifier runs after it
+
+**Amended 2026-09-08 by BUG-005.** The original decision routed text to the `Classifier`, which then
+returned `"Indexer"`. The required chain is the other way round:
+
+**`Ingestor → Indexer → Classifier`.** A document is published to the vault first and gains its topic
+and tags afterwards. The Classifier is the terminal stage.
 
 The routing table, in evaluation order:
 
@@ -112,13 +119,26 @@ The routing table, in evaluation order:
 |---|---|---|
 | archive: zip, rar, 7z, gz | `Extractor` | unchanged |
 | `source_url` set and http/https | `Clipper` | unchanged (ADR26 decision 5) |
-| text, Markdown, HTML, JSON, XML, CSV, log | `Classifier` | **changed** from `Indexer` |
+| text, Markdown, HTML, JSON, XML, CSV, log | `Indexer` | **amended**: this ADR first changed it to `Classifier`; BUG-005 changed it back, and the Classifier now runs after the Indexer rather than before it |
 | PDF, DOC(X), PPT(X), XLS(X), EPub, RTF, ODT | none, with a warning naming the format | **changed**: PDF used to be classed as text and indexed as raw bytes |
 | `source_url` set but not parseable as http/https | none, with a warning saying so | **changed** from the generic message |
 | anything else | none, with a warning naming the mime type | unchanged |
 
-The old table indexed every text document unclassified and left the Classifier unreachable. That is
-the single most consequential line in this story, which is why it is here.
+Why it was reversed. The original argument was that a document should carry its labels before it is
+published, and that the Classifier was registered, threaded and unreachable. The first half is a
+preference; the second is satisfied either way, because the Classifier is reached in both orderings —
+the ADR conflated "the Classifier must be in the chain" with "the Classifier must be first". Against
+that, publishing first is what the pipeline is for: the vault write is the step whose failure loses
+the document, and it should not sit behind a model call that takes seconds, needs a running Ollama,
+and fails in ways ADR31 decision 4 already treats as survivable. With the Indexer first, "a failed
+classification must not strand a document" stops being a rule the Classifier has to honour and
+becomes a property of the ordering.
+
+What it costs, and what is not solved: a file now reaches the indexing directory before it has a topic
+or tags, so anything watching that directory can see a document unclassified. Nothing watches it
+today (ADR30 found the installed Smart Connections MCP server has no indexing tool at all), so the
+window is free for now. The story that wires an external indexer owns the question of whether it
+re-reads after classification.
 
 ### 5. Formats needing conversion stop with a warning rather than parking at the Extractor
 
@@ -150,9 +170,8 @@ private note is not something a user expects to find in a log file.
 
 ## Consequences
 
-- The Classifier starts receiving documents for the first time. Until Story P2.4 lands it is a stub
-  that logs and returns `"Indexer"`, so the chain still completes and the ordering is safe either
-  way.
+- The Classifier receives documents for the first time, as the stage after the Indexer rather than
+  before it. Every ingested text document reaches the vault whether or not the model answers.
 - Every ingested file exists twice on disk, in `tmp` and in `raw`, until the Indexer moves the `tmp`
   copy to `indexing`.
 - Two of P2.2's four acceptance criteria are re-mapped: the RAW_DIR one to P2.7 (decision 1), and
@@ -170,7 +189,16 @@ private note is not something a user expects to find in a log file.
 | | Why not |
 |---|---|
 | Ingestor scans `$RAW_DIR` on a schedule | A second entry point one ADR after ADR26 removed one, and it takes P2.7's only job |
-| Leave text routing at `Indexer` and let P2.4 change it | The Classifier stays unreachable until then, and the change is a design decision either way — it should not arrive inside a story about prompts |
 | Route PDFs to the `Extractor` now and let P2.3 drain the queue | The document parks with nothing above debug in the log; a silent queue of stuck documents is what ADR28 was written against |
 | Move the `tmp` file to `raw` instead of copying | The Extractor and the Indexer both read `tmp`; the move breaks both today |
 | Materialise text in `IngestionController` instead | Puts file I/O back at the REST boundary, and the Extractor's re-submitted members would still need the Ingestor to do it |
+| Keep the Classifier first and change the requirement instead (BUG-005) | It puts the vault write, the step whose failure actually loses a document, behind a model call that needs a running Ollama and takes seconds |
+
+## Amendments
+
+- **2026-09-08, BUG-005.** Decision 4 reversed: text routes to the `Indexer`, and the `Classifier`
+  runs after it as the terminal stage. The original heading ("Text routes to the Classifier, not the
+  Indexer") and the two rejected alternatives that argued for it have been rewritten rather than left
+  standing, because this file is not yet folded into `ADRS.md` and folding a superseded decision was
+  the worse of the two options. The ordering is now recorded in a document about the pipeline as well:
+  `PipelineFlowTest` asserts the whole chain, which nothing did when this ADR was written.

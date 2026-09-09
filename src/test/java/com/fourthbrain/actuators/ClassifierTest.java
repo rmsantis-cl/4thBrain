@@ -32,8 +32,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * data/fourthbrain.db, opens a port, or calls a model, so it runs in milliseconds
  * beside whatever else is on the machine.
  *
- * The through-line of every case is ADR31 decision 4: whatever goes wrong, the document
- * still routes to the Indexer.
+ * The through-line of every case is ADR31 decision 4: whatever goes wrong, a failed
+ * classification must not strand the document. The Indexer publishes before this stage
+ * runs (BUG-005), so the Classifier is terminal and every path returns null — the
+ * document is already in the vault whatever happens here.
  */
 @DisplayName("Classifier behaviour (real objects, log-verified)")
 class ClassifierTest {
@@ -90,14 +92,14 @@ class ClassifierTest {
     }
 
     @Test
-    @DisplayName("a good reply writes the topic, the tags and the links, and routes to Indexer")
+    @DisplayName("a good reply writes the topic, the tags and the links, and ends the chain")
     void goodReplyIsStored() {
         ollama.reply = GOOD_REPLY;
         Document doc = doc("A long enough note about building services with Spring Boot.");
 
         String next = classifier.doTheThing(doc);
 
-        assertEquals("Indexer", next);
+        assertNull(next, "the Classifier is the last stage; nothing follows it");
         assertEquals("Spring Boot", database.topics.get(7L), "the row's topic");
         assertEquals(List.of("java", "spring-boot"), database.activeTagNames(7L),
                 "tags are normalised before they are written (ADR31 decision 3)");
@@ -106,7 +108,7 @@ class ClassifierTest {
     }
 
     @Test
-    @DisplayName("the in-memory Document carries the topic onward, not only the row")
+    @DisplayName("the in-memory Document carries the topic, not only the row")
     void inMemoryDocumentGetsTheTopic() {
         ollama.reply = GOOD_REPLY;
         Document doc = doc("Something about Spring Boot.");
@@ -114,18 +116,19 @@ class ClassifierTest {
         classifier.doTheThing(doc);
 
         assertEquals("Spring Boot", doc.getTopic(),
-                "the Document travels in the Message (ADR26 decision 2); the Indexer reads it next");
+                "the Document travels in the Message (ADR26 decision 2) and carries what was learned here");
     }
 
     @Test
-    @DisplayName("a garbage reply writes nothing, warns, and still routes to Indexer")
+    @DisplayName("a garbage reply writes nothing, warns, and ends the chain without stranding the document")
     void garbageReplyIsNotFatal() {
         ollama.reply = "I am afraid I cannot classify that document.";
         Document doc = doc("Some content that the model did not like.");
 
         String next = classifier.doTheThing(doc);
 
-        assertEquals("Indexer", next, "a parse failure is not a pipeline failure (ADR31 decision 4)");
+        assertNull(next, "a parse failure is not a pipeline failure (ADR31 decision 4); "
+                + "the document was published by the Indexer before this stage ran");
         assertNull(doc.getTopic());
         assertTrue(database.topics.isEmpty());
         assertTrue(database.links.isEmpty());
@@ -134,14 +137,14 @@ class ClassifierTest {
     }
 
     @Test
-    @DisplayName("an OllamaException is logged at ERROR and still routes to Indexer")
+    @DisplayName("an OllamaException is logged at ERROR and ends the chain")
     void failedCallIsNotFatal() {
         ollama.failure = new OllamaException("connection refused", 502, "upstream", null);
         Document doc = doc("Content that never reaches a model.");
 
         String next = classifier.doTheThing(doc);
 
-        assertEquals("Indexer", next);
+        assertNull(next);
         assertNull(doc.getTopic());
         assertTrue(database.links.isEmpty());
         assertTrue(loggedAtLevel("ERROR", "Model call failed"),
@@ -153,20 +156,20 @@ class ClassifierTest {
     void blankContentSkipsTheModel() {
         ollama.reply = GOOD_REPLY;
 
-        assertEquals("Indexer", classifier.doTheThing(doc("   \n\t  ")));
-        assertEquals("Indexer", classifier.doTheThing(doc(null)));
+        assertNull(classifier.doTheThing(doc("   \n\t  ")));
+        assertNull(classifier.doTheThing(doc(null)));
 
         assertEquals(0, ollama.calls, "the one Ollama permit must not be spent on an empty string");
         assertTrue(database.links.isEmpty());
     }
 
     @Test
-    @DisplayName("with no OllamaClient injected the document goes on unclassified")
+    @DisplayName("with no OllamaClient injected the document stays unclassified rather than failing")
     void noClientIsNotFatal() {
         classifier.ollamaClient = null;
         Document doc = doc("Content, but P2.1 has not merged yet.");
 
-        assertEquals("Indexer", classifier.doTheThing(doc));
+        assertNull(classifier.doTheThing(doc));
         assertTrue(loggedAtLevel("WARN", "No OllamaClient available"),
                 "expected a WARN naming the missing client; captured:" + formattedMessages());
     }

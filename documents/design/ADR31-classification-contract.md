@@ -1,18 +1,19 @@
 ---
 name: ADR31-classification-contract
-description: ADR31 — the Classifier produces tags, stores them in document.topic and document_tag, parses the first balanced JSON object out of the reply, and treats a parse failure as non-fatal
+description: ADR31 — the Classifier produces tags, stores them in document.topic and document_tag, parses the first balanced JSON object out of the reply, and is the terminal stage where a parse failure costs only the labels
 date: 2026-09-08
 metadata:
-  version: 1.0
+  version: 1.1
   created-by: Claude Opus 5
   story: P2.4
   adr: ADR31
+  amended-by: BUG-005
 ---
 
 # ADR31 — The classification contract: the Classifier owns tags, and a bad reply does not stop the pipeline
 
 **Date:** 2026-09-08
-**Status:** Accepted
+**Status:** Accepted, decision 4 amended by BUG-005
 **Supersedes:** nothing
 **Arises from:** Story P2.4 (Classifier Real Logic), `plan-P2.4.md` step 0
 **Closes:** DD-3 (Tags have no owner)
@@ -99,22 +100,29 @@ the column.
 
 ## Decision 4 — a parse failure is not a pipeline failure
 
-**An unparseable reply logs the raw response at WARN, leaves `topic` null, writes no tags, and still
-returns `"Indexer"`.** An `OllamaException` does the same at ERROR. A document with no content to
-classify skips the model call entirely and returns `"Indexer"` without spending the single Ollama
-permit on an empty string.
+**Amended 2026-09-08 by BUG-005.** The required chain is `Ingestor → Indexer → Classifier`: the
+Indexer publishes the document to the vault, and the Classifier runs after it as the terminal stage.
+The original version of this decision was written for the opposite order, where the Classifier ran
+first and had to return `"Indexer"` on every path to avoid stranding a document it could not label.
 
-An unclassified document in the vault is worth more than a document stopped outside it. The
-Classifier also has no way to record that it failed — `Actuator.run` stamps the participle
-unconditionally once `doTheThing` returns (DD-4) — so stopping the chain would produce a document
-sitting at `classified` that never reaches the vault, with a log line as the only trace. That is
-strictly worse than an untagged file that is present and searchable by its text.
+**Every path now returns null.** An unparseable reply logs the raw response at WARN, leaves `topic`
+null and writes no tags; an `OllamaException` does the same at ERROR; a document with no content
+skips the model call entirely rather than spending the single Ollama permit on an empty string. None
+of them routes anywhere, because there is nowhere left to route to.
 
-**This is the opposite of ADR28's choice for conversion failures, and the asymmetry is deliberate.**
-A failed conversion produces no content to index, so continuing would put an empty file in the vault.
-A failed classification produces content with no labels, which is exactly what every document in the
-vault had before this story existed. The two differ in what survives the failure, and that is the
-whole of the reason.
+The guarantee is unchanged and now costs nothing to keep: **a failed classification must not strand
+the document.** Under the original ordering that was a rule the Classifier had to honour on five
+separate paths, and DD-4 made getting it wrong invisible — `Actuator.run` stamps the participle
+unconditionally once `doTheThing` returns, so a document stopped here would have sat at `classified`
+having never reached the vault, with a log line as the only trace. Reversed, the file is already in
+the vault before this stage starts. The worst outcome of any failure here is an untagged document
+that is present and searchable by its text, which is what every document in the vault was before this
+story existed.
+
+**The asymmetry with ADR28's choice for conversion failures survives the reordering.** A failed
+conversion produces no content to index, so continuing would put an empty file in the vault. A failed
+classification produces content with no labels. The two differ in what survives the failure, and that
+is still the whole of the reason.
 
 ## Consequences
 
@@ -123,8 +131,15 @@ whole of the reason.
 both answers active and the second run's disagreement with the first is invisible.
 
 **The in-memory `Document` gets its topic set too**, not only the row. The document travels in the
-`Message` (ADR26 decision 2) and the Indexer is the next stage to read it; writing only the row is
-the mistake DD-1 describes, in the one place where avoiding it costs a line.
+`Message` (ADR26 decision 2), and writing only the row is the mistake DD-1 describes, in the one place
+where avoiding it costs a line. No stage reads it after this one now — the Indexer, which used to,
+runs before — so this is about the object being consistent with the database rather than about a
+handover.
+
+**A document is briefly in the vault unclassified.** The Indexer publishes first, so a file exists in
+the indexing directory for as long as the model call takes before it has a topic or tags. Nothing
+watches that directory today (ADR30), and the story that wires an external indexer owns whether it
+re-reads after classification.
 
 **Tag vocabulary drifts.** Nothing constrains the model to a controlled vocabulary, so `tag` grows a
 row per phrasing the model invents. Acceptable at personal-vault scale, and the first thing to
@@ -134,7 +149,7 @@ vocabulary can also shift under a model pull with no code change at all.
 **`OllamaClient` is injected optionally.** P2.1 owns `com.fourthbrain.llm` and merges separately; on a
 tree where the interface exists but no implementation bean does, a required injection would fail the
 whole application context and take every `@SpringBootTest` down with it. The Classifier therefore
-takes the client as an optional dependency and, finding none, logs at WARN and routes on — the same
+takes the client as an optional dependency and, finding none, logs at WARN and stops — the same
 behaviour decision 4 already specifies for a failed call.
 
 ## Alternatives rejected
@@ -144,6 +159,15 @@ behaviour decision 4 already specifies for a failed call.
 | Add a `classification` table now | A schema migration from one of four concurrent branches, for a column nothing reads yet. Decision 2. |
 | Parse the whole reply as JSON and fail otherwise | Rejects the common case. Local models fence and preamble their output whatever the prompt says. |
 | Extract the object with a regex | Silently truncates on a `{` or `}` inside a string value, and the truncation still parses. Decision 3. |
-| Stop the chain on a classification failure | Produces a document stamped `classified` that never reaches the vault (DD-4), which is less visible than an untagged document, not more. |
+| Stop the chain on a classification failure | Under the original ordering it produced a document stamped `classified` that never reached the vault (DD-4). Under the required ordering the question no longer arises: the document is already published. |
 | Ask the model to emit `#tags` inline in the body | Walks straight into DD-3's Markdown-heading trap for no gain over a JSON array. |
 | Retry a failed or unparseable call | One call, one outcome. A retry under a one-permit gate needs a decision about queueing behind other work, and there is no evidence yet about what actually fails. |
+
+## Amendments
+
+- **2026-09-08, BUG-005.** Decision 4 rewritten for the required chain `Ingestor → Indexer →
+  Classifier`. The Classifier is the terminal stage and returns null on all five of its paths instead
+  of `"Indexer"`. The guarantee it was protecting is unchanged; it is now a property of the ordering
+  rather than a rule five return statements had to keep. Consequences gained the publication window
+  the reversal opens, and lost the claim that the Indexer reads the topic downstream — it no longer
+  runs downstream, and it no longer logs the topic either.
