@@ -2,12 +2,17 @@
 name: DESIGN-DEBT
 description: Open design gaps found mid-plan that were logged rather than resolved in the same pass, per .claude/rules/design-before-implementation.md
 metadata:
-  version: 1.3
+  version: 1.4
   created-by: Claude Sonnet 5
   date: 2026-09-08
 ---
 
 # Design Debt
+
+Numbering note, 2026-09-08: **DD-6 is reserved** by a concurrent pass on Stories P1.15 and P1.16,
+running in its own worktree and not yet merged. It covers documents lost at shutdown and
+vault-reconciled documents stopping at `indexed`. This file skips to DD-7 so the two cannot collide;
+DD-6's text arrives with that merge.
 
 ## Open
 
@@ -138,6 +143,20 @@ its participle stops being a wrong value in an unread column and becomes a green
 P1.20's ADR32 has to close this or state in writing that the strip shows apparent progress and cannot
 show failure.
 
+**2026-09-08, second entry:** a second plan has now hit this, and it is the first one that could not
+route around it. `documents/plan-P2.9-P2.3.md` carries P2.9's failure-status mapping as a binding
+contract on P2.3, and the contract is unwritable: whatever the Extractor sets is overwritten one line
+later, and throwing instead leaves the document at `extracting`, which the same contract forbids.
+
+The plan **split Story P2.3 rather than blocking it whole**. The conversion path ships with an interim
+that logs the reason and nothing else; the failure statuses moved into a new Story **P2.13**, blocked
+on this entry. That is the right call for delivery and it should not be read as the debt shrinking —
+see [[DD-8]] for what the interim actually costs, which is more than the earlier plans paid, because
+under ADR38 there is no queryable failure signal left at all.
+
+Whoever closes this reserves **ADR39**. ADR36 and ADR37 are taken by P1.15 and P1.16, ADR38 by the
+Extractor's output model.
+
 ### DD-5 — `/api/chat/llama` has no owner
 
 **Found:** planning P1.18 and P2.1 (`plan-P1.18.md`, `plan-P2.1.md`).
@@ -162,3 +181,75 @@ applies to a real `ASK`.
 
 **Closes when:** a story owns `ChatController`, deciding the multi-turn shape and how an interactive
 call shares the gate with pipeline work.
+
+### DD-7 — `document.content` has no owner
+
+**Found:** writing `documents/plan-P2.9-P2.3.md` and ADR38.
+
+**What's missing:** a decision about who owns a document's text once the same text exists in two
+places. The Classifier reads from `document.content` (`Classifier.java:114`), the vault holds the file,
+and nothing says which one is authoritative, what happens when they disagree, or what bounds the
+column.
+
+This has been latent since Phase 1 and the plan forces it into the open. `IngestionController` builds
+an uploaded document with `.content("")` (lines 119 and 301), so the file's text is on disk and the
+column is empty — and `Classifier.doTheThing` returns early on blank content, which means **no
+uploaded file has ever been classified**. Nothing caught it because P2.4's 33 tests all build
+documents that have content by construction. ADR38's child model fixes it for converted documents by
+putting the converted Markdown in the child's `content`, and in doing so writes the extracted text
+twice: once in the column, once in the vault file the Indexer publishes.
+
+Three questions fall out and none has an answer on file:
+
+- Which is the record? If the column is, the vault file is a rendering and a hand edit to it is lost.
+  If the file is, the column is a cache and something has to invalidate it.
+- What caps the column? `content` is `TEXT` with no bound. A 100 MB input converts to Markdown that
+  goes in a SQLite row, in a database read by a synchronized service on one connection. The plan sets
+  `extractor.max-content-chars` as a local mitigation, which is a number picked by one caller rather
+  than a policy.
+- What about the documents the Extractor never touches? A `.txt` or `.md` uploaded directly routes
+  Ingestor → Indexer → Classifier with an empty column and is still never classified. The plan does
+  not fix that, because the fix is the Classifier reading the file, which is this decision.
+
+**Why it wasn't fixed in this pass:** the plan needed the Classifier to work at all for extracted
+documents, and setting the child's `content` does that without deciding anything about ownership.
+Deciding it properly means changing what the Classifier reads, which is `Classifier.java` — a file
+this plan does not own — and it interacts with ADR31's contract and with whatever the Indexer
+publishes.
+
+**Closes when:** a story or ADR names the authoritative store for a document's text, states what caps
+the column, and says how a document with a file and no content gets classified.
+
+### DD-8 — P2.9's failure-status contract is unwritable while DD-4 is open
+
+**Found:** writing `documents/plan-P2.9-P2.3.md`.
+
+**What's missing:** the mapping from `ConversionException.Reason` to a terminal document status, which
+Story P2.9 wrote as a binding contract and Story P2.3 copied verbatim. It cannot be implemented from
+inside the Extractor: `Actuator.run()` overwrites the status one line after `doTheThing` returns, and
+throwing instead leaves the document at `extracting`, which the same contract forbids. That is
+[[DD-4]], and this entry exists to record what it costs the conversion work specifically.
+
+The plan carved the contract out into Story **P2.13** (NOT-READY, blocked on DD-4) so P2.3 could ship
+the conversion path. P2.3's interim: on failure the Extractor creates no child, logs the `Reason` and
+the `detail` at ERROR, and the original stays in `raw`.
+
+**The interim has no queryable failure signal, and that is worse than it was before ADR38.** The
+signal an earlier draft assumed — "documents at `extracted` with no row whose `parent_id` is theirs" —
+does not survive the output model, because **zero children is a legitimate success**. An archive of
+directories produces none. A conversion producing four images and no text produces children that are
+all images. The query cannot separate a failed PDF from an empty ZIP, and it cannot separate a scanned
+page that threw `EMPTY_RESULT` from a photo archive that behaved correctly. Nothing else survives
+either: `status` is stamped by the run loop, `content` is empty in both cases, and no column holds a
+reason.
+
+So until DD-4 closes, **the reason a conversion failed exists only in the log.** Parents at
+`extracted` with no children at all are a review list for a person, not a failure signal, and the plan
+says so in those words rather than dressing it up as monitoring.
+
+**Why it wasn't fixed in this pass:** the fix is `Actuator.java`, frozen, and a persisted reason
+detail needs a column, which `CREATE TABLE IF NOT EXISTS` under `ddl-auto: validate` will not add to
+an existing database. Both belong to P2.13.
+
+**Closes when:** P2.13 lands, or DD-4 closes in a way that gives P2.13 what it needs. Cross-reference
+[[DD-4]] and `documents/story/P2.13.md`.
