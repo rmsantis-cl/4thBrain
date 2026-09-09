@@ -8,9 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -72,27 +74,34 @@ public class IngestionController {
             originalName = "document";
         }
 
-        // Extract base name without extension
+        // The extension comes from the uploaded name, which is the only clue that
+        // survives a browser sending application/octet-stream. Deriving it from the
+        // MIME type instead dropped it entirely on every such upload, so the file
+        // landed on disk as "notes" rather than "notes.txt" and Ingestor could match
+        // neither its type nor its extension.
         String baseName = originalName;
+        String extension = "";
         int dotIndex = originalName.lastIndexOf('.');
         if (dotIndex > 0) {
             baseName = originalName.substring(0, dotIndex);
+            // A trailing dot is not an extension.
+            if (dotIndex < originalName.length() - 1) {
+                extension = originalName.substring(dotIndex).toLowerCase();
+            }
         }
+
+        String mimeType = resolveMimeType(file.getContentType(), extension, originalName);
+
+        // A name with no extension can still take one from a type we trust.
+        if (StringUtils.isBlank(extension)) {
+            extension = getExtensionFromMimeType(mimeType);
+        }
+
+        log.debug("MIME resolution: name={} declared={} extension={} resolved={}",
+            originalName, file.getContentType(), extension, mimeType);
 
         // Generate unique filename
         String fileName = newName(tmp, baseName);
-
-        // Detect MIME type
-        String mimeType = file.getContentType();
-        if (StringUtils.isBlank(mimeType)) {
-            mimeType = Files.probeContentType(Paths.get(originalName));
-        }
-        if (StringUtils.isBlank(mimeType)) {
-            mimeType = "application/octet-stream";
-        }
-
-        // Get file extension from MIME type
-        String extension = getExtensionFromMimeType(mimeType);
         if (StringUtils.isNotBlank(extension)) {
             fileName = fileName + extension;
         }
@@ -131,14 +140,110 @@ public class IngestionController {
         log.info("Saved record on {}", savedDoc.id());
 
         // Start pipeline
-        coordinator.sendMessage("Ingestor",savedDoc);
+        coordinator.startChain(savedDoc.id());
 
         return Map.of(
-            "message", "File received and queued",
             "id", savedDoc.id(),
+            "status", "ingesting",
+            "message", "File received and queued",
             "fileName", doc.getName(),
             "mimeType", doc.getMimeType()
         );
+    }
+
+    /**
+     * The MIME type to record for an upload.
+     * <p>
+     * Order matters. A browser that names a real type is believed first, because it
+     * may know something the extension cannot say. When it says nothing useful — which
+     * for a plain multipart upload is most of the time — the extension decides, and a
+     * filesystem probe is the last hint before giving up.
+     */
+    static String resolveMimeType(String declaredType, String extension, String originalName) {
+        String declared = bareType(declaredType);
+        if (!isGenericType(declared)) {
+            return declared;
+        }
+
+        String fromExtension = getMimeTypeFromExtension(extension);
+        if (StringUtils.isNotBlank(fromExtension)) {
+            return fromExtension;
+        }
+
+        try {
+            String probed = bareType(Files.probeContentType(Paths.get(originalName)));
+            if (!isGenericType(probed)) {
+                return probed;
+            }
+        } catch (IOException | InvalidPathException e) {
+            // probeContentType consults the OS registry and can reject an odd name
+            // outright on Windows. It is a hint, so a failure falls through.
+            log.debug("Could not probe content type for {}: {}", originalName, e.toString());
+        }
+
+        return "application/octet-stream";
+    }
+
+    /** A content type without its parameters: "text/plain; charset=utf-8" becomes "text/plain". */
+    private static String bareType(String mimeType) {
+        if (StringUtils.isBlank(mimeType)) {
+            return "";
+        }
+        String type = mimeType.trim();
+        int semicolon = type.indexOf(';');
+        if (semicolon >= 0) {
+            type = type.substring(0, semicolon).trim();
+        }
+        return type.toLowerCase();
+    }
+
+    /** True for the types that carry no information — a client saying "I don't know". */
+    private static boolean isGenericType(String bareType) {
+        return StringUtils.isBlank(bareType)
+            || bareType.equals("application/octet-stream")
+            || bareType.equals("binary/octet-stream")
+            || bareType.equals("application/unknown")
+            || bareType.equals("*/*");
+    }
+
+    /**
+     * Extension to MIME type. The inverse of {@link #getExtensionFromMimeType(String)},
+     * and deliberately wider: it covers the formats ADR28's converter accepts and the
+     * archives Ingestor routes to the Extractor, so a document's next stage can be
+     * chosen from a file that arrived as octet-stream.
+     */
+    static String getMimeTypeFromExtension(String extension) {
+        if (StringUtils.isBlank(extension)) {
+            return "";
+        }
+        return switch (extension.toLowerCase()) {
+            case ".txt", ".log" -> "text/plain";
+            case ".md", ".markdown" -> "text/markdown";
+            case ".html", ".htm" -> "text/html";
+            case ".csv" -> "text/csv";
+            case ".json" -> "application/json";
+            case ".xml" -> "application/xml";
+            case ".pdf" -> "application/pdf";
+            case ".doc" -> "application/msword";
+            case ".docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case ".xls" -> "application/vnd.ms-excel";
+            case ".xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case ".ppt" -> "application/vnd.ms-powerpoint";
+            case ".pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            case ".epub" -> "application/epub+zip";
+            case ".rtf" -> "application/rtf";
+            case ".odt" -> "application/vnd.oasis.opendocument.text";
+            case ".jpg", ".jpeg" -> "image/jpeg";
+            case ".png" -> "image/png";
+            case ".gif" -> "image/gif";
+            case ".webp" -> "image/webp";
+            case ".svg" -> "image/svg+xml";
+            case ".zip" -> "application/zip";
+            case ".gz" -> "application/gzip";
+            case ".rar" -> "application/x-rar-compressed";
+            case ".7z" -> "application/x-7z-compressed";
+            default -> "";
+        };
     }
 
     private static String getExtensionFromMimeType(String mimeType) {
@@ -162,31 +267,58 @@ public class IngestionController {
         };
     }
 
-    @PostMapping("/text")
-    public Map<String, Object> submitText(@RequestBody Map<String, String> payload) {
-        // String text = payload.get("text");
-        // String tags = payload.get("tags");
-        log.info("Not implemented");
-        return  Map.of("not","implemented");
-        // System.out.println("[IngestionController] submitText: text length=" + (text != null ? text.length() : 0) + ", tags=" + tags);
+    /**
+     * Ingest by value: a body carries either a "url" or a "text" key, never both
+     * (ADR26 decision 6). The UI's own type-detection picks the key; this handler
+     * does not re-derive the type. Replaces the former /text and /url endpoints.
+     */
+    @PostMapping("/capture")
+    public Map<String, Object> capture(@RequestBody Map<String, String> payload) {
+        String url = StringUtils.trimToNull(payload.get("url"));
+        String text = StringUtils.trimToNull(payload.get("text"));
 
-        // // Create document in database
-        // Long docId = databaseService.createDocument("text", text).getId();
+        if ((url == null) == (text == null)) {
+            throw new IllegalArgumentException("Request body must set exactly one of 'url' or 'text'");
+        }
 
-        // coordinator.sendMessage("Ingestor",docId);
+        Document doc = (url != null) ? buildUrlDocument(url) : buildTextDocument(text);
+        Document savedDoc = databaseService.create(doc);
+        log.info("Captured document: id={}, sourceUrl={}", savedDoc.getId(), savedDoc.getSourceUrl());
 
+        coordinator.startChain(savedDoc.getId());
 
-        // return Map.of(
-        //     "message", "Text received and queued",
-        //     "jobId", docId
-        // );
+        return Map.of(
+            "id", savedDoc.getId(),
+            "status", "ingesting",
+            "message", url != null ? "URL received and queued" : "Text received and queued"
+        );
     }
 
-    @PostMapping("/url")
-    public Map<String, Object> submitUrl(@RequestBody Map<String, String> payload) {
-        String url = payload.get("url");
-        String tags = payload.get("tags");
-        log.info("Not implemented");
-        return  Map.of("not","implemented");
+    /** No copy row: the URL is provenance, not a location, so it lives in source_url (P1.8, ADR26). */
+    private static Document buildUrlDocument(String url) {
+        return Document.builder()
+            .sourceUrl(url)
+            .content("")
+            .status("New")
+            .createdAt(java.time.LocalDateTime.now())
+            .updatedAt(java.time.LocalDateTime.now())
+            .build();
+    }
+
+    /** No copy row: nothing is on disk. */
+    private static Document buildTextDocument(String text) {
+        return Document.builder()
+            .content(text)
+            .mimeType("text/plain")
+            .status("New")
+            .createdAt(java.time.LocalDateTime.now())
+            .updatedAt(java.time.LocalDateTime.now())
+            .build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleBadCapture(IllegalArgumentException e) {
+        return Map.of("message", e.getMessage());
     }
 }

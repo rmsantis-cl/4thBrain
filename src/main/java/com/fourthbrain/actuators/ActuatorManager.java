@@ -41,6 +41,8 @@ public class ActuatorManager {
     private ObjectFactory<Indexer> indexerFactory;
     @Autowired
     private ObjectFactory<Clipper> clipperFactory;
+    @Autowired
+    private Coordinator coordinator;
 
     @Value("${actuators.threads.ingestor:1}")
     private int ingestorThreads;
@@ -89,7 +91,7 @@ public class ActuatorManager {
 
     private void registerInstances() {
         for (Actuator a : instances) {
-            Coordinator.register(a);
+            coordinator.register(a);
         }
         log.info("Registered {} actuator instance(s)", instances.size());
     }

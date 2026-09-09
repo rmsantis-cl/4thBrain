@@ -1,3 +1,5 @@
+import java.time.Duration
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.6'
@@ -49,6 +51,13 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Belt and braces against a hanging test. The whole suite runs in single-digit
+    // seconds today (BUILD SUCCESSFUL in 9s, 2026-09-07); these are generous
+    // multiples of that, not round numbers, so a real hang still fails fast:
+    // any one test method running past 15s is failed rather than left to block
+    // the run, and the whole task is killed if the suite as a whole exceeds 3 minutes.
+    systemProperty 'junit.jupiter.execution.timeout.default', '15s'
+    timeout = Duration.ofMinutes(3)
 }
 
 springBoot {

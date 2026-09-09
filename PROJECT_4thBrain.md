@@ -5,7 +5,7 @@
 | Property | Value |
 | :---- | :---- |
 | **Document Title** | Project 4thBrain v04 — Three-Phase Delivery Plan |
-| **Version** | 1.5 |
+| **Version** | 1.6 |
 | **Date** | 2026-09-07 |
 | **Status** | Phase 1 in progress — the application boots as of P1.9 |
 
@@ -54,11 +54,12 @@ Delivered in three phases:
 - **P1.10 — Actuator Run Loop:** See `documents/story/P1.10.md`.
 - **P1.11 — Coordinator Entry Point & Message Addressing:** See `documents/story/P1.11.md`.
 - **P1.12 — Status Endpoint Reports Document Counts:** See `documents/story/P1.12.md`.
-- **P1.13 — Text and URL Ingestion Endpoints:** See `documents/story/P1.13.md`.
+- **P1.13 — Ingest-by-Value Endpoint (Text and URL):** See `documents/story/P1.13.md`. One `POST /api/ingest/capture` endpoint, dispatching on a `url` or `text` body key, per ADR26.
 - **P1.14 — View Layer & Template Engine:** See `documents/story/P1.14.md`. Closes BUG-001; design in ADR25.
 - **P1.15 — Orderly Shutdown:** See `documents/story/P1.15.md`.
 - **P1.16 — Crash Recovery:** See `documents/story/P1.16.md`.
 - **P1.17 — Spike: A Unified Composer:** See `documents/story/P1.17.md`. Timeboxed investigation of collapsing Add File, Add Text, Add URL and Chat into one composer screen; brief in `documents/design/SPIKE-UNIFIED-COMPOSER.md`. Runs before P1.13, which its outcome constrains.
+- **P1.18 — The Unified Composer:** See `documents/story/P1.18.md`. Follow-on to P1.17's spike, building the chosen routing decision into `index.html`, wired to P1.13's single ingest endpoint. Blocked by P1.13 and P1.17.
 
 ---
 
@@ -144,3 +145,4 @@ From v03 Analysis & .v03/documents/design/:
 - 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved to COMPLETED — its code had already landed, and the boot confirmed it registers all five actuators. Logged BUG-002: a fresh clone cannot start because nothing creates the `data/` directory SQLite needs.
 - 2026-09-07: P1.9 and P1.10 verified together, since P1.10's changes had landed in the same pass. Three defects found while verifying and fixed — the Coordinator registry was published unsafely, `Actuator.run()` dereferenced a null next-actuator, and the `InterruptedException` handler could busy-spin on an interrupt that did not come from `shutdown()`. `build.gradle`'s `sourceCompatibility` corrected from 17 to 21, which the code had already been relying on. New `ActuatorManagerTest` asserts instance counts, registration, injection and shared queues against the registry. Added Stories P1.15 (Orderly Shutdown) and P1.16 (Crash Recovery); these were drafted as P1.14 and P1.15 on the branch that carried the verification work, and are renumbered here because P1.14 was already taken by View Layer & Template Engine.
 - 2026-09-07: Added Story P1.17 (Spike: A Unified Composer) to Phase 1, with its brief in `documents/design/SPIKE-UNIFIED-COMPOSER.md`. One composer screen replaces the three separate ingest panels and the chat panel; the question it exists to answer is how a single input distinguishes capturing a note from asking a question, since URL syntax can be detected and intent cannot. Version 1.5.
+- 2026-09-07: ADR26 written, settling the pipeline's entry contract: `startChain` is the only entry point; a `Message` carries the fully-loaded `Document`, not an id, so no actuator re-fetches one it already holds; the Coordinator registry becomes instance state; a submitted URL lives in `source_url`. Extended to P1.13, retitled Ingest-by-Value Endpoint (Text and URL): `/api/ingest/text` and `/api/ingest/url` collapse into one `POST /api/ingest/capture` dispatching on whichever of a `url` or `text` body key the UI populates, so the type-detection the composer already does is not duplicated server-side. Added Story P1.18 (The Unified Composer), the follow-on P1.17 named but did not create, blocked by P1.13 and P1.17. Version 1.6.

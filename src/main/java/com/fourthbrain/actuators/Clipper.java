@@ -46,20 +46,21 @@ public class Clipper extends Actuator {
             return null;
         }
 
-        log.info("Clipping document: id={}, content={}", doc.getId(), doc.getContent());
+        log.info("Clipping document: id={}, sourceUrl={}", doc.getId(), doc.getSourceUrl());
 
         try {
-            // Check if the document content is a URL
-            String content = doc.getContent();
-            if (content == null || !isValidUrl(content)) {
-                log.warn("Document does not contain a valid URL: id={}", doc.getId());
+            // The URL is the field of record for a submitted URL (ADR26 decision 4);
+            // content stays empty until it is fetched below.
+            String sourceUrl = doc.getSourceUrl();
+            if (sourceUrl == null || !isValidUrl(sourceUrl)) {
+                log.warn("Document has no valid source_url: id={}", doc.getId());
                 return null;
             }
 
             // Fetch content from the URL
-            String fetchedContent = fetchUrlContent(content);
+            String fetchedContent = fetchUrlContent(sourceUrl);
             if (fetchedContent == null || fetchedContent.isEmpty()) {
-                log.warn("Failed to fetch content from URL: {}", content);
+                log.warn("Failed to fetch content from URL: {}", sourceUrl);
                 return null;
             }
 
@@ -68,7 +69,7 @@ public class Clipper extends Actuator {
             // location, so it goes in source_url (P1.8).
             Document childDoc = Document.builder()
                 .parentId(doc.getId())
-                .sourceUrl(content)
+                .sourceUrl(sourceUrl)
                 .name("clipped_" + doc.getName())
                 .extension(".html")
                 .mimeType("text/html")
@@ -133,20 +134,14 @@ public class Clipper extends Actuator {
         // Routed through the Coordinator rather than autowired directly: Ingestor
         // is a prototype bean, so an @Autowired field here would mint a fresh,
         // unregistered instance instead of reaching a registered one (P1.9).
-        Actuator ingestor = Coordinator.get("Ingestor");
+        Actuator ingestor = getCoordinator().get("Ingestor");
         if (ingestor == null) {
             log.warn("Ingestor actuator not available - cannot send document: id={}", doc.getId());
             return;
         }
 
         try {
-            // Create a message and send to Ingestor
-            Message message = Message.builder()
-                .document(doc)
-                .from(this)
-                .to(ingestor)
-                .build();
-
+            Message message = Message.between(this, ingestor, doc);
             ingestor.enqueueMessage(message);
             log.info("Clipped document sent to Ingestor: id={}", doc.getId());
         } catch (Exception e) {

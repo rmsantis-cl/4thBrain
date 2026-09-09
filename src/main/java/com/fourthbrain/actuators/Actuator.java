@@ -15,6 +15,9 @@ public abstract class Actuator extends Thread {
 
     @Autowired
     private DocumentService service;
+    @Autowired
+    @Getter(AccessLevel.PROTECTED)
+    private Coordinator coordinator;
     private String name;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
@@ -92,18 +95,14 @@ public abstract class Actuator extends Thread {
                 service.setStatus(d, getParticiple());
                 log.info("completed doc={} {}->{}", d.id(), getGerund(), getParticiple());
                 if (n != null) {
-                    Actuator follow = Coordinator.get(n);
+                    Actuator follow = coordinator.get(n);
                     if (follow == null) {
                         // Unregistered name: stop the document here rather than
                         // taking the whole loop down with an NPE.
                         log.error("No actuator registered as '{}'; doc={} stops here", n, d.id());
                         continue;
                     }
-                    Message next = Message.builder()
-                            .document(d)
-                            .from(this)
-                            .to(follow)
-                            .build();
+                    Message next = Message.between(this, follow, d);
                     log.debug("message {}:  {} is ready for you", follow.getName(), d.id());
                     follow.getQueue().offer(next);
                 } else {

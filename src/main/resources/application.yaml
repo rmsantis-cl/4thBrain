@@ -16,6 +16,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  thymeleaf:
+    # Story P1.19. With the cache on, a template edit stays invisible until
+    # the process restarts. Set unconditionally rather than in a dev profile:
+    # this is a single-user desktop app serving four small pages, so the
+    # per-request re-parse costs nothing measurable, and a second config file
+    # would only be there to protect a deployment that does not exist.
+    # The engine re-reads build/resources/main/templates/, never src/, so an
+    # edit shows only once it has been copied there. bootRun holds the Gradle
+    # project lock while it runs, so a second gradle call waits instead of
+    # copying — see P1.19 for what to do about that.
+    cache: false
 
 server:
   port: 8080
@@ -47,9 +58,28 @@ recovery:
   stale-after-ms: 3600000
 
 ollama:
+  # Already ends in /v1: OllamaHttpClient appends /chat/completions and nothing else.
+  # The /api/ps root is derived from this by stripping the /v1 suffix — no second key.
   url: http://localhost:11434/v1
-  model: mistral
+  # No model key. ADR35 / Story P2.12: the model is whichever one Ollama has loaded,
+  # read from /api/ps before each call. Swap with `ollama stop <a>; ollama run <b>`.
+  # Nothing loaded means every LLM call fails, by design.
   concurrency: 1
+  connect-timeout-ms: 5000
+  read-timeout-ms: 120000
+  acquire-timeout-ms: 120000
+
+classifier:
+  # Story P2.4 / ADR31. Every key carries a default in its @Value, so an older
+  # config with no classifier block still starts.
+  max-chars: 8000
+  max-tags: 8
+  max-tag-length: 64
+  system-prompt: |
+    You classify documents for a personal knowledge vault.
+    Answer with a single JSON object and nothing else:
+    {"topic": "<one short noun phrase>", "tags": ["<lowercase-hyphenated>", ...]}
+    Use at most 8 tags. Do not explain. Do not use code fences.
 
 vault:
   path: ./vault
@@ -62,6 +92,25 @@ vault:
     # once Extractor writes sanitized output there (P2.3).
     source-area: tmp
 
+indexer:
+  # A document that carries its text but no file — a note typed into the
+  # composer — is written into the indexing area rather than dropped.
+  materialise-content: true
+
+smartconnections:
+  enabled: false          # flipped by ADR30, Part B
+  vault-path: ""          # absolute path to the Obsidian vault; empty means "not configured"
+
+# Story P2.2 / ADR29. The Ingestor writes captured notes into vault.tmp and
+# copies every original into vault.raw; both paths are configured above.
+ingestor:
+  # ADR28's failure semantics assume the original survives, so this is on by
+  # default. Turning it off halves the disk use and gives that assumption up.
+  archive-original: true
+  # Upper bound on a file name derived from a note's first line.
+  max-name-length: 60
+  # Extension given to a captured note that arrived without one.
+  default-extension: .md
 
 logging:
   file:
