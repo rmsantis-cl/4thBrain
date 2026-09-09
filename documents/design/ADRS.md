@@ -2,9 +2,9 @@
 name: ADRS
 description: Architecture Decision Records for 4thBrain v04. ADR1-ADR24 are inherited from v03 and not restated here; v04's own decisions start at ADR25
 metadata:
-  version: 1.1
+  version: 1.2
   created-by: Claude Code
-  date: 2026-09-07
+  date: 2026-09-08
 ---
 
 # Architecture Decision Records — v04
@@ -323,3 +323,129 @@ read for anything that can reach the port.
 take the JVM with them — which gives up the isolation that is this ADR's entire reason for existing.
 GraalPy is the only serious candidate, and MarkItDown's dependency graph (`pandas`, `lxml`,
 `onnxruntime` under `magika`) is exactly where native-wheel support is thin.
+
+---
+
+## ADR36 — `POST /api/shutdown` stops the application; the bounded join belongs to the manager
+
+**Date:** 2026-09-08
+**Status:** Accepted
+**Supersedes:** nothing
+**Arises from:** Story P1.15
+
+### Context
+
+A context close already stops the actuator threads: `ActuatorManager.@PreDestroy` landed with P1.9
+and `Actuator.shutdown()` with P1.10. What was missing is a way to trigger that close from outside
+the JVM. Killing the process works, but it leaves whatever an actuator was holding in a gerund
+status, which is the case P1.16 then has to clean up on the next start.
+
+Two smaller questions came with it. The story asks for a join timeout that is reported when a thread
+overruns it, and there was nowhere to report from: `shutdown()` did the join itself and discarded the
+outcome. And the story allows a Spring Boot Actuator endpoint as an alternative to writing one.
+
+### Decision
+
+**The endpoint is `POST /api/shutdown`, written as an ordinary `@RestController`.** POST because a
+GET would let a link, a browser prefetch or a crawler take the application down. It is written
+rather than inherited from `spring-boot-starter-actuator` for two reasons: the starter's endpoints
+live under `/actuator`, which in this codebase names the pipeline stages and nothing else, and a
+hand-written endpoint can call `ActuatorManager.shutdownAll()` and report how many threads it owned
+in the response body. It answers 202 with `{"status": "shutting down", "actuatorsStopped": n}`.
+
+**`Actuator.shutdown()` only signals; `ActuatorManager` does the joining.** `shutdown()` clears
+`running` — now volatile — and interrupts the thread. `shutdownAll()` signals every actuator first
+and only then joins each one with `actuators.shutdown.join-timeout-ms` (5000). Signalling first is
+what keeps the total bounded in practice rather than in theory: an idle actuator leaves as soon as
+it is interrupted, so the joins that follow return at once instead of each one being free to cost
+the full timeout. A thread still alive after its timeout is logged by name and left to the JVM,
+which kills it at exit because actuators are daemon threads.
+
+**Closing the context is enough to end the process.** The endpoint stops the actuators inline, so
+the response can carry the count, then hands the context close to a daemon thread that waits
+`shutdown.close-delay-ms` (500) before calling `SpringApplication.exit`. The delay exists because
+closing the context inline would tear down the web server before the answer reached the caller.
+There is no `System.exit`: the close stops the web server, and the web server's non-daemon thread is
+what was keeping the JVM alive.
+
+**`shutdownAll()` is guarded so it runs once.** The endpoint calls it, then `@PreDestroy` calls it
+again during the close it triggered. An `AtomicBoolean` makes the second call a no-op, so the
+summary line is logged once.
+
+### Consequences
+
+The endpoint is unauthenticated, like everything else this application serves. On localhost that is
+consistent with the rest of the surface; if the port is ever exposed, this is the first thing that
+has to move behind something, because it is a one-request denial of service.
+
+`shutdown()` no longer waits, so a future caller that needs to know the thread has stopped has to
+join it. The only caller is `ActuatorManager`, which does.
+
+The rest of a shutdown is not covered. A document whose message had already been routed onto the
+next actuator's queue is lost with the queue, and it sits at a participle status, which P1.16 does
+not treat as transient. Nothing recovers it. That is a gap between the pair of stories rather than
+inside either one; it is recorded in the tracker.
+
+---
+
+## ADR37 — Crash recovery runs once at startup, keyed on actuator gerunds and `Document.updatedAt`
+
+**Date:** 2026-09-08
+**Status:** Accepted
+**Supersedes:** nothing
+**Arises from:** Story P1.16
+
+### Context
+
+The pipeline is message-driven and its queues are in memory. A document taken off a queue when the
+process died is referenced by nothing afterwards: no actuator holds it, and nothing polls for it. It
+keeps the gerund status it had, for good.
+
+### Decision
+
+**Recovery is one pass at `ApplicationReadyEvent`, ordered after the actuator threads start.**
+`RecoveryService` carries `@Order(20)` and `ActuatorManager.startAll` now carries `@Order(10)`, so
+requeued work is offered to threads that are already reading. Ordering is not needed for correctness
+— a queue accepts an offer before its thread starts — but it fixes where the recovery report lands
+in the startup log.
+
+**The set of transient statuses comes from the actuators, not from a list.** `RecoveryService` asks
+`ActuatorManager` for its instances and builds a map of `getGerund()` to the first instance of each
+class. Taking the first is correct because instances of one class share a static queue. This covers
+`clipping`, which a list copied from the story would have missed, and a sixth actuator needs no edit
+here.
+
+**Staleness is `Document.updatedAt` against `recovery.stale-after-ms` (one hour).** Every path that
+writes a status through `DocumentService` stamps `updatedAt`, so it is the last-status-change time
+the story asks for. A document with no `updatedAt` is treated as arbitrarily old. A document inside
+the threshold is left alone and counted, because it may still be in progress.
+
+**A document at `New` is requeued to the entry stage with no age test.** It never reached a queue,
+and at startup no queue holds anything, so however recently it was created nothing else is going to
+pick it up. The entry stage is the actuator whose gerund is `ingesting`.
+
+**A stale document at `indexing` is reconciled against the vault before it is requeued.** If
+`document_copy` holds a live copy in the `indexing` area and the file is still on disk, the document
+is set to that actuator's participle instead. This is the P1.8 copy model doing the work; nothing
+scans the vault directory.
+
+**One document id is requeued at most once per pass.** Statuses are disjoint today, so the guard is
+against a future overlap rather than a present one, and it makes the criterion testable.
+
+**The pass returns a report.** `recover()` hands back counts by stage, the reconciled count and the
+count left alone, and the startup listener logs its `summary()`. Returning it rather than only
+logging is what lets the tests assert the report instead of scraping a log line. The line reads
+`Recovered 4 document(s): 3 from ingesting, 1 from classifying`, ordered down the pipeline.
+
+### Consequences
+
+Recovery runs at startup only. A stage that stalls while the application keeps running goes
+unnoticed until the next restart. Making that a periodic sweep is a different decision, and nothing
+in Phase 1 asks for it.
+
+A document that reached a participle status and then lost its queue entry at shutdown is not
+recovered, because participles are not transient. Same gap as ADR36's closing note.
+
+The one-hour threshold is a guess with no measurement behind it. It is a config key so it can be
+tightened once real stage durations are known; the LLM classification pass is the one likely to run
+long enough to matter.
