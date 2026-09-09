@@ -16,6 +16,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  thymeleaf:
+    # Story P1.19. With the cache on, a template edit stays invisible until
+    # the process restarts. Set unconditionally rather than in a dev profile:
+    # this is a single-user desktop app serving four small pages, so the
+    # per-request re-parse costs nothing measurable, and a second config file
+    # would only be there to protect a deployment that does not exist.
+    # The engine re-reads build/resources/main/templates/, never src/, so an
+    # edit shows only once it has been copied there. bootRun holds the Gradle
+    # project lock while it runs, so a second gradle call waits instead of
+    # copying — see P1.19 for what to do about that.
+    cache: false
 
 server:
   port: 8080
