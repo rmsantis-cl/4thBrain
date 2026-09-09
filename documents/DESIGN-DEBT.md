@@ -2,7 +2,7 @@
 name: DESIGN-DEBT
 description: Open design gaps found mid-plan that were logged rather than resolved in the same pass, per .claude/rules/design-before-implementation.md
 metadata:
-  version: 1.3
+  version: 1.4
   created-by: Claude Sonnet 5
   date: 2026-09-08
 ---
@@ -42,6 +42,12 @@ without a reload — consistent with ADR26 decision 2 (the document travels in t
 `plan-P2.4.md`, `plan-P2.5.md`) all freeze `Actuator.java` for the length of their run, so none of
 them can close this and none of them can make it worse. It needs a pass of its own, after they merge.
 
+**2026-09-08:** Story P1.16 adds a third call site. `RecoveryService` writes a reconciled document's
+status through `DocumentService.updateDocumentStatus`, the writer ADR26 retired, so a chain can now
+begin at the synchronized service (`startChain`), continue through the unsynchronized one
+(`Actuator.run()`), and be corrected at startup by the unsynchronized one again. Nothing is made
+worse — recovery runs before any actuator holds the document — but the count of places a fix has to
+reach went from two to three.
 ### DD-2 — No endpoint reports the status of one document
 
 **Found:** deciding ADR27 (Story P1.17).
@@ -138,6 +144,11 @@ its participle stops being a wrong value in an unread column and becomes a green
 P1.20's ADR32 has to close this or state in writing that the strip shows apparent progress and cannot
 show failure.
 
+**2026-09-08:** Story P1.15 hits this from the other side. Its third acceptance criterion asks that an
+in-flight document either finish processing or be *marked with a stopped status* before the context
+closes. The first half is built and tested; the second cannot be built, because there is no status
+other than the participle for the run loop to write. The criterion is recorded as half met, half
+waived on this entry, and ADR36 says so in writing rather than leaving the gap in the story's tick.
 ### DD-5 — `/api/chat/llama` has no owner
 
 **Found:** planning P1.18 and P2.1 (`plan-P1.18.md`, `plan-P2.1.md`).
@@ -162,3 +173,34 @@ applies to a real `ASK`.
 
 **Closes when:** a story owns `ChatController`, deciding the multi-turn shape and how an interactive
 call shares the gate with pipeline work.
+
+### DD-6 — A document loses its place at shutdown, and a reconciled one loses the rest of its chain
+
+**Found:** implementing P1.15 and P1.16 together.
+
+**What's missing:** two routes to the same end — a document that stops moving and that no recovery
+pass will look at again, because both leave it at a *participle*, and P1.16 treats only gerunds as
+transient.
+
+The first is shutdown. `Actuator.run()` routes a document by offering a message to the next
+actuator's queue, and that queue is in memory. A document already routed when the context closes is
+gone with the queue, sitting at the participle its last stage wrote. ADR36 records this; nothing
+recovers it.
+
+The second arrived with BUG-005. P1.16's second criterion says a stale document in `indexing` whose
+file is already in the vault is marked `indexed` rather than requeued, so an indexer crash that
+persisted its work is not re-run. That was written when `indexing` was the last stage. The chain is
+`Ingestor → Indexer → Classifier` now, so `indexed` is the middle of the pipeline: the reconciled
+document is never classified, gets no topic and no tags, and no later pass sees it.
+
+**Why it wasn't fixed in this pass:** both fixes need recovery to know a stage's successor, and
+today only `doTheThing` knows that — it computes the next actuator's name while processing, which is
+exactly what recovery is trying not to re-run. Giving `Actuator` a declared successor is a change to
+the frozen file and a change to the routing model, since `Ingestor` picks between four successors on
+the document's type. Requeuing to the *following* stage rather than the failed one is also a
+different guarantee than the story argued for, and swapping it in under a criterion written for the
+old order would hide the reversal rather than record it.
+
+**Closes when:** a story decides how a stage's successor is known outside `doTheThing`, and whether
+a participle with no queue entry is a recoverable state. Tangled with DD-4: both fixes want the run
+loop to record more about an outcome than a single status string.

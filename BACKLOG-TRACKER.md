@@ -1,166 +1,8 @@
-<<<<<<< ours
 ---
 name: BACKLOG-TRACKER
 description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
 metadata:
-  version: 2.3
-  created-by: Claude Code
-  date: 2026-09-07
----
-
-# BACKLOG-TRACKER — 4thBrain v04
-
-Status of record for delivery. Stories are defined in `PROJECT_4thBrain.md`; this file tracks
-where each one stands. A story moves READY → WIP → COMPLETED, or sits in NOT-READY until its
-blocker clears.
-
-Section meanings:
-
-- **WIP** — being worked on now. At most one or two at a time.
-- **READY** — design is settled, acceptance criteria written, nothing blocking. Can be picked up.
-- **NOT-READY** — blocked by another story, or the design is not yet decided.
-- **COMPLETED** — acceptance criteria met and verified.
-
-## Summary
-
-31 stories: 1 WIP, 6 READY, 12 NOT-READY, 12 COMPLETED.
-2 bugs: 1 READY, 1 COMPLETED.
-
-### WIP
-
-| ID       | Title                                          | Note                                                                                                                                                                                                                                                           |
-| ------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [[P2.8]] | Spike: MarkItDown as the Extractor's converter | Decision taken — **ADR28**, MarkItDown as a subprocess. Analysis in `@batch/p2_8-analysis.md`, P2.3 rewritten, P2.9 created. Still open: the fixture corpus and every measurement. ADR28's triggers 1 and 2 can reverse the stack; run the format census first |
-
-### READY
-
-| ID        | Title                                        | Note                                                                                                  |
-| --------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [[P1.11]] | Coordinator Entry Point & Message Addressing | Unblocked by [[P1.9]]. Stage 1 of [[P1.11-FIX-PLAN]]                                            |
-| [[P1.12]] | Status Endpoint Reports Document Counts      | No dependency                                                                                         |
-| [[P1.15]] | Orderly Shutdown                             | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                  |
-| [[P1.16]] | Crash Recovery                               | Unblocked by [[P1.9]]                                                                                 |
-| [[P1.17]] | Spike: A Unified Composer                    | Stage 2 of [[P1.11-FIX-PLAN]]; runs alongside [[P1.11]], lands before [[P1.13]]                 |
-| [[P2.9]]  | MarkdownConverter Seam & Implementation      | Stack settled by ADR28. Run [[P2.8]]'s format census before starting — it can still reverse the stack |
-
-### NOT-READY
-
-| ID | Title | Blocked by |
-|----|-------|------------|
-| [[P1.13]] | Text and URL Ingestion Endpoints | [[P1.11]], [[P1.17]] — stage 3 of [[P1.11-FIX-PLAN]] |
-| [[P2.1]] | OllamaClient & ConcurrencyGate | [[P1.11]] — no working pipeline entry point |
-| [[P2.2]] | Ingestor Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.3]] | TextExtractor Real Logic | [[P1.11]] — no working pipeline entry point; [[P2.9]] — the converter it calls does not exist |
-| [[P2.4]] | Classifier Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.5]] | Indexer Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.6]] | Briefing Real Logic | [[P1.11]] — no working pipeline entry point |
-| [[P2.7]] | File Watcher | [[P1.11]] — no working pipeline entry point |
-| [[P3.1]] | Unit Tests | Phase 2 |
-| [[P3.2]] | Integration Tests | Phase 2 |
-| [[P3.3]] | REST API Tests | [[P1.13]] |
-| [[P3.4]] | Smoke Test | Phase 2 |
-
-### COMPLETED
-
-| ID | Title | Completed | Note |
-|----|-------|-----------|------|
-| P1.1 | Spring Boot Skeleton | Phase 1 skeleton | |
-| P1.2 | Database Setup | Phase 1 skeleton | |
-| P1.3 | Actuator Framework | Phase 1 skeleton | Run loop superseded by [[P1.10]] |
-| P1.4 | Coordinator & Messaging | Phase 1 skeleton | Defects tracked as [[P1.11]] |
-| P1.5 | Monitor Component | Phase 1 skeleton | |
-| P1.6 | REST API Skeleton | Phase 1 skeleton | text/url endpoints stubbed, see [[P1.13]] |
-| P1.7 | Web UI Wiring | Phase 1 skeleton | |
-| [[P1.8]] | Document Copies | 2026-09-06 | Verified against a fresh database |
-| [[P1.9]] | Actuator Instantiation & Registration | 2026-09-06 | Verified by boot log and `ActuatorManagerTest`; three defects found and fixed in the pass. Re-confirmed 2026-09-07 against a running app. Planned — [[P1.9-FIX-PLAN]] |
-| [[P1.10]] | Actuator Run Loop | 2026-09-06 | Landed with [[P1.9]]; idle actuators cost no CPU |
-| [[P1.14]] | View Layer & Template Engine | 2026-09-07 | Closes [[BUG-001]]. All six endpoints return 200; the inline script's `${...}` literals survive rendering intact |
-| [[P3.5]] | Upgrade to JUnit 5 | 2026-09-07 | Not the migration the story described — that had already happened. Removed the dangling `junit:junit` from the test classpath, which had no vintage engine behind it, so a JUnit 4 test compiled and then silently did not run. Test count identical before and after; the trap was verified closed with a throwaway probe. Planned — [[P3.5-UPGRADE-PLAN]] |
-
-Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
-in sync with the per-bug file.
-
-## Story Detail Files
-
-Detailed descriptions and acceptance criteria are kept in one file per story under
-`documents/story/`. Every ID in the tables above links to its file where one exists:
-
-- Phase 1: [[P1.8]], [[P1.9]], [[P1.10]], [[P1.11]], [[P1.12]], [[P1.13]], [[P1.14]], [[P1.15]], [[P1.16]], [[P1.17]]
-- Phase 2: [[P2.1]], [[P2.2]], [[P2.3]], [[P2.4]], [[P2.5]], [[P2.6]], [[P2.7]], [[P2.8]], [[P2.9]]
-- Phase 3: [[P3.1]], [[P3.2]], [[P3.3]], [[P3.4]], [[P3.5]]
-
-P1.1–P1.7 have no story file. They were delivered as Phase 1 skeleton wiring before the
-per-story files existed, and are described in `PROJECT_4thBrain.md` only.
-
-Plans: [[P1.11-FIX-PLAN]] under `documents/` covers P1.11, P1.17, P1.13 and the follow-on P1.18
-together, despite its P1.11-only name. [[P1.9-FIX-PLAN]] and [[P3.5-UPGRADE-PLAN]] cover a story each
-and have moved to `documents/done/`. Design artifacts they depend on are
-in `documents/design/` — [[ADRS]],
-[[SPIKE-MARKITDOWN]] (P2.8), [[SPIKE-UNIFIED-COMPOSER]] (P1.17) and [[STARTUP-SEQUENCE]] (P1.9).
-
-## Bugs
-
-Bug tracking follows the same process as stories. Detailed descriptions for each bug are maintained in individual files under `documents/bug/`.
-
-### READY
-
-| ID | Title | Note |
-|----|-------|------|
-| [[BUG-002]] | A fresh clone will not start | SQLite will not create the `data/` directory holding its database file, and `data/` is untracked. Every clone fails on first run. Found during P1.14 verification |
-
-### COMPLETED
-
-| ID | Title | Resolved | Fixed by |
-|----|-------|----------|----------|
-| [[BUG-001]] | UI Is Not Showing Up | 2026-09-07 | [[P1.14]] |
-
-Full details: [[BUG-001]], [[BUG-002]] — one file per bug under `documents/bug/`.
-
-## Notes
-
-**Phase 2 blocking.** P2.1–P2.7 were recorded as blocked by "Phase 1 does not boot". That is no longer true — the application boots as of P1.9 and serves every endpoint — so their blocker is restated as P1.11: nothing yet starts a chain, `startChain()` is a stub that throws, and `IngestionController` calls `sendMessage()` instead, which builds messages that NPE when logged. The seven stories stay in NOT-READY. P2.3's second blocker has changed rather than cleared: its v03 Node stack was replaced by ADR28 (MarkItDown as a subprocess) and the story rewritten, so it is no longer blocked on a decision — it is blocked on P2.9, which builds the converter it calls.
-
-**ADR28 was taken without P2.8's measurements.** The decision rests on the argument that a hard timeout only exists across a process boundary, which is a property of this pipeline rather than of the converters. It does not rest on the corpus, because no corpus was assembled. The research arm's finding is that the choice actually hinges on format mix — on PDF the two candidates are the same flat text extractor, so a PDF-heavy inflow means the Python runtime is bought for nothing. That is a ten-minute count. Run it before P2.9 starts; ADR28 carries it as trigger 1, and trigger 2 (share of scanned PDFs) can turn the whole spike into an OCR decision instead.
-
-**Phase 3 blocking:** P3.1, P3.2, P3.4 blocked by Phase 2. P3.3 blocked by P1.13. P3.5 is done.
-
-**The three UI entry-point stories are planned as one run** — [[P1.11-FIX-PLAN]], which now carries all of them despite its P1.11-only name; the separate `UI-ENTRY-POINTS-PLAN.md` was merged into it. P1.11 is stage 1, the P1.17 spike runs alongside it, P1.13 is stage 3. None of them can start before ADR26 is written: P1.11's story leaves two choices open (keep or delete `sendMessage`; static or instance state), and the cheap answer to the second does not work, because Spring caches test contexts so a static registry is never cleared between them. The plan also found that P1.13 cannot meet its own acceptance criteria as written — `Ingestor` and `Clipper` both read a submitted URL from `content`, not `source_url`, so a document built the way P1.13 describes stops at the first hop with no error.
-
-**P1.11, P1.13 and P1.17 do not finish the UI on their own.** They deliver three working endpoints behind the existing three panels. The single composer is the spike's follow-on story, P1.18, which does not exist yet — P1.17's scope forbids production code. The plan carries it as stage 4.
-
-**`gradlew test` exits non-zero, and that is expected.** 28 tests execute; the 23 failures are all `IngestionControllerTest` asserting P1.13's endpoint contract — `jobId` where the controller returns `id`, and `/text` and `/url` still stubbed. P1.11's plan marks those methods `@Disabled("Story P1.13")` so the suite goes green with the gap still visible, and P1.13 removes the annotations. `ActuatorManagerTest` passes 5 for 5.
-
-**Completed stories.** P1.8, P1.9 and P1.10 have recorded verification.
-
-P1.8: the application was booted against a fresh SQLite database with `ddl-auto: validate` passing, confirming `document_copy`, `source_url`, `area`, `end_date` and `copy_id` all exist and `document.path` is gone.
-
-P1.9 and P1.10 were verified together on 2026-09-06, since P1.10's changes landed in the same pass. `gradlew bootRun` against a fresh database logs `Created 1 <Type> instance(s)` for all five types, `Registered 5 actuator instance(s)`, `Started 5 actuator thread(s)` and `Started FourthBrainApplication`, with no `IllegalThreadStateException` and no `Main loop error`. Actuator threads consume no measurable CPU while idle. `ActuatorManagerTest` asserts instance counts, injection and shared queues against the registry rather than the log, and its context close logs `Thread exiting.` exactly once per actuator followed by `Shut down N actuator thread(s)`.
-
-P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each has known defects now carried by a later story — P1.10 (now closed), P1.11 and P1.13 respectively. They are not re-opened; the follow-up story owns the fix.
-
-## Changelog
-
-- 2026-09-06: Created. Seeded from the 24 stories in `PROJECT_4thBrain.md`.
-- 2026-09-06: Summary split into four tables, one per status. The COMPLETED section's own table was dropped as a duplicate of the Summary's.
-- 2026-09-07: Added P2.8 (MarkItDown spike) to READY. P2.3 gains it as a second blocker. Counts now 25 stories: 1 WIP, 3 READY, 13 NOT-READY, 8 COMPLETED.
-- 2026-09-07: Created individual story files under `documents/story/`. Added P3.5 (JUnit 5 upgrade) to READY. Renamed `documets/` directory to `documents/`. Updated summary to 26 stories: 1 WIP, 4 READY, 13 NOT-READY, 8 COMPLETED.
-- 2026-09-07: Added BUG-001 (UI Is Not Showing Up) to NOT-READY. Created Bugs section and per-bug documentation structure matching story files. Summary updated: 26 stories, 1 bug NOT-READY.
-- 2026-09-07: BUG-001 diagnosed. Cause is view resolution, not static resources: the controllers return view names and no template engine is on the classpath. Its blocker is now the choice of fix, not P1.7.
-- 2026-09-07: BUG-001's fix decided (ADR25, Thymeleaf) and moved to READY. Added Story P1.14 (View Layer & Template Engine) to carry it out. Counts now 27 stories: 1 WIP, 5 READY, 13 NOT-READY, 8 COMPLETED.
-- 2026-09-07: P1.14 implemented and verified against a running application; BUG-001 closed. P1.9 moved from WIP to COMPLETED — its code had already landed and the boot proved it works. Added BUG-002 (a fresh clone cannot start, because nothing creates the `data/` directory). The "Phase 1 does not boot" blocker on P2.1–P2.7 is now false and those seven need re-triage. Counts: 0 WIP, 4 READY, 13 NOT-READY, 10 COMPLETED; 2 bugs.
-- 2026-09-07: P1.10 moved to COMPLETED — it landed in the same pass as P1.9 and was verified with it. P1.11 unblocked into READY. P2.1–P2.7's blocker restated as P1.11 rather than "Phase 1 does not boot", closing the re-triage note. Added Stories P1.15 (Orderly Shutdown) and P1.16 (Crash Recovery), both READY; they were drafted as P1.14 and P1.15 on the branch carrying the P1.9/P1.10 verification and are renumbered because P1.14 was already taken. Counts: 29 stories — 0 WIP, 6 READY, 12 NOT-READY, 11 COMPLETED.
-- 2026-09-07: P1.11 and P3.5 planned; plans recorded under `documents/`. P2.8 moved to WIP — its research went to the Anthropic Batch API as three requests (analysis, ADR, implementation story) under batch `msgbatch_01DPrdauF54ZbbpLzMruGeQb` (a first submission at a 16k output cap truncated two of the three answers and was rerun at 64k); the local corpus measurements it also needs are not covered by that and still have to be run. Counts: 29 stories — 1 WIP, 5 READY, 12 NOT-READY, 11 COMPLETED. P1.9 needed no change: it was already recorded as COMPLETED and verified on 2026-09-06, re-confirmed 2026-09-07.
-- 2026-09-07: P3.5 implemented and verified; moved to COMPLETED. It was not the migration its story described — the test code had been Jupiter all along, and what remained was `junit:junit:4.13.2` sitting on the test classpath with no vintage engine, so a JUnit 4 test would compile and then silently not run. Deprecated `@MockBean` replaced with `@MockitoBean` in the same pass. Test counts identical before and after (28 executed, 23 failing on P1.13's contract, 0 skipped). Counts: 29 stories — 1 WIP, 4 READY, 12 NOT-READY, 12 COMPLETED.
-- 2026-09-07: Added Story P1.17 (Spike: A Unified Composer) to READY, with its brief in `documents/design/SPIKE-UNIFIED-COMPOSER.md`. It collapses the Add File, Add Text, Add URL and Chat panels into one composer, and exists mainly to settle how one input tells capture from conversation — auto-detection can spot a URL but cannot tell a note from a question. Sequenced before P1.13 deliberately: what the text and URL endpoints should accept depends on what the composer sends. The spike's ADR is numbered 27, since P1.11's plan already claims ADR26. Counts: 30 stories — 1 WIP, 5 READY, 12 NOT-READY, 12 COMPLETED.
-- 2026-09-07: P2.8's decision taken — ADR28, MarkItDown invoked as a subprocess behind a `MarkdownConverter` interface. Numbered 28 because ADR26 is reserved by P1.11's plan and ADR27 by P1.17's spike. P2.3 rewritten against it and reblocked on P2.9 rather than P2.8. Story P2.9 (MarkdownConverter Seam & Implementation) added to READY. P2.8 stays WIP: three of its five acceptance criteria are met and the fixture corpus and every measurement are still outstanding. Counts: 31 stories — 1 WIP, 6 READY, 12 NOT-READY, 12 COMPLETED.
-- 2026-09-07: Every Story and Bug ID in the tables now links to its file, the way P1.11 already did — `[[P2.3]]`, `[[BUG-001]]` and so on, in the ID columns and in the blocked-by and note columns. The Story Detail Files section lists the files instead of describing ranges, and records that P1.1–P1.7 have none. Plans and design artifacts (`P1.9-FIX-PLAN`, `P1.11-FIX-PLAN`, `P3.5-UPGRADE-PLAN`, `ADRS`, the two spike briefs, `STARTUP-SEQUENCE`) are linked from the same place. No status or count changed.
-- 2026-09-07: `P1.11-FIX-PLAN.md` rewritten to plan P1.11, P1.17 and P1.13 as one run to working file, text and URL entry points; the short-lived `UI-ENTRY-POINTS-PLAN.md` is merged into it and gone, so there is one plan file rather than two covering the same stories. The spike is sequenced in parallel with P1.11 rather than after it — it touches nothing under `src/main` — and has to land before P1.13, which it constrains. Two findings changed the shape of the work: P1.13 cannot meet its own acceptance criteria as written, because `Ingestor` and `Clipper` read a submitted URL from `content` while the story specifies `source_url`; and the three stories together stop short of the goal, since P1.17 forbids production code, so the composer needs a fourth story (P1.18) that the spike is to create. Correction to the note this replaces: the earlier plan's Coordinator sketch was said not to compile because it called a `DocumentService` that does not exist. `DocumentService` does exist, with both `getDocumentById` and `setStatus`. The sketch still moves to `DatabaseService`, for the reason that actually holds — it is the synchronized service under ADR17 and the one `IngestionController` already injects — which exposes a genuine inconsistency the plan now logs: two services write `Document.status`, and only one of them is synchronized. No status or count changed.
-=======
----
-name: BACKLOG-TRACKER
-description: Delivery status of every Story and Bug in 4thBrain v04, grouped by WIP, READY, NOT-READY and COMPLETED
-metadata:
-  version: 3.13
+  version: 3.14
   created-by: Claude Sonnet 5
   date: 2026-09-08
 ---
@@ -180,7 +22,7 @@ Section meanings:
 
 ## Summary
 
-38 stories: 1 WIP, 10 READY, 5 NOT-READY, 22 COMPLETED.
+38 stories: 1 WIP, 8 READY, 5 NOT-READY, 24 COMPLETED.
 5 bugs: 1 READY, 4 COMPLETED.
 
 The breakdown was recounted against the four tables on 2026-09-08 and three of the four figures
@@ -200,8 +42,6 @@ a minute and is worth doing before trusting these numbers.
 | --------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [[P1.12]] | Status Endpoint Reports Document Counts | No dependency                                                                                                                                           |
 | [[P1.21]] | Spike: Generated Tracking Documents     | Design an agent and a record store so **this file** and [[INDEX]] are generated rather than hand-edited by every agent. **Q1 settled: one shared SQLite database across all projects**, superseding v1.0's file-per-entity-in-repo recommendation, which could not hold another repository's records. Reserves **ADR33**. The tooling has its own repository now — **Discrepo**, at `C:\Users\rsant\desar\github\Discrepo`, charter only, its Phase 0 is this spike. The follow-on implementation story belongs there; what stays here is adoption and the rule rewrites. One-day timebox; produces a decision, a prototype and two follow-on stories, no production code |
-| [[P1.15]] | Orderly Shutdown                        | Unblocked by [[P1.9]] and [[P1.10]]; `/api/shutdown` is what remains                                                                                    |
-| [[P1.16]] | Crash Recovery                          | Unblocked by [[P1.9]]                                                                                                                                   |
 | [[P2.6]]  | Briefing Real Logic            | No `Briefing` class exists in `src/main`; [[P2.1]] built the client it will use                                     |
 | [[P2.5]]  | Indexer Real Logic                      | **Part A merged 2026-09-08**; Part B (Smart Connections) stays blocked on **ADR30**, which is written but records the decision as not taken. The story stays READY until Part B closes |
 | [[P2.7]]  | File Watcher                            | Unblocked by [[P1.11]]                                                                                                                                  |
@@ -245,6 +85,8 @@ a minute and is worth doing before trusting these numbers.
 | [[P2.12]] | Runtime Model Resolution from `ollama ps`     | 2026-09-08       | **ADR35** written and carried out in one pass. `ollama.model` is gone from `application.yaml` and from the client; the model is whichever one `/api/ps` reports loaded, resolved per call so a mid-session `ollama run` swap is picked up. Nothing loaded throws before `/chat/completions` is contacted, with `ollama run` named in the message; two loaded uses the first and warns; `isAvailable()` now means a model is loaded rather than the port answering. The `/api/ps` root is derived by stripping `/v1` — no second config key. `gradle build` green at 106 tests; `OllamaHttpClientTest` 6 → 12. The response shape was checked against the running server, but **no live round trip**: every test is against `MockRestServiceServer` |
 | [[P1.19]] | Template Cache Off                           | 2026-09-08       | `spring.thymeleaf.cache: false` in the `spring:` block, with the reason left beside it as a comment; no other block touched, so it merges alongside the Phase 2 plans. Verified live on port **8081** the way the cache would defeat if it were still on — `/admin` fetched first so it was already parsed and cached, a marker added to `admin.html` and placed in `build/resources/main/templates/`, the same URL refetched with the process untouched and carrying the marker, then reverted and gone again. 106 tests, 0 failures, 0 skipped. One criterion re-mapped: `/admin/api-docs` is not a URL this application has — `AdminController` maps `/api/docs`, so the page is at `/admin/api/docs` and returns 200. Also found: `bootRun` holds the project lock, so `gradle processResources` from a second shell waits rather than copying, and the edit-build-refresh loop needs the file placed some other way |
 | [[P1.17]] | Spike: A Unified Composer                    | 2026-09-07       | Closed as a decision, **not as a spike** — no prototype built, so its first acceptance criterion is waived rather than met. Decision is **ADR27**: one composer, buttons `[+]` `ASK` `URL` `SEND`, the user routes and detection only enables `URL`. Unblocks [[P1.18]]. Gaps found: DD-2 (no per-document status) and DD-3 (tags have no owner)             |
+| [[P1.15]] | Orderly Shutdown                             | 2026-09-08       | `POST /api/shutdown` added, and the bounded join moved from `Actuator.shutdown()` — which now only signals — to `ActuatorManager.shutdownAll()`, so every thread is interrupted before any one is waited on and the joins do not stack. `running` is volatile. A thread past `actuators.shutdown.join-timeout-ms` is named in a WARN and left to the JVM. **ADR36** written and folded into [[ADRS]]. One criterion is half waived: an in-flight document finishes, but nothing marks a *stopped* status, because **DD-4** leaves the run loop no vocabulary for one. 7 tests. **No live run** — `ShutdownControllerTest` pushes the close delay past the test, so nothing has ever observed the context actually closing |
+| [[P1.16]] | Crash Recovery                               | 2026-09-08       | `RecoveryService` runs one pass at `ApplicationReadyEvent`, `@Order(20)` behind the actuator start. Stages come from `ActuatorManager` rather than a hard-coded list, so `clipping` is covered; staleness is `Document.updatedAt` against `recovery.stale-after-ms`; a document at `New` is requeued with no age test. **ADR37** written and folded into [[ADRS]]. One criterion met as written but now wrong in effect — BUG-005 made `indexed` mid-pipeline, so a vault-reconciled document is never classified; logged as **DD-6** rather than patched. 9 tests, all against mocks. **No live run**: the startup listener and the `@Order` sequencing are exercised by nothing |
 
 Bugs are listed in their own section below. A Bug row goes in the table matching its status, kept
 in sync with the per-bug file.
@@ -373,7 +215,7 @@ output contract, which closes DD-3). P1.18 and P2.1 claim no number.
 Reserved outside this set: **ADR32** by [[P1.20]] (per-document status delivery) and **ADR33** by
 [[P1.21]] (generated tracking documents) and **ADR34** by [[P2.11]] (which model classifies best, on
 measured evidence). **ADR35** is written and accepted, by [[P2.12]] (the model is whichever one
-Ollama has loaded). Next free number is 36. P1.21 asks whether this reservation
+Ollama has loaded). **ADR36** and **ADR37** are written, accepted and folded into [[ADRS]], by [[P1.15]] (the shutdown endpoint) and [[P1.16]] (the crash-recovery pass). Next free number is 38. P1.21 asks whether this reservation
 list should stay a human convention or become something a generator checks.
 
 **Four ADRs are standalone files awaiting a fold into [[ADRS]]:** ADR29, ADR30, ADR31 and ADR35.
@@ -442,4 +284,4 @@ P1.3, P1.4 and P1.6 are marked complete as skeleton wiring, but each had known d
 - 2026-09-08: **Story P2.12 (Runtime Model Resolution from `ollama ps`) added and completed in the same pass**, under **ADR35**, written first as the design gate. It removes the mechanism behind P2.10's finding rather than the symptom: instead of pinning a correct model name, there is no configured model name at all. `OllamaHttpClient` reads `/api/ps` before each call and uses whichever model Ollama has loaded. Five decisions in the ADR. Resolution is per call rather than cached, because a cached answer would make a mid-session `ollama run` swap invisible and would attribute a result to a model that did not produce it — which is exactly what P2.11's measurements must not do, and the cost is one loopback GET against a classification measured in tens of seconds. The `/api/ps` root is derived from `ollama.url` by stripping `/v1` rather than configured separately, since two keys that must agree will stop agreeing. Nothing loaded throws before `/chat/completions` is contacted, with `ollama run` named in the message; the rejected alternative — naming a model and letting Ollama load it implicitly — is what produced a configuration pointing at nothing for the life of the project, and on this hardware an implicit load of a large model would surface as a 120-second read timeout rather than as a diagnosis. Two models loaded uses the first and logs a WARN naming both, rejected erroring as too brittle for the comparison workflow the change exists to serve. `isAvailable()` now reports whether a model is loaded, replacing a `/v1/models` probe that returned true in exactly the situation where every chat call fails. **ADR31 is deliberately untouched:** a failed classification stays non-fatal, so a machine with nothing loaded fills the vault with untagged documents at one ERROR each, and changing failure semantics in the same pass would make both unreviewable. Also recorded as a consequence: nothing auto-loads a model any more, so a reboot leaves every LLM call failing with no startup warning — held out of scope, because what the application should *do* about it is a design question P2.10 also declined. `gradle build` green at 106 tests, 0 failures, 2 skipped (`PipelineFlowTest`, disabled against BUG-005); `OllamaHttpClientTest` 6 → 12. The `/api/ps` response shape was verified against the running server; the client itself still has no live round trip, the same gap P2.1 closed with. ADR35 is a standalone file and joins ADR29, ADR30 and ADR31 in awaiting a fold into `documents/design/ADRS.md`. Next free ADR number is 36. Counts: 38 stories — 1 WIP, 9 READY, 8 NOT-READY, 20 COMPLETED; bugs unchanged.
 - 2026-09-08: **BUG-003 and BUG-005 fixed**, in one pass over the same worktree. BUG-005 reversed the full-path chain to `Ingestor → Indexer → Classifier`: three return values changed, `PipelineFlowTest` enabled, and the assertions in `IngestorRoutingTest`, `ClassifierTest` and `IndexerTest` updated — those three had all passed against a chain that was not the required one, which is the whole reason the flow test exists. **ADR29 decision 4 and ADR31 decision 4 were amended rather than left to be folded into `ADRS.md` superseded**, since neither has been folded in yet. ADR29 now records why the reversal wins the argument its first version lost: the vault write is the step whose failure loses a document, and it should not sit behind a model call that needs a running Ollama; and it records what the reversal costs, a window in which a published file has no topic or tags. ADR31's D4 keeps its guarantee — a failed classification must not strand a document — but the guarantee is now a property of the ordering rather than a rule five return statements had to keep, so the Classifier is terminal and returns null everywhere. `Indexer` also stopped logging `topic=`, which is structurally null once it runs before the Classifier. BUG-003 took fix option A: the hamburger's eight declarations moved from an inline `style` attribute into a `.menu-btn` rule in the `<style>` block, so the `max-width: 768px` rule meant to reveal it is no longer outranked, and a handler now toggles `.sidebar.open` and closes it again once a nav item is chosen. `gradle build` green at 100 tests, 0 failures, 0 skipped. What is not verified: BUG-003 is a browser-visual fix and nothing in this repository renders a page, so its four viewport criteria are ticked on the code being right and still want a look at a narrow viewport. Counts: 5 bugs — 1 READY, 4 COMPLETED; stories unchanged.
 - 2026-09-08: **P1.19 (Template Cache Off) implemented and moved to COMPLETED.** `spring.thymeleaf.cache: false` in the `spring:` block of `application.yaml`, set unconditionally rather than behind a `dev` profile, with the argument for that left in the file as a comment so it is where the setting is rather than only in the story. Nothing else in the file was touched or reordered, so the branch stays mergeable with the Phase 2 plans owning `ollama:`, `ingestor:`, `classifier:` and `indexer:`. Verified against a running application on **8081**, 8080 being held by another instance: `/admin` was fetched first so the engine had already parsed and cached it, a marker was added to `admin.html` and placed into `build/resources/main/templates/`, and the same URL served the marker without the process restarting; reverting removed it again. Two things the verification turned up that the story did not know. `bootRun` holds the Gradle project lock, so `gradle processResources` from a second shell waits instead of copying — the edit-build-refresh loop the story describes does not work as written in one directory, and the story now says so. And the criterion listing four pages names one URL that does not exist: `/admin/api-docs` returns 404 because `AdminController` maps `/api/docs`, making the real path `/admin/api/docs`, which returns 200 — a wrong path in the story, not a defect. Starting in a fresh worktree also needed `data/` created by hand, which is [[BUG-002]] behaving exactly as filed. `gradle build` green at 106 tests, 0 failures, 0 skipped. The summary breakdown was recounted in the same pass and three of its four figures were wrong — the total 38 was right, READY understated by two and NOT-READY overstated by three, drift from earlier passes rather than any story moving. Counts after both the recount and P1.19: 38 stories — 1 WIP, 10 READY, 5 NOT-READY, 22 COMPLETED; bugs unchanged.
->>>>>>> theirs
+- 2026-09-08: **P1.15 (Orderly Shutdown) and P1.16 (Crash Recovery) implemented and moved to COMPLETED**, finishing work a previous agent had left mid-flight. The branch it was on had been merged with conflict markers committed in fifteen files, and the union merge driver added for `*.whatever` had turned every one of them into a whole-file conflict; the stale side turned out to carry a tree-wide line-ending rewrite, so thirteen of the fifteen differed from `v04` by nothing but CRLF and were resolved by taking `v04`. `ActuatorManagerTest` was the one that mattered — the stale side still called a static `Coordinator`, which P1.11 replaced with an injected bean, so the build could not compile. `documents/design/ADRS.md` was the only real merge: `v04` content with **ADR36** and **ADR37** appended. The inherited code needed one fix beyond that: `Message.builder()` is gone from `v04`, replaced by the `Message.to` / `Message.between` factories under ADR26, so `RecoveryService` and `ActuatorShutdownTest` were moved onto `Message.to`. `gradle build` green at 122 tests, 0 failures, 0 skipped. **Neither story was run against a live application** — every check is a unit test, and both story files say which behaviour is therefore unobserved. **DD-6** logged: a document already routed onto a queue is lost at shutdown, and a vault-reconciled document now stops at `indexed` because BUG-005 made that mid-pipeline; both leave a document at a participle, which recovery does not treat as transient, and both need recovery to know a stage's successor when only `doTheThing` does. Counts: 38 stories — 1 WIP, 8 READY, 5 NOT-READY, 24 COMPLETED; bugs unchanged.

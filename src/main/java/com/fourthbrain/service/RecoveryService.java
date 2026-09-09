@@ -22,7 +22,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -170,15 +169,10 @@ public class RecoveryService {
     }
 
     private void requeue(Document d, Actuator actuator) {
-        // Built rather than passed through the (from, to, payload) constructor,
-        // which logs the message and would need a "from" this pass does not
-        // have. createdAt is stamped here because the builder does not.
-        Message m = Message.builder()
-                .document(d)
-                .to(actuator)
-                .createdAt(new Date())
-                .build();
-        actuator.enqueueMessage(m);
+        // Message.to is the factory for a message with no sending actuator
+        // (ADR26) — the same one the REST boundary uses. Recovery has no "from"
+        // either: the actuator that held this document is gone with the process.
+        actuator.enqueueMessage(Message.to(actuator, d));
         log.info("doc={} requeued to {} from status {}", d.getId(), actuator.getName(), d.getStatus());
     }
 

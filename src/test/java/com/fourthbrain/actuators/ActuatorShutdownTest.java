@@ -31,11 +31,10 @@ import static org.mockito.Mockito.when;
 /**
  * Story P1.15 — orderly shutdown.
  *
- * Deliberately not a @SpringBootTest. The Coordinator registry is static and
- * survives across contexts, so a second Spring context would add actuators that
- * ActuatorManagerTest then counts (making that static state per-context is
- * P1.11). Nothing here registers with the Coordinator or touches a production
- * actuator's static queue.
+ * Deliberately not a @SpringBootTest. Actuator queues are static per class
+ * (P1.9), so a real actuator started here would race whatever else the test JVM
+ * enqueues. TestActuator carries its own queue and registers with no
+ * Coordinator, so nothing here is visible to another test.
  */
 @DisplayName("Actuator Shutdown Tests")
 class ActuatorShutdownTest {
@@ -158,7 +157,7 @@ class ActuatorShutdownTest {
         actuator.release = new CountDownLatch(1);
 
         actuator.start();
-        actuator.enqueueMessage(Message.builder().document(doc(7L)).to(actuator).build());
+        actuator.enqueueMessage(Message.to(actuator, doc(7L)));
 
         assertTrue(actuator.entered.await(5, TimeUnit.SECONDS), "doTheThing never started");
 
