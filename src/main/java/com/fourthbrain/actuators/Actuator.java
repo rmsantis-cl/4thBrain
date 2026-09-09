@@ -24,7 +24,9 @@ public abstract class Actuator extends Thread {
     private Logger log;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private boolean running;
+    // Volatile: written by whichever thread calls shutdown(), read by this
+    // actuator's own thread on every pass of the run loop (P1.15).
+    private volatile boolean running;
 
     public Actuator() {
         super();
@@ -46,15 +48,18 @@ public abstract class Actuator extends Thread {
         this.name = name;
     }
 
-    /** Stops the run loop and waits (bounded) for the thread to exit. */
+    /**
+     * Signals the run loop to stop. Does not wait: the bounded join belongs to
+     * ActuatorManager, so every thread is signalled before any one of them is
+     * waited on, rather than each 5-second wait stacking on the last (P1.15).
+     * <p>
+     * Idempotent. Clearing a cleared flag is a no-op, and both interrupt() and
+     * join() are defined on a thread that has already terminated or has never
+     * been started.
+     */
     public void shutdown() {
         running = false;
         interrupt();
-        try {
-            join(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     // No default implementation: each subclass owns a static queue so instances

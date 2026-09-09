@@ -42,6 +42,20 @@ actuators:
     clipper: 1
     # No Briefing class exists in src/main yet; reserved for Phase 2 (P1.9).
     briefing: 1
+  shutdown:
+    # Milliseconds one actuator thread is given to leave its run loop before it
+    # is logged and left to the JVM (P1.15).
+    join-timeout-ms: 5000
+
+shutdown:
+  # Milliseconds between /api/shutdown answering and the context closing, so the
+  # response reaches the caller before the web server stops (P1.15, ADR36).
+  close-delay-ms: 500
+
+recovery:
+  # How long a document may hold a gerund status before startup treats the
+  # actuator that held it as crashed and requeues it. One hour (P1.16, ADR37).
+  stale-after-ms: 3600000
 
 ollama:
   # Already ends in /v1: OllamaHttpClient appends /chat/completions and nothing else.
