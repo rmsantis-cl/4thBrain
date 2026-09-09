@@ -95,6 +95,21 @@
       font-weight: 600;
     }
 
+    /* Hidden at wide widths; the max-width: 768px block below turns it on.
+       Keep these declarations here, not inline on the element: an inline
+       style outranks the media query and hides the button everywhere
+       (BUG-003). */
+    .menu-btn {
+      display: none;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
     .panels-container {
       flex: 1;
       overflow-y: auto;
@@ -397,7 +412,7 @@
       <div class="topbar-left">
         <h1>4thBrain</h1>
       </div>
-      <button class="menu-btn" style="display:none; width: 36px; height: 36px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); border-radius: 4px; cursor: pointer;">☰</button>
+      <button type="button" class="menu-btn" aria-label="Toggle navigation" aria-expanded="false">☰</button>
     </div>
 
     <div class="panels-container" id="panels-container"></div>
@@ -412,6 +427,25 @@
       { id: "ingest-status", icon: "▤", label: "Ingest status" },
       { id: "admin", icon: "⚙", label: "Admin", href: "/admin" },
     ];
+
+    // Under 768px the sidebar is position: fixed over the page, so it has to
+    // close again once a nav item is chosen or it hides the panel just picked.
+    function setSidebar(open) {
+      const sidebar = document.querySelector(".sidebar");
+      const menuBtn = document.querySelector(".menu-btn");
+      if (!sidebar) return;
+      sidebar.classList.toggle("open", open);
+      if (menuBtn) menuBtn.setAttribute("aria-expanded", String(open));
+    }
+
+    function wireSidebarToggle() {
+      const sidebar = document.querySelector(".sidebar");
+      const menuBtn = document.querySelector(".menu-btn");
+      if (!sidebar || !menuBtn) return;
+      menuBtn.addEventListener("click", () => {
+        setSidebar(!sidebar.classList.contains("open"));
+      });
+    }
 
     function renderNav() {
       const nav = document.getElementById("nav-container");
@@ -428,7 +462,12 @@
           document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
           btn.classList.add("active");
           document.getElementById("panel-" + btn.getAttribute("data-panel")).classList.add("active");
+          setSidebar(false);
         });
+      });
+
+      document.querySelectorAll(".nav-item[href]").forEach(link => {
+        link.addEventListener("click", () => setSidebar(false));
       });
     }
 
@@ -760,6 +799,7 @@
       });
     }
 
+    wireSidebarToggle();
     renderNav();
     renderPanels();
   </script>
