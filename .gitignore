@@ -12,3 +12,4 @@ vault/
 *.class
 **/*.class
 .classpath
+.aider*
