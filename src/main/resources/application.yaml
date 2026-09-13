@@ -49,6 +49,27 @@ vault:
     source-area: tmp
 
 
+fourthbrain:
+  converter:
+    implementation: markitdown
+    fail-fast: true
+    supported-extensions: [pdf, docx, doc, pptx, xlsx, xls, html, htm, epub, msg, csv, json, xml]
+    passthrough-extensions: [md, markdown, txt, text]
+    min-output-chars: 1
+    max-input-bytes: 104857600
+    max-output-bytes: 33554432
+    max-concurrent-processes: 2
+    markitdown:
+      executable: ""
+      python: ""
+      expected-version: ""
+      version-check: warn
+      timeout: 120s
+      work-dir: ""
+      env:
+        PYTHONUTF8: "1"
+        PYTHONIOENCODING: "utf-8"
+
 logging:
   file:
     name: 'log/application.log'

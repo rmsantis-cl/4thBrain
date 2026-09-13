@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS document (
     source_url VARCHAR(2048),
     topic VARCHAR(256),
     status VARCHAR(64),
+    status_reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

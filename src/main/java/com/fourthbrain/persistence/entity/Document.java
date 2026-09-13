@@ -49,6 +49,9 @@ public class Document {
     @Column
     private String status; // "New", "Processing", "Indexed", "Failed"
 
+    @Column(columnDefinition = "TEXT")
+    private String statusReason; // Detailed reason for failure states
+
     // Constructors
     public Document() {
         this.createdAt = LocalDateTime.now();
