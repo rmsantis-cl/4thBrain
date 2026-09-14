@@ -13,3 +13,7 @@ vault/
 **/*.class
 .classpath
 .aider*
+
+.factorypath
+.settings/**
+.vscode/**
