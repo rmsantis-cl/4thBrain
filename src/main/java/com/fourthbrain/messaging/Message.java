@@ -5,51 +5,54 @@ import java.util.Date;
 import com.fourthbrain.actuators.Actuator;
 import com.fourthbrain.persistence.entity.Document;
 
-import lombok.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Simple message passed between actuators.
- * Carries only the document ID. Rest is in database.
- * Actuators log and pass to next stage.
+ * Message passed between actuators. Carries the fully-loaded Document, not an id
+ * (ADR26): a message's recipient reads and mutates the same Document instance the
+ * chain started with, rather than re-fetching it from the database on every hop.
  */
 
 @Slf4j
-@Data
-@Builder 
-@AllArgsConstructor 
+@Getter
 public class Message {
 
+    private final Document document;
+    private final Actuator from;
+    private final Actuator to;
+    private final Date createdAt;
 
-    private Document document;
-    private Actuator from;
-    private Actuator to;
-    private Date createdAt;
-
-
-
-    public Message(Actuator from, Actuator to, Document payload) {
-        setFrom(from);
-        setTo(to);
-        setDocument(payload);
-
+    private Message(Actuator from, Actuator to, Document document) {
+        this.from = from;
+        this.to = to;
+        this.document = document;
         this.createdAt = new Date();
-        log.info("Created message from {} to {}: {}", from, to, payload);
+        log.info("Created message from {} to {}: {}", from, to, document);
     }
 
-    public static String toAddress ( Object o ) {
-        return o==null?"null":String.format("%05x@%s", o.hashCode(), o.getClass().getSimpleName());
+    /** A message originating at the REST boundary, outside any actuator (ADR26). */
+    public static Message to(Actuator target, Document document) {
+        return new Message(null, target, document);
     }
+
+    /** A message handed off from one actuator to the next. */
+    public static Message between(Actuator from, Actuator to, Document document) {
+        return new Message(from, to, document);
+    }
+
+    public static String toAddress(Object o) {
+        return o == null ? "null" : String.format("%05x@%s", o.hashCode(), o.getClass().getSimpleName());
+    }
+
     public String id() {
-
-        return String.format("Mesasge[%s] (%s->%s)",toAddress(document),from.getName(),to.getName());
+        String fromName = (from == null) ? "external" : from.getName();
+        return String.format("Message[%s] (%s->%s)", toAddress(document), fromName, to.getName());
     }
-
 
     @Override
     public String toString() {
-        return String.format("%s createdAt=%s ",id(), createdAt);
+        return String.format("%s createdAt=%s ", id(), createdAt);
     }
-
 
 }

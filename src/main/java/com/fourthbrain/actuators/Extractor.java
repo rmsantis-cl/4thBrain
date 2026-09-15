@@ -195,20 +195,14 @@ public class Extractor extends Actuator {
         // Routed through the Coordinator rather than autowired directly: Ingestor
         // is a prototype bean, so an @Autowired field here would mint a fresh,
         // unregistered instance instead of reaching a registered one (P1.9).
-        Actuator ingestor = Coordinator.get("Ingestor");
+        Actuator ingestor = getCoordinator().get("Ingestor");
         if (ingestor == null) {
             log.warn("Ingestor actuator not available - cannot send document: id={}", doc.getId());
             return;
         }
 
         try {
-            // Create a message and send to Ingestor
-            Message message = Message.builder()
-                .document(doc)
-                .from(this)
-                .to(ingestor)
-                .build();
-
+            Message message = Message.between(this, ingestor, doc);
             ingestor.enqueueMessage(message);
             log.debug("Extracted document sent to Ingestor: id={}", doc.getId());
         } catch (Exception e) {
