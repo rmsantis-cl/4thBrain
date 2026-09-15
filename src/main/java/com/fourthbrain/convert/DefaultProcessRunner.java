@@ -3,8 +3,6 @@ package com.fourthbrain.convert;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -34,14 +32,11 @@ public class DefaultProcessRunner implements ProcessRunner {
         pb.redirectError(stderrFile.toFile());
 
         Process process = pb.start();
-        boolean timedOut = false;
-
         try {
             long timeoutMs = timeout.toMillis();
             boolean finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
 
             if (!finished) {
-                timedOut = true;
                 killProcess(process, timeout);
                 return new ProcessResult(-1, true);
             }
@@ -54,6 +49,7 @@ public class DefaultProcessRunner implements ProcessRunner {
         }
     }
 
+    @SuppressWarnings("null")
     private void killProcess(Process process, Duration timeout) {
         // Destroy gracefully
         process.destroy();

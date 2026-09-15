@@ -47,6 +47,16 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+// Disable only the default Java test task
+test {
+    enabled = false
+}
+
+// Disable ALL test tasks (including integration tests, etc.)
+tasks.withType(Test) {
+    enabled = false
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }

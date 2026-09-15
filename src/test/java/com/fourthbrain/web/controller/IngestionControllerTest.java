@@ -3,6 +3,9 @@ package com.fourthbrain.web.controller;
 import com.fourthbrain.actuators.Coordinator;
 import com.fourthbrain.persistence.DatabaseService;
 import com.fourthbrain.persistence.entity.Document;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(IngestionController.class)
 @DisplayName("IngestionController Tests")
+@SuppressWarnings("null")
+@Slf4j 
 public class IngestionControllerTest {
 
     @Autowired
@@ -36,7 +41,7 @@ public class IngestionControllerTest {
     private Coordinator coordinator;
 
     private Document testDocument;
-    private static final String VAULT_TMP_PATH = "/tmp/vault";
+//     private static final String VAULT_TMP_PATH = "/tmp/vault";
 
     @BeforeEach
     void setUp() {
@@ -70,7 +75,7 @@ public class IngestionControllerTest {
                 .andExpect(jsonPath("$.message").value("Text received and queued"))
                 .andExpect(jsonPath("$.jobId").value(1))
                 .andReturn();
-
+log.debug("{}",result.getResponse().getContentAsString());
         // Verify interactions
         verify(databaseService, times(1)).createDocument(anyString(), anyString());
         verify(coordinator, times(1)).startChain(1L);

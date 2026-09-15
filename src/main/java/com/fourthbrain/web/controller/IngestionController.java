@@ -60,15 +60,16 @@ public class IngestionController {
     private record Upload(Document document, Path destPath) {
     }
 
-    private static Upload processUploadedFile(MultipartFile file, String vaultTmpPath) throws IOException {
+    private static Upload processUploadedFile( MultipartFile file, String vaultTmpPath) throws IOException {
         Path tmp = Paths.get(vaultTmpPath);
+        assert file!=null:"file cannot be null";
         if (!Files.exists(tmp)) {
             Files.createDirectories(tmp);
         }
 
         // Extract and validate filename
         String originalName = file.getOriginalFilename();
-        if (StringUtils.isBlank(originalName)) {
+        if (originalName==null ||StringUtils.isBlank(originalName)) {
             originalName = "document";
         }
 
@@ -184,8 +185,8 @@ public class IngestionController {
 
     @PostMapping("/url")
     public Map<String, Object> submitUrl(@RequestBody Map<String, String> payload) {
-        String url = payload.get("url");
-        String tags = payload.get("tags");
+        // String url = payload.get("url");
+        // String tags = payload.get("tags");
         log.info("Not implemented");
         return  Map.of("not","implemented");
     }

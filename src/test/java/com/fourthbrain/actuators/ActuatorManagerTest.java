@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
         "actuators.threads.ingestor=2"
 })
 @DisplayName("ActuatorManager Tests")
+@SuppressWarnings("null")
+
 class ActuatorManagerTest {
 
     private static final List<String> ACTUATOR_NAMES =

@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:memory:
+  jpa:
+    hibernate:
+      ddl-auto: create
+
+fourthbrain:
+  converter:
+    fail-fast: false

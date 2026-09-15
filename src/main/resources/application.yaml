@@ -52,7 +52,7 @@ vault:
 fourthbrain:
   converter:
     implementation: markitdown
-    fail-fast: true
+    fail-fast: false
     supported-extensions: [pdf, docx, doc, pptx, xlsx, xls, html, htm, epub, msg, csv, json, xml]
     passthrough-extensions: [md, markdown, txt, text]
     min-output-chars: 1

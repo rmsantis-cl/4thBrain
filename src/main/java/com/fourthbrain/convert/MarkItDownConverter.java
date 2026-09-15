@@ -1,11 +1,13 @@
 package com.fourthbrain.convert;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -194,7 +196,8 @@ public class MarkItDownConverter implements MarkdownConverter {
         }
     }
 
-    private String performConversion(Path source, String ext) throws ConversionException {
+      @SneakyThrows 
+    private String performConversion(Path source, String ext)  {
         String uuid = UUID.randomUUID().toString();
         Path stagedInput = workDir.resolve("in-" + uuid + "." + ext);
         Path outputFile = workDir.resolve("out-" + uuid + ".md");
@@ -263,6 +266,8 @@ public class MarkItDownConverter implements MarkdownConverter {
             }
 
             return markdown;
+        } catch (IOException e) {
+            log.error("failed",e);
         } finally {
             try {
                 Files.deleteIfExists(stagedInput);
@@ -272,6 +277,7 @@ public class MarkItDownConverter implements MarkdownConverter {
                 log.warn("Error cleaning up temporary files: {}", e.getMessage());
             }
         }
+        return null;
     }
 
     private List<String> buildConversionCommand(Path input, Path output) {

@@ -9,3 +9,10 @@ tmp/
 *.class
 **/*.class
 .classpath
+.aider*
+vault/
+.old-vscode/
+.zed/
+.vscode/
+.settings/
+.claude/

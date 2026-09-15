@@ -24,6 +24,7 @@ import java.util.Optional;
  * Per ADR17: keep transactions brief (no long-running locks).
  */
 @Service
+@SuppressWarnings("null")
 public class DatabaseService {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseService.class);
@@ -34,9 +35,9 @@ public class DatabaseService {
     private final DocumentCopyRepository documentCopyRepository;
 
     public DatabaseService(DocumentRepository documentRepository,
-                          TagRepository tagRepository,
-                          DocumentTagRepository documentTagRepository,
-                          DocumentCopyRepository documentCopyRepository) {
+            TagRepository tagRepository,
+            DocumentTagRepository documentTagRepository,
+            DocumentCopyRepository documentCopyRepository) {
         this.documentRepository = documentRepository;
         this.tagRepository = tagRepository;
         this.documentTagRepository = documentTagRepository;

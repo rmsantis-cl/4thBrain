@@ -18,7 +18,7 @@ public abstract class Actuator extends Thread {
     private String name;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private Logger log;
+    protected Logger log;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private boolean running;

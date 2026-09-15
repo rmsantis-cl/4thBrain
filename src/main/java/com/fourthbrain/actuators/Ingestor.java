@@ -3,7 +3,8 @@ package com.fourthbrain.actuators;
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
-import java.net.URL;
+
+import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -40,8 +41,9 @@ public class Ingestor extends Actuator {
         }
 
         log.info("Ingesting document: id={}, mimeType={}, content preview={}",
-            doc.getId(), doc.getMimeType(),
-            doc.getContent() != null ? doc.getContent().substring(0, Math.min(50, doc.getContent().length())) : "null");
+                doc.getId(), doc.getMimeType(),
+                doc.getContent() != null ? doc.getContent().substring(0, Math.min(50, doc.getContent().length()))
+                        : "null");
 
         try {
             // Route based on document type
@@ -70,10 +72,10 @@ public class Ingestor extends Actuator {
 
         if (mimeType != null) {
             return mimeType.equals("application/zip") ||
-                   mimeType.equals("application/x-zip-compressed") ||
-                   mimeType.equals("application/x-rar-compressed") ||
-                   mimeType.equals("application/x-7z-compressed") ||
-                   mimeType.equals("application/gzip");
+                    mimeType.equals("application/x-zip-compressed") ||
+                    mimeType.equals("application/x-rar-compressed") ||
+                    mimeType.equals("application/x-7z-compressed") ||
+                    mimeType.equals("application/gzip");
         }
 
         if (extension != null) {
@@ -92,7 +94,8 @@ public class Ingestor extends Actuator {
 
         content = content.trim();
         try {
-            new URL(content);
+            new URI(content).toURL();
+
             return content.startsWith("http://") || content.startsWith("https://");
         } catch (Exception e) {
             return false;
@@ -103,9 +106,9 @@ public class Ingestor extends Actuator {
         String mimeType = doc.getMimeType();
         if (mimeType != null) {
             return mimeType.startsWith("text/") ||
-                   mimeType.equals("application/json") ||
-                   mimeType.equals("application/xml") ||
-                   mimeType.equals("application/pdf");
+                    mimeType.equals("application/json") ||
+                    mimeType.equals("application/xml") ||
+                    mimeType.equals("application/pdf");
         }
 
         String extension = doc.getExtension();

@@ -5,6 +5,8 @@ import com.fourthbrain.persistence.DatabaseService;
 import com.fourthbrain.persistence.entity.Document;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -95,7 +97,7 @@ public class Clipper extends Actuator {
 
     private boolean isValidUrl(String urlString) {
         try {
-            new URL(urlString);
+            new URI(urlString).toURL();
             return urlString.startsWith("http://") || urlString.startsWith("https://");
         } catch (Exception e) {
             return false;
@@ -106,7 +108,8 @@ public class Clipper extends Actuator {
         try {
             log.debug("Fetching content from URL: {}", urlString);
 
-            URL url = new URL(urlString);
+            URL url = new URI(urlString).toURL();
+
             java.net.URLConnection connection = url.openConnection();
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);

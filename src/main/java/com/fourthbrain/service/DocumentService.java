@@ -1,16 +1,21 @@
 package com.fourthbrain.service;
 
-import com.fourthbrain.persistence.entity.Document;
-import com.fourthbrain.persistence.repository.DocumentRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.fourthbrain.persistence.entity.Document;
+import com.fourthbrain.persistence.repository.DocumentRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Service
 @Slf4j
+@SuppressWarnings("null")
+
 public class DocumentService {
 
     @Autowired
