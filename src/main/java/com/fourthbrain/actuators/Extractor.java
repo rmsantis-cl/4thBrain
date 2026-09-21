@@ -1,5 +1,7 @@
 package com.fourthbrain.actuators;
 
+import com.fourthbrain.convert.ConversionException;
+import com.fourthbrain.convert.MarkdownConverter;
 import com.fourthbrain.messaging.Message;
 import com.fourthbrain.persistence.DatabaseService;
 import com.fourthbrain.persistence.VaultArea;
@@ -9,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,6 +31,9 @@ public class Extractor extends Actuator {
 
     @Autowired
     private DatabaseService databaseService;
+
+    @Autowired(required = false)
+    private MarkdownConverter markdownConverter;
 
     public Extractor() {
         super();
@@ -59,23 +65,26 @@ public class Extractor extends Actuator {
         log.info("Extracting document: id={}, mimeType={}", doc.getId(), doc.getMimeType());
 
         try {
-            // Check if the document is a ZIP file
-            if (!isZipFile(doc)) {
-                log.debug("Document is not a ZIP file: id={}", doc.getId());
-                return null;
-            }
-
-            // The archive is the copy sitting in tmp
-            DocumentCopy archive = databaseService.findLive(doc.getId(), VaultArea.TMP);
-            if (archive == null) {
+            // Get the copy sitting in tmp
+            DocumentCopy copy = databaseService.findLive(doc.getId(), VaultArea.TMP);
+            if (copy == null) {
                 log.warn("No live copy in area {} for document: id={}", VaultArea.TMP, doc.getId());
                 return null;
             }
 
-            // Extract the ZIP file
-            extractZipAndCreateDocuments(doc, archive);
+            // Check if the document is a ZIP file
+            if (isZipFile(doc)) {
+                extractZipAndCreateDocuments(doc, copy);
+                return null;
+            }
 
-            // Return null - extraction is complete
+            // Check if the document is a PDF
+            if (isPdfFile(doc)) {
+                extractPdfAndCreateDocument(doc, copy);
+                return null;
+            }
+
+            log.debug("Document is neither ZIP nor PDF: id={}", doc.getId());
             return null;
         } catch (Exception e) {
             log.error("Error extracting document: id={}", doc.getId(), e);
@@ -91,6 +100,18 @@ public class Extractor extends Actuator {
 
         if (doc.getExtension() != null) {
             return doc.getExtension().equalsIgnoreCase(".zip");
+        }
+
+        return false;
+    }
+
+    private boolean isPdfFile(Document doc) {
+        if (doc.getMimeType() != null) {
+            return doc.getMimeType().equals("application/pdf");
+        }
+
+        if (doc.getExtension() != null) {
+            return doc.getExtension().equalsIgnoreCase(".pdf");
         }
 
         return false;
@@ -139,6 +160,68 @@ public class Extractor extends Actuator {
 
         log.info("ZIP extraction complete: parentId={}, extractionDir={}",
             zipDoc.getId(), extractionDir);
+    }
+
+    private void extractPdfAndCreateDocument(Document pdfDoc, DocumentCopy pdfCopy) {
+        if (markdownConverter == null) {
+            log.warn("Markdown converter not available; cannot extract PDF: id={}", pdfDoc.getId());
+            return;
+        }
+
+        Path pdfPath = Paths.get(pdfCopy.getPath());
+
+        if (!Files.exists(pdfPath)) {
+            log.warn("PDF file does not exist: {}", pdfPath);
+            return;
+        }
+
+        try {
+            // Convert PDF to Markdown
+            String markdown = markdownConverter.convert(pdfPath, "pdf");
+
+            // Create a temporary file for the Markdown content
+            Path markdownFilePath = Paths.get(vaultTmpPath).resolve(
+                "extracted_" + System.currentTimeMillis() + ".md"
+            );
+            Files.write(markdownFilePath, markdown.getBytes(StandardCharsets.UTF_8));
+
+            log.debug("PDF converted to markdown: {}", markdownFilePath);
+
+            // Create a Document for the Markdown file
+            Document markdownDoc = createDocumentForExtractedPdf(pdfDoc, markdownFilePath);
+
+            // Save to database, then record where the markdown file landed
+            Document savedDoc = databaseService.create(markdownDoc);
+            databaseService.addCopy(savedDoc, VaultArea.TMP, markdownFilePath.toString());
+            log.info("Extracted PDF document created: id={}, parentId={}, name={}",
+                savedDoc.getId(), savedDoc.getParentId(), savedDoc.getName());
+
+            // Send to Ingestor for processing
+            sendToIngestor(savedDoc);
+
+        } catch (ConversionException e) {
+            log.warn("Failed to convert PDF to markdown: id={}, reason={}, detail={}",
+                pdfDoc.getId(), e.getReason(), e.getDetail(), e);
+        } catch (Exception e) {
+            log.error("Error extracting PDF: id={}", pdfDoc.getId(), e);
+        }
+    }
+
+    private Document createDocumentForExtractedPdf(Document pdfDoc, Path markdownFilePath) {
+        String originalName = pdfDoc.getName();
+        String nameWithoutExt = originalName.replaceFirst("\\.pdf$", "");
+        String fileName = nameWithoutExt + ".md";
+
+        return Document.builder()
+            .parentId(pdfDoc.getId())
+            .name(fileName)
+            .extension(".md")
+            .mimeType("text/markdown")
+            .content("")
+            .status("New")
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .build();
     }
 
     private Document createDocumentForExtractedFile(Document zipDoc, Path filePath, String entryName) {
